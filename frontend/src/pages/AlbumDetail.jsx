@@ -6,11 +6,13 @@ import {
 } from 'antd';
 import { 
   HeartOutlined, HeartFilled, EditOutlined, 
-  DeleteOutlined, UserOutlined 
+  DeleteOutlined, UserOutlined, MessageOutlined,
+  SendOutlined
 } from '@ant-design/icons';
 import { albumsApi } from '../api/albums';
 import { reviewsApi } from '../api/reviews';
 import { favoritesApi } from '../api/favorites';
+import { repliesApi } from '../api/replies';
 import { useAuth } from '../context/AuthContext';
 
 const { Title, Text, Paragraph } = Typography;
@@ -112,6 +114,32 @@ const styles = {
     color: '#A1887F',
     padding: '32px',
   },
+  replyContainer: {
+    marginLeft: '56px',
+    marginTop: '12px',
+    padding: '12px 16px',
+    background: 'linear-gradient(145deg, #FFF8F0 0%, #F5E6D3 100%)',
+    borderRadius: '8px',
+    borderLeft: '3px solid #D4A574',
+  },
+  replyUsername: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: '14px',
+    fontWeight: 700,
+    color: '#5D4037',
+  },
+  replyContent: {
+    fontFamily: "'Noto Serif SC', serif",
+    fontSize: '14px',
+    fontWeight: 500,
+    color: '#6D4C41',
+    marginTop: '4px',
+  },
+  replyDate: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: '12px',
+    color: '#A1887F',
+  },
 };
 
 const AlbumDetail = () => {
@@ -121,12 +149,19 @@ const AlbumDetail = () => {
   
   const [album, setAlbum] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [reviewReplies, setReviewReplies] = useState({});
   const [isFavorited, setIsFavorited] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [myReview, setMyReview] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm();
+  
+  // Reply state
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyContent, setReplyContent] = useState('');
+  const [submittingReply, setSubmittingReply] = useState(false);
+  const [expandedReplies, setExpandedReplies] = useState({});
 
   useEffect(() => {
     loadAlbum();
@@ -157,6 +192,29 @@ const AlbumDetail = () => {
       navigate('/');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadReplies = async (reviewId) => {
+    try {
+      const response = await repliesApi.getByReview(reviewId);
+      setReviewReplies(prev => ({
+        ...prev,
+        [reviewId]: response.data
+      }));
+    } catch (error) {
+      message.error('Failed to load replies');
+    }
+  };
+
+  const toggleReplies = async (reviewId) => {
+    if (expandedReplies[reviewId]) {
+      setExpandedReplies(prev => ({ ...prev, [reviewId]: false }));
+    } else {
+      if (!reviewReplies[reviewId]) {
+        await loadReplies(reviewId);
+      }
+      setExpandedReplies(prev => ({ ...prev, [reviewId]: true }));
     }
   };
 
@@ -226,6 +284,46 @@ const AlbumDetail = () => {
       loadAlbum();
     } catch (error) {
       message.error('Failed to delete review');
+    }
+  };
+
+  const handleSubmitReply = async (reviewId) => {
+    if (!isAuthenticated) {
+      message.info('Please login to reply');
+      navigate('/login');
+      return;
+    }
+
+    if (!replyContent.trim()) {
+      message.warning('Please enter your reply');
+      return;
+    }
+
+    setSubmittingReply(true);
+    try {
+      await repliesApi.create({
+        reviewId: reviewId,
+        content: replyContent,
+      });
+      message.success('Reply submitted!');
+      setReplyContent('');
+      setReplyingTo(null);
+      await loadReplies(reviewId);
+      setExpandedReplies(prev => ({ ...prev, [reviewId]: true }));
+    } catch (error) {
+      message.error('Failed to submit reply');
+    } finally {
+      setSubmittingReply(false);
+    }
+  };
+
+  const handleDeleteReply = async (replyId, reviewId) => {
+    try {
+      await repliesApi.delete(replyId);
+      message.success('Reply deleted');
+      await loadReplies(reviewId);
+    } catch (error) {
+      message.error('Failed to delete reply');
     }
   };
 
@@ -379,56 +477,138 @@ const AlbumDetail = () => {
           <List
             dataSource={reviews}
             renderItem={(review) => (
-              <List.Item
-                actions={
-                  user?.id === review.userId ? [
-                    <Button 
-                      type="text" 
-                      icon={<EditOutlined />}
-                      onClick={openReviewModal}
-                    />,
-                    <Button 
-                      type="text" 
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={() => handleDeleteReview(review.id)}
-                    />,
-                  ] : []
-                }
-              >
-                <List.Item.Meta
-                  avatar={
-                    <Avatar 
-                      icon={<UserOutlined />} 
-                      src={review.userAvatar}
-                      size={48}
-                      style={{ border: '2px solid #E8D5C4' }}
-                    />
-                  }
-                  title={
-                    <div>
-                      <span style={styles.reviewUsername}>{review.username}</span>
-                      <Rate 
-                        disabled 
-                        value={review.rating} 
-                        allowHalf 
-                        style={{ fontSize: '14px', color: '#D4A574' }} 
+              <div key={review.id}>
+                <List.Item
+                  actions={[
+                    <Button
+                      type="text"
+                      icon={<MessageOutlined />}
+                      onClick={() => toggleReplies(review.id)}
+                      style={{ color: '#8D6E63' }}
+                    >
+                      {expandedReplies[review.id] ? 'Hide' : 'Replies'}
+                    </Button>,
+                    ...(user?.id === review.userId ? [
+                      <Button 
+                        type="text" 
+                        icon={<EditOutlined />}
+                        onClick={openReviewModal}
+                      />,
+                      <Button 
+                        type="text" 
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={() => handleDeleteReview(review.id)}
+                      />,
+                    ] : [])
+                  ]}
+                >
+                  <List.Item.Meta
+                    avatar={
+                      <Avatar 
+                        icon={<UserOutlined />} 
+                        src={review.userAvatar}
+                        size={48}
+                        style={{ border: '2px solid #E8D5C4' }}
                       />
-                    </div>
-                  }
-                  description={
-                    <div>
-                      <p style={styles.reviewContent}>{review.content}</p>
-                      <Text type="secondary" style={{ 
-                        fontSize: '13px',
-                        fontFamily: "'Cormorant Garamond', serif",
-                      }}>
-                        {new Date(review.createdAt).toLocaleDateString()}
+                    }
+                    title={
+                      <div>
+                        <span style={styles.reviewUsername}>{review.username}</span>
+                        <Rate 
+                          disabled 
+                          value={review.rating} 
+                          allowHalf 
+                          style={{ fontSize: '14px', color: '#D4A574' }} 
+                        />
+                      </div>
+                    }
+                    description={
+                      <div>
+                        <p style={styles.reviewContent}>{review.content}</p>
+                        <Text type="secondary" style={{ 
+                          fontSize: '13px',
+                          fontFamily: "'Cormorant Garamond', serif",
+                        }}>
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </Text>
+                      </div>
+                    }
+                  />
+                </List.Item>
+
+                {/* Replies Section */}
+                {expandedReplies[review.id] && (
+                  <div style={styles.replyContainer}>
+                    {/* Reply Input */}
+                    {isAuthenticated && (
+                      <div style={{ marginBottom: '16px', display: 'flex', gap: '8px' }}>
+                        <Input.TextArea
+                          value={replyingTo === review.id ? replyContent : ''}
+                          onChange={(e) => {
+                            setReplyingTo(review.id);
+                            setReplyContent(e.target.value);
+                          }}
+                          placeholder="Write a reply..."
+                          autoSize={{ minRows: 1, maxRows: 3 }}
+                          style={{ flex: 1 }}
+                          onFocus={() => setReplyingTo(review.id)}
+                        />
+                        <Button
+                          type="primary"
+                          icon={<SendOutlined />}
+                          loading={submittingReply && replyingTo === review.id}
+                          onClick={() => handleSubmitReply(review.id)}
+                          disabled={!replyContent.trim() || replyingTo !== review.id}
+                        >
+                          Reply
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Replies List */}
+                    {reviewReplies[review.id]?.length > 0 ? (
+                      reviewReplies[review.id].map((reply) => (
+                        <div key={reply.id} style={{ 
+                          padding: '8px 0', 
+                          borderBottom: '1px solid #E8D5C4',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '12px',
+                        }}>
+                          <Avatar 
+                            size={32} 
+                            src={reply.userAvatar}
+                            icon={<UserOutlined />}
+                          />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={styles.replyUsername}>{reply.username}</span>
+                              <span style={styles.replyDate}>
+                                {new Date(reply.createdAt).toLocaleDateString()}
+                              </span>
+                              {user?.id === reply.userId && (
+                                <Button
+                                  type="text"
+                                  size="small"
+                                  danger
+                                  icon={<DeleteOutlined />}
+                                  onClick={() => handleDeleteReply(reply.id, review.id)}
+                                />
+                              )}
+                            </div>
+                            <p style={styles.replyContent}>{reply.content}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <Text type="secondary" style={{ fontSize: '14px' }}>
+                        No replies yet. Be the first to reply!
                       </Text>
-                    </div>
-                  }
-                />
-              </List.Item>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
           />
         )}

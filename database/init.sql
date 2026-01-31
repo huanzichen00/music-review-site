@@ -131,6 +131,23 @@ CREATE TABLE reviews (
 ) COMMENT '评论表';
 
 -- =====================================================
+-- 9. 评论回复表
+-- =====================================================
+CREATE TABLE review_replies (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    review_id BIGINT NOT NULL COMMENT '评论ID',
+    user_id BIGINT NOT NULL COMMENT '回复用户ID',
+    content TEXT NOT NULL COMMENT '回复内容',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '回复时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    
+    FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) COMMENT '评论回复表';
+
+CREATE INDEX idx_replies_review ON review_replies(review_id);
+
+-- =====================================================
 -- 初始数据: 流派
 -- =====================================================
 INSERT INTO genres (name, description) VALUES
