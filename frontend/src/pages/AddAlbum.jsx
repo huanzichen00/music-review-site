@@ -209,12 +209,23 @@ const AddAlbum = () => {
                           error.response?.data?.message || 
                           error.message || 
                           'Failed to create album';
-      message.error(`Failed to create album: ${errorMessage}`);
       
-      // If 401, redirect to login
-      if (error.response?.status === 401) {
+      // Handle 403 Forbidden - usually means token expired or invalid
+      if (error.response?.status === 403) {
+        message.error('Access denied. Please try logging out and logging in again.');
+        // Optionally redirect to login after a delay
+        setTimeout(() => {
+          if (confirm('Your session may have expired. Would you like to login again?')) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            navigate('/login');
+          }
+        }, 2000);
+      } else if (error.response?.status === 401) {
         message.warning('Please login again');
         navigate('/login');
+      } else {
+        message.error(`Failed to create album: ${errorMessage}`);
       }
     } finally {
       setLoading(false);

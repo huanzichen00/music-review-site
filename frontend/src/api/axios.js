@@ -30,6 +30,16 @@ api.interceptors.response.use(
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
+    } else if (error.response?.status === 403) {
+      // Forbidden - might be token issue
+      console.error('403 Forbidden - Token might be expired or invalid');
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found in localStorage');
+        window.location.href = '/login';
+      } else {
+        console.error('Token exists but request was forbidden. Token:', token.substring(0, 20) + '...');
+      }
     }
     return Promise.reject(error);
   }
