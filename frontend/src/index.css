@@ -4,33 +4,190 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+:root {
+  /* 暖色系配色变量 */
+  --warm-bg-primary: #FDF5ED;
+  --warm-bg-secondary: #FFF8F0;
+  --warm-bg-card: #FFFCF8;
+  --warm-header: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #CD853F 100%);
+  --warm-footer: #F5E6D3;
+  --warm-text: #5D4037;
+  --warm-text-secondary: #8D6E63;
+  --warm-border: #E8D5C4;
+  --warm-accent: #D4A574;
+  --warm-accent-light: #F5DEB3;
 }
 
-/* Custom scrollbar */
+body {
+  font-family: 'Noto Serif SC', 'Georgia', serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--warm-bg-primary);
+  color: var(--warm-text);
+}
+
+/* 全局背景渐变 */
+#root {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #FDF5ED 0%, #FFF8F0 50%, #FFEFD5 100%);
+}
+
+/* Custom scrollbar - 暖色系 */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #F5E6D3;
+  border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
+  background: linear-gradient(180deg, #D4A574 0%, #C4956A 100%);
+  border-radius: 5px;
+  border: 2px solid #F5E6D3;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: linear-gradient(180deg, #C4956A 0%, #B8860B 100%);
 }
 
 /* Card hover effect */
+.ant-card {
+  border: 1px solid var(--warm-border) !important;
+  box-shadow: 0 2px 8px rgba(139, 69, 19, 0.08);
+  transition: all 0.3s ease;
+}
+
 .ant-card-hoverable:hover {
   transform: translateY(-4px);
-  transition: transform 0.3s ease;
+  box-shadow: 0 8px 24px rgba(139, 69, 19, 0.15);
+  border-color: var(--warm-accent) !important;
+}
+
+/* 标题样式 */
+.ant-typography h1,
+.ant-typography h2,
+.ant-typography h3,
+.ant-typography h4 {
+  color: #5D4037 !important;
+}
+
+/* 按钮样式增强 */
+.ant-btn-primary {
+  background: linear-gradient(135deg, #D4A574 0%, #C4956A 100%);
+  border: none;
+  box-shadow: 0 2px 8px rgba(196, 149, 106, 0.4);
+}
+
+.ant-btn-primary:hover {
+  background: linear-gradient(135deg, #C4956A 0%, #B8860B 100%);
+  box-shadow: 0 4px 12px rgba(196, 149, 106, 0.5);
+}
+
+/* 输入框样式 */
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-select-selector,
+.ant-picker {
+  border-color: var(--warm-border) !important;
+  background: #FFFCF8 !important;
+}
+
+.ant-input:focus,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused {
+  border-color: var(--warm-accent) !important;
+  box-shadow: 0 0 0 2px rgba(212, 165, 116, 0.2) !important;
+}
+
+/* 选中状态 */
+.ant-select-item-option-selected {
+  background: #FFF8E7 !important;
+}
+
+/* 分割线 */
+.ant-divider {
+  border-color: var(--warm-border);
+}
+
+/* 标签 */
+.ant-tag {
+  border-color: var(--warm-border);
+  background: #FFF8E7;
+}
+
+/* 统计数字 */
+.ant-statistic-title {
+  color: var(--warm-text-secondary);
+}
+
+.ant-statistic-content {
+  color: var(--warm-text);
+}
+
+/* Alert 样式 */
+.ant-alert-info {
+  background: #FFF8E7;
+  border-color: #FFE4B5;
+}
+
+/* 表格 */
+.ant-table {
+  background: var(--warm-bg-card);
+}
+
+.ant-table-thead > tr > th {
+  background: #FFF3E0 !important;
+  color: var(--warm-text);
+}
+
+/* 下拉菜单 */
+.ant-dropdown-menu {
+  background: #FFFCF8;
+}
+
+.ant-dropdown-menu-item:hover {
+  background: #FFF8E7;
+}
+
+/* 模态框 */
+.ant-modal-content {
+  background: #FFFCF8;
+}
+
+.ant-modal-header {
+  background: #FFF8E7;
+  border-bottom-color: var(--warm-border);
+}
+
+/* 消息提示 */
+.ant-message-notice-content {
+  background: #FFFCF8;
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.15);
+}
+
+/* 评分星星 */
+.ant-rate-star-full .anticon {
+  color: #FFB74D !important;
+}
+
+/* 加载动画 */
+.ant-spin-dot-item {
+  background-color: var(--warm-accent);
+}
+
+/* 面包屑 */
+.ant-breadcrumb a {
+  color: var(--warm-accent);
+}
+
+.ant-breadcrumb a:hover {
+  color: #B8860B;
+}
+
+/* 描述列表 */
+.ant-descriptions-item-label {
+  color: var(--warm-text-secondary);
 }
