@@ -9,6 +9,7 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -44,8 +45,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/import/**").permitAll()
-                        .requestMatchers("/api/genres").permitAll()
-                        .requestMatchers("/api/genres/**").permitAll()
+                        // Public read access for albums, artists, genres, reviews
+                        .requestMatchers(HttpMethod.GET, "/api/albums").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/albums/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/artists").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/artists/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/genres").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/genres/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
                         // All other endpoints require authentication
                         .anyRequest().authenticated()
                 )
@@ -61,7 +68,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // React dev server
+        // Allow multiple frontend ports
+        configuration.setAllowedOrigins(List.of(
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:5173"
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
