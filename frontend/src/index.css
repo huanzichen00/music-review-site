@@ -195,6 +195,7 @@ body {
 /* 导航菜单样式 */
 .ant-menu-horizontal {
   font-family: 'Playfair Display', 'Noto Serif SC', Georgia, serif !important;
+  flex-wrap: nowrap !important;
 }
 
 .ant-menu-horizontal .ant-menu-item,
@@ -211,6 +212,15 @@ body {
 
 .ant-menu-horizontal .ant-menu-item:hover a {
   color: #FFE4B5 !important;
+}
+
+/* 禁止菜单折叠 */
+.ant-menu-overflow {
+  flex-wrap: nowrap !important;
+}
+
+.ant-menu-overflow-item {
+  flex-shrink: 0 !important;
 }
 
 /* 下拉菜单字体 */
