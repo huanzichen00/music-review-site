@@ -95,7 +95,14 @@ public class JwtUtils {
      * Get signing key from secret
      */
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-        return Keys.hmacShaKeyFor(keyBytes);
+        // Try Base64 decode first, if fails use the secret directly as bytes
+        try {
+            byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+            return Keys.hmacShaKeyFor(keyBytes);
+        } catch (IllegalArgumentException e) {
+            // If not Base64, use the secret string directly
+            byte[] keyBytes = jwtSecret.getBytes();
+            return Keys.hmacShaKeyFor(keyBytes);
+        }
     }
 }
