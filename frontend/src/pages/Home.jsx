@@ -5,7 +5,56 @@ import { genresApi } from '../api/genres';
 import AlbumCard from '../components/AlbumCard';
 import AlphabetFilter from '../components/AlphabetFilter';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
+
+// 自定义样式
+const styles = {
+  pageTitle: {
+    fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
+    fontSize: '42px',
+    fontWeight: 600,
+    color: '#5D4037',
+    marginBottom: '24px',
+    letterSpacing: '1px',
+    textShadow: '1px 1px 2px rgba(139, 69, 19, 0.1)',
+  },
+  sectionTitle: {
+    fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
+    fontSize: '32px',
+    fontWeight: 500,
+    color: '#6D4C41',
+    marginBottom: '20px',
+    letterSpacing: '0.5px',
+  },
+  genreCard: {
+    textAlign: 'center',
+    background: 'linear-gradient(145deg, #FFFCF8 0%, #FFF8F0 100%)',
+    borderRadius: '12px',
+  },
+  genreIcon: {
+    fontSize: '36px',
+    marginBottom: '12px',
+  },
+  genreName: {
+    fontFamily: "'Cormorant Garamond', 'Noto Serif SC', Georgia, serif",
+    fontSize: '18px',
+    fontWeight: 600,
+    color: '#5D4037',
+  },
+  genreCount: {
+    fontFamily: "'Cormorant Garamond', serif",
+    color: '#8D6E63',
+    fontSize: '14px',
+    marginTop: '4px',
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#8D6E63',
+    fontSize: '16px',
+    fontFamily: "'Noto Serif SC', serif",
+    padding: '40px',
+  },
+};
 
 const Home = () => {
   const [albums, setAlbums] = useState([]);
@@ -37,7 +86,7 @@ const Home = () => {
 
   return (
     <div>
-      <Title level={2}>Browse Albums</Title>
+      <h1 style={styles.pageTitle}>🎵 Browse Albums</h1>
       
       <AlphabetFilter 
         selected={selectedLetter} 
@@ -45,19 +94,19 @@ const Home = () => {
       />
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '50px' }}>
+        <div style={{ textAlign: 'center', padding: '60px' }}>
           <Spin size="large" />
         </div>
       ) : (
         <>
           {albums.length === 0 ? (
-            <Card>
-              <p style={{ textAlign: 'center', color: '#999' }}>
+            <Card style={{ borderRadius: '12px' }}>
+              <p style={styles.emptyText}>
                 No albums found. {selectedLetter && `Try selecting a different letter.`}
               </p>
             </Card>
           ) : (
-            <Row gutter={[16, 16]}>
+            <Row gutter={[24, 24]}>
               {albums.map((album) => (
                 <Col key={album.id} xs={12} sm={8} md={6} lg={4}>
                   <AlbumCard album={album} />
@@ -67,19 +116,19 @@ const Home = () => {
           )}
 
           {genres.length > 0 && (
-            <div style={{ marginTop: '48px' }}>
-              <Title level={3}>Genres</Title>
-              <Row gutter={[16, 16]}>
+            <div style={{ marginTop: '60px' }}>
+              <h2 style={styles.sectionTitle}>🎸 Genres</h2>
+              <Row gutter={[20, 20]}>
                 {genres.map((genre) => (
                   <Col key={genre.id} xs={12} sm={8} md={6} lg={4}>
                     <Card 
                       hoverable
-                      style={{ textAlign: 'center' }}
+                      style={styles.genreCard}
                     >
-                      <div style={{ fontSize: '24px', marginBottom: '8px' }}>🎸</div>
-                      <div style={{ fontWeight: 'bold' }}>{genre.name}</div>
+                      <div style={styles.genreIcon}>🎸</div>
+                      <div style={styles.genreName}>{genre.name}</div>
                       {genre.albumCount > 0 && (
-                        <div style={{ color: '#999', fontSize: '12px' }}>
+                        <div style={styles.genreCount}>
                           {genre.albumCount} albums
                         </div>
                       )}

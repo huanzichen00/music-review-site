@@ -16,6 +16,98 @@ import { useAuth } from '../context/AuthContext';
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
+// 自定义样式
+const styles = {
+  albumTitle: {
+    fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
+    fontSize: '38px',
+    fontWeight: 600,
+    color: '#5D4037',
+    marginBottom: '8px',
+    lineHeight: 1.3,
+  },
+  artistName: {
+    fontFamily: "'Cormorant Garamond', 'Noto Serif SC', Georgia, serif",
+    fontSize: '24px',
+    fontWeight: 500,
+    color: '#8D6E63',
+    marginTop: '0',
+  },
+  coverContainer: {
+    width: '100%',
+    paddingTop: '100%',
+    position: 'relative',
+    background: 'linear-gradient(145deg, #F5E6D3 0%, #E8D5C4 100%)',
+    borderRadius: '16px',
+    overflow: 'hidden',
+    boxShadow: '0 8px 32px rgba(139, 69, 19, 0.2)',
+  },
+  coverImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+  },
+  tag: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: '14px',
+    padding: '4px 12px',
+    borderRadius: '16px',
+  },
+  description: {
+    fontFamily: "'Noto Serif SC', Georgia, serif",
+    fontSize: '16px',
+    lineHeight: 1.8,
+    color: '#6D4C41',
+  },
+  cardTitle: {
+    fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
+    fontSize: '24px',
+    fontWeight: 500,
+    color: '#5D4037',
+  },
+  trackNumber: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: '16px',
+    marginRight: '16px',
+    color: '#A1887F',
+    minWidth: '30px',
+  },
+  trackTitle: {
+    fontFamily: "'Noto Serif SC', Georgia, serif",
+    fontSize: '16px',
+    flex: 1,
+    color: '#5D4037',
+  },
+  trackDuration: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: '15px',
+    color: '#A1887F',
+  },
+  reviewUsername: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: '17px',
+    fontWeight: 600,
+    color: '#5D4037',
+    marginRight: '12px',
+  },
+  reviewContent: {
+    fontFamily: "'Noto Serif SC', Georgia, serif",
+    fontSize: '15px',
+    lineHeight: 1.7,
+    color: '#6D4C41',
+  },
+  emptyText: {
+    fontFamily: "'Noto Serif SC', serif",
+    fontSize: '16px',
+    textAlign: 'center',
+    color: '#A1887F',
+    padding: '32px',
+  },
+};
+
 const AlbumDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -143,29 +235,15 @@ const AlbumDetail = () => {
 
   return (
     <div>
-      <Row gutter={[32, 32]}>
+      <Row gutter={[40, 32]}>
         {/* Album Cover */}
         <Col xs={24} md={8}>
-          <div style={{ 
-            width: '100%', 
-            paddingTop: '100%', 
-            position: 'relative',
-            background: '#f0f0f0',
-            borderRadius: '8px',
-            overflow: 'hidden'
-          }}>
+          <div style={styles.coverContainer}>
             {album.coverUrl ? (
               <img 
                 src={album.coverUrl} 
                 alt={album.title}
-                style={{ 
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
+                style={styles.coverImage}
               />
             ) : (
               <div style={{
@@ -173,7 +251,8 @@ const AlbumDetail = () => {
                 top: '50%',
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
-                fontSize: '80px'
+                fontSize: '100px',
+                opacity: 0.5,
               }}>
                 🎵
               </div>
@@ -183,69 +262,98 @@ const AlbumDetail = () => {
 
         {/* Album Info */}
         <Col xs={24} md={16}>
-          <Title level={2}>{album.title}</Title>
-          <Title level={4} type="secondary" style={{ marginTop: 0 }}>
-            {album.artistName}
-          </Title>
+          <h1 style={styles.albumTitle}>{album.title}</h1>
+          <h2 style={styles.artistName}>{album.artistName}</h2>
 
-          <div style={{ marginBottom: '16px' }}>
-            {album.releaseYear && <Tag color="blue">{album.releaseYear}</Tag>}
+          <div style={{ marginBottom: '20px', marginTop: '16px' }}>
+            {album.releaseYear && (
+              <Tag color="orange" style={styles.tag}>{album.releaseYear}</Tag>
+            )}
             {album.genres?.map((genre) => (
-              <Tag key={genre.id} color="purple">{genre.name}</Tag>
+              <Tag key={genre.id} color="gold" style={styles.tag}>{genre.name}</Tag>
             ))}
           </div>
 
           {album.averageRating !== null && (
-            <div style={{ marginBottom: '16px' }}>
-              <Rate disabled value={album.averageRating} allowHalf />
-              <Text style={{ marginLeft: '8px' }}>
+            <div style={{ marginBottom: '20px' }}>
+              <Rate 
+                disabled 
+                value={album.averageRating} 
+                allowHalf 
+                style={{ fontSize: '20px', color: '#D4A574' }}
+              />
+              <Text style={{ 
+                marginLeft: '12px', 
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: '18px',
+                color: '#8D6E63',
+              }}>
                 {album.averageRating?.toFixed(1)} ({album.reviewCount} reviews)
               </Text>
             </div>
           )}
 
-          <div style={{ marginBottom: '24px' }}>
+          <div style={{ marginBottom: '28px' }}>
             <Button 
               type={isFavorited ? 'primary' : 'default'}
               icon={isFavorited ? <HeartFilled /> : <HeartOutlined />}
               onClick={handleFavorite}
-              style={{ marginRight: '8px' }}
+              size="large"
+              style={{ 
+                marginRight: '12px',
+                borderRadius: '8px',
+                fontFamily: "'Noto Serif SC', serif",
+              }}
             >
               {isFavorited ? 'Favorited' : 'Add to Favorites'}
             </Button>
             <Button 
               icon={<EditOutlined />}
               onClick={openReviewModal}
+              size="large"
+              style={{ 
+                borderRadius: '8px',
+                fontFamily: "'Noto Serif SC', serif",
+              }}
             >
               {myReview ? 'Edit Review' : 'Write Review'}
             </Button>
           </div>
 
           {album.description && (
-            <Paragraph>{album.description}</Paragraph>
+            <Paragraph style={styles.description}>{album.description}</Paragraph>
           )}
         </Col>
       </Row>
 
       {/* Track List */}
       {album.tracks && album.tracks.length > 0 && (
-        <Card title="Track List" style={{ marginTop: '32px' }}>
+        <Card 
+          title={<span style={styles.cardTitle}>📀 Track List</span>}
+          style={{ marginTop: '40px', borderRadius: '16px' }}
+        >
           <List
             dataSource={album.tracks}
             renderItem={(track) => (
-              <List.Item>
-                <span style={{ marginRight: '16px', color: '#999' }}>
+              <List.Item style={{ padding: '12px 0' }}>
+                <span style={styles.trackNumber}>
                   {track.trackNumber}.
                 </span>
-                <span style={{ flex: 1 }}>{track.title}</span>
+                <span style={styles.trackTitle}>{track.title}</span>
                 {track.formattedDuration && (
-                  <span style={{ color: '#999' }}>{track.formattedDuration}</span>
+                  <span style={styles.trackDuration}>{track.formattedDuration}</span>
                 )}
               </List.Item>
             )}
           />
           {album.formattedTotalDuration && (
-            <div style={{ textAlign: 'right', marginTop: '16px', color: '#999' }}>
+            <div style={{ 
+              textAlign: 'right', 
+              marginTop: '16px', 
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: '16px',
+              color: '#8D6E63',
+            }}>
               Total: {album.formattedTotalDuration}
             </div>
           )}
@@ -253,9 +361,12 @@ const AlbumDetail = () => {
       )}
 
       {/* Reviews */}
-      <Card title={`Reviews (${reviews.length})`} style={{ marginTop: '32px' }}>
+      <Card 
+        title={<span style={styles.cardTitle}>💬 Reviews ({reviews.length})</span>}
+        style={{ marginTop: '32px', borderRadius: '16px' }}
+      >
         {reviews.length === 0 ? (
-          <div style={{ textAlign: 'center', color: '#999', padding: '24px' }}>
+          <div style={styles.emptyText}>
             No reviews yet. Be the first to review!
           </div>
         ) : (
@@ -280,17 +391,32 @@ const AlbumDetail = () => {
                 }
               >
                 <List.Item.Meta
-                  avatar={<Avatar icon={<UserOutlined />} src={review.userAvatar} />}
+                  avatar={
+                    <Avatar 
+                      icon={<UserOutlined />} 
+                      src={review.userAvatar}
+                      size={48}
+                      style={{ border: '2px solid #E8D5C4' }}
+                    />
+                  }
                   title={
                     <div>
-                      <span style={{ marginRight: '8px' }}>{review.username}</span>
-                      <Rate disabled value={review.rating} allowHalf style={{ fontSize: '14px' }} />
+                      <span style={styles.reviewUsername}>{review.username}</span>
+                      <Rate 
+                        disabled 
+                        value={review.rating} 
+                        allowHalf 
+                        style={{ fontSize: '14px', color: '#D4A574' }} 
+                      />
                     </div>
                   }
                   description={
                     <div>
-                      <Paragraph style={{ marginBottom: '4px' }}>{review.content}</Paragraph>
-                      <Text type="secondary" style={{ fontSize: '12px' }}>
+                      <p style={styles.reviewContent}>{review.content}</p>
+                      <Text type="secondary" style={{ 
+                        fontSize: '13px',
+                        fontFamily: "'Cormorant Garamond', serif",
+                      }}>
                         {new Date(review.createdAt).toLocaleDateString()}
                       </Text>
                     </div>
@@ -304,7 +430,15 @@ const AlbumDetail = () => {
 
       {/* Review Modal */}
       <Modal
-        title={myReview ? 'Edit Review' : 'Write Review'}
+        title={
+          <span style={{ 
+            fontFamily: "'Playfair Display', serif",
+            fontSize: '20px',
+            color: '#5D4037',
+          }}>
+            {myReview ? 'Edit Review' : 'Write Review'}
+          </span>
+        }
         open={reviewModalVisible}
         onCancel={() => setReviewModalVisible(false)}
         footer={null}
@@ -316,19 +450,33 @@ const AlbumDetail = () => {
         >
           <Form.Item
             name="rating"
-            label="Rating"
+            label={<span style={{ fontFamily: "'Noto Serif SC', serif" }}>Rating</span>}
             rules={[{ required: true, message: 'Please select a rating' }]}
           >
-            <Rate allowHalf />
+            <Rate allowHalf style={{ fontSize: '28px', color: '#D4A574' }} />
           </Form.Item>
           <Form.Item
             name="content"
-            label="Review"
+            label={<span style={{ fontFamily: "'Noto Serif SC', serif" }}>Review</span>}
           >
-            <TextArea rows={4} placeholder="Write your review..." />
+            <TextArea 
+              rows={4} 
+              placeholder="Write your review..." 
+              style={{ fontFamily: "'Noto Serif SC', serif" }}
+            />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={submitting} block>
+            <Button 
+              type="primary" 
+              htmlType="submit" 
+              loading={submitting} 
+              block
+              size="large"
+              style={{ 
+                fontFamily: "'Noto Serif SC', serif",
+                borderRadius: '8px',
+              }}
+            >
               {myReview ? 'Update Review' : 'Submit Review'}
             </Button>
           </Form.Item>
