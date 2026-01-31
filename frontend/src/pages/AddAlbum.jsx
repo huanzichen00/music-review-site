@@ -182,25 +182,40 @@ const AddAlbum = () => {
   const onFinish = async (values) => {
     setLoading(true);
     try {
+      // Filter out empty tracks
+      const validTracks = values.tracks?.filter(track => track.title && track.title.trim()) || [];
+      
       const albumData = {
-        title: values.title,
+        title: values.title?.trim(),
         artistId: values.artistId,
-        releaseYear: values.releaseYear,
-        coverUrl: values.coverUrl,
-        description: values.description,
-        genreIds: values.genreIds,
-        tracks: values.tracks?.map((track, index) => ({
+        releaseYear: values.releaseYear || null,
+        coverUrl: values.coverUrl?.trim() || null,
+        description: values.description?.trim() || null,
+        genreIds: values.genreIds && values.genreIds.length > 0 ? values.genreIds : null,
+        tracks: validTracks.length > 0 ? validTracks.map((track, index) => ({
           trackNumber: index + 1,
-          title: track.title,
+          title: track.title.trim(),
           duration: track.minutes ? track.minutes * 60 + (track.seconds || 0) : null,
-        })),
+        })) : null,
       };
 
+      console.log('Submitting album data:', albumData);
       const response = await albumsApi.create(albumData);
       message.success('Album created successfully!');
       navigate(`/albums/${response.data.id}`);
     } catch (error) {
-      message.error(error.response?.data?.error || 'Failed to create album');
+      console.error('Error creating album:', error);
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          error.message || 
+                          'Failed to create album';
+      message.error(`Failed to create album: ${errorMessage}`);
+      
+      // If 401, redirect to login
+      if (error.response?.status === 401) {
+        message.warning('Please login again');
+        navigate('/login');
+      }
     } finally {
       setLoading(false);
     }
