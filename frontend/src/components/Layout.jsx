@@ -6,7 +6,8 @@ import {
   HeartOutlined,
   LogoutOutlined,
   LoginOutlined,
-  AppstoreOutlined
+  AppstoreOutlined,
+  PlusOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 
@@ -33,6 +34,11 @@ const Layout = ({ children }) => {
       icon: <AppstoreOutlined />,
       label: <Link to="/albums">Albums</Link>,
     },
+    ...(isAuthenticated ? [{
+      key: '/add-album',
+      icon: <PlusOutlined />,
+      label: <Link to="/add-album">Add Album</Link>,
+    }] : []),
   ];
 
   const userMenuItems = [

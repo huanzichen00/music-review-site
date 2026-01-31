@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import AlbumDetail from './pages/AlbumDetail';
 import Favorites from './pages/Favorites';
+import AddAlbum from './pages/AddAlbum';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/favorites" element={<Favorites />} />
+              <Route path="/add-album" element={<AddAlbum />} />
             </Routes>
           </Layout>
         </Router>
