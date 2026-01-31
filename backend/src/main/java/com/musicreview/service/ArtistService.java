@@ -4,6 +4,7 @@ import com.musicreview.dto.artist.ArtistRequest;
 import com.musicreview.dto.artist.ArtistResponse;
 import com.musicreview.entity.Artist;
 import com.musicreview.entity.User;
+import com.musicreview.repository.AlbumRepository;
 import com.musicreview.repository.ArtistRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 public class ArtistService {
 
     private final ArtistRepository artistRepository;
+    private final AlbumRepository albumRepository;
     private final AuthService authService;
 
     /**
@@ -93,7 +95,7 @@ public class ArtistService {
     }
 
     /**
-     * Delete an artist (only allowed for user "Huan")
+     * Delete an artist (only allowed for user "Huan" and only if artist has no albums)
      */
     @Transactional
     public void deleteArtist(Long id) {
@@ -103,9 +105,15 @@ public class ArtistService {
             throw new RuntimeException("Only user 'Huan' can delete artists");
         }
         
-        if (!artistRepository.existsById(id)) {
-            throw new RuntimeException("Artist not found with id: " + id);
+        Artist artist = artistRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Artist not found with id: " + id));
+        
+        // Check if artist has any albums
+        List<com.musicreview.entity.Album> albums = albumRepository.findByArtistIdOrderByReleaseYearDesc(id);
+        if (albums != null && !albums.isEmpty()) {
+            throw new RuntimeException("Cannot delete artist: Artist has " + albums.size() + " album(s). Please delete all albums first.");
         }
+        
         artistRepository.deleteById(id);
     }
 

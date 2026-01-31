@@ -56,7 +56,7 @@ const Artists = () => {
                   ? [
                       <Popconfirm
                         title="删除艺术家"
-                        description={`确定要删除艺术家 "${artist.name}" 吗？此操作将删除该艺术家的所有专辑，且无法撤销。`}
+                        description={`确定要删除艺术家 "${artist.name}" 吗？只有没有专辑的艺术家才能被删除。`}
                         icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
                         onConfirm={() => handleDeleteArtist(artist.id)}
                         okText="确定"
