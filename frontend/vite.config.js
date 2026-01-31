@@ -7,6 +7,7 @@ export default defineConfig({
   server: {
     host: true,  // 监听所有网络接口，允许局域网访问
     port: 3000,
+    allowedHosts: ['lifelessly-fibrillose-tonia.ngrok-free.dev', '.ngrok-free.dev', '.ngrok.io'],
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
