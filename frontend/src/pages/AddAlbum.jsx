@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { 
   Form, Input, Button, Card, Typography, message, Select, 
-  InputNumber, Space, Divider, Modal, Alert 
+  InputNumber, Space, Divider, Modal, Alert, List, Spin, Tabs
 } from 'antd';
-import { PlusOutlined, MinusCircleOutlined, CloudDownloadOutlined } from '@ant-design/icons';
+import { PlusOutlined, MinusCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { albumsApi } from '../api/albums';
 import { artistsApi } from '../api/artists';
@@ -65,11 +65,17 @@ const AddAlbum = () => {
   const [artistLoading, setArtistLoading] = useState(false);
   const [genreModalVisible, setGenreModalVisible] = useState(false);
   const [genreLoading, setGenreLoading] = useState(false);
-  const [importUrl, setImportUrl] = useState('');
-  const [importing, setImporting] = useState(false);
   const [importedArtist, setImportedArtist] = useState(null);
   const [batchTrackModalVisible, setBatchTrackModalVisible] = useState(false);
   const [batchTrackText, setBatchTrackText] = useState('');
+  
+  // MusicBrainz search states
+  const [searchAlbum, setSearchAlbum] = useState('');
+  const [searchArtist, setSearchArtist] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [importing, setImporting] = useState(false);
+  
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -95,15 +101,33 @@ const AddAlbum = () => {
     }
   };
 
-  const handleImport = async () => {
-    if (!importUrl.trim()) {
-      message.warning('Please enter a NetEase Music album URL');
+  // Search albums from MusicBrainz
+  const handleSearch = async () => {
+    if (!searchAlbum.trim() && !searchArtist.trim()) {
+      message.warning('Please enter album name or artist name');
       return;
     }
 
+    setSearching(true);
+    setSearchResults([]);
+    try {
+      const response = await importApi.searchAlbums(searchAlbum, searchArtist, 15);
+      setSearchResults(response.data.results || []);
+      if (response.data.results?.length === 0) {
+        message.info('No albums found. Try different search terms.');
+      }
+    } catch (error) {
+      message.error(error.response?.data?.error || 'Search failed');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  // Import selected album from MusicBrainz
+  const handleImportAlbum = async (mbid) => {
     setImporting(true);
     try {
-      const response = await importApi.fromNetease(importUrl);
+      const response = await importApi.getAlbumDetails(mbid);
       const data = response.data;
 
       // Fill form with imported data
@@ -111,7 +135,7 @@ const AddAlbum = () => {
         title: data.title,
         releaseYear: data.releaseYear,
         coverUrl: data.coverUrl,
-        description: data.description,
+        description: data.description || '',
         tracks: data.tracks?.map(track => ({
           title: track.title,
           minutes: track.minutes,
@@ -124,9 +148,12 @@ const AddAlbum = () => {
         setImportedArtist(data.artist);
       }
 
-      message.success('Album imported successfully! Please select or create an artist.');
+      message.success(`Imported "${data.title}" with ${data.trackCount} tracks!`);
+      setSearchResults([]);
+      setSearchAlbum('');
+      setSearchArtist('');
     } catch (error) {
-      message.error(error.response?.data?.error || 'Failed to import from NetEase Music');
+      message.error(error.response?.data?.error || 'Failed to import album');
     } finally {
       setImporting(false);
     }
@@ -272,35 +299,88 @@ const AddAlbum = () => {
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
       <Title level={2}>Add New Album</Title>
 
-      {/* Import from NetEase */}
+      {/* Search and Import from MusicBrainz */}
       <Card style={{ marginBottom: 16 }}>
         <Title level={4}>
-          <CloudDownloadOutlined style={{ marginRight: 8 }} />
-          Import from NetEase Music
+          <SearchOutlined style={{ marginRight: 8 }} />
+          Search & Import Album
         </Title>
         <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-          Paste a NetEase Music album link to auto-fill album info and track list<br />
-          <Text type="warning" style={{ fontSize: '12px' }}>
-            Note: NetEase API may be restricted. Use "Batch Import Tracks" below as alternative.
-          </Text>
+          Search from MusicBrainz database to auto-fill album info and track list
         </Text>
-        <Space.Compact style={{ width: '100%' }}>
+        
+        <Space style={{ width: '100%', marginBottom: 16 }} wrap>
           <Input
-            placeholder="https://music.163.com/#/album?id=xxxxx"
-            value={importUrl}
-            onChange={(e) => setImportUrl(e.target.value)}
-            onPressEnter={handleImport}
-            style={{ flex: 1 }}
+            placeholder="Album name..."
+            value={searchAlbum}
+            onChange={(e) => setSearchAlbum(e.target.value)}
+            onPressEnter={handleSearch}
+            style={{ width: 200 }}
+            prefix={<SearchOutlined />}
+          />
+          <Input
+            placeholder="Artist name..."
+            value={searchArtist}
+            onChange={(e) => setSearchArtist(e.target.value)}
+            onPressEnter={handleSearch}
+            style={{ width: 200 }}
           />
           <Button 
             type="primary" 
-            onClick={handleImport} 
-            loading={importing}
-            icon={<CloudDownloadOutlined />}
+            onClick={handleSearch} 
+            loading={searching}
+            icon={<SearchOutlined />}
           >
-            Import
+            Search
           </Button>
-        </Space.Compact>
+        </Space>
+
+        {/* Search Results */}
+        {searching && (
+          <div style={{ textAlign: 'center', padding: 20 }}>
+            <Spin tip="Searching..." />
+          </div>
+        )}
+        
+        {searchResults.length > 0 && (
+          <List
+            size="small"
+            bordered
+            dataSource={searchResults}
+            style={{ maxHeight: 300, overflow: 'auto' }}
+            renderItem={(item) => (
+              <List.Item
+                actions={[
+                  <Button 
+                    type="link" 
+                    size="small"
+                    loading={importing}
+                    onClick={() => handleImportAlbum(item.mbid)}
+                  >
+                    Import
+                  </Button>
+                ]}
+              >
+                <List.Item.Meta
+                  title={
+                    <span>
+                      {item.title} 
+                      {item.date && <Text type="secondary"> ({item.date.substring(0, 4)})</Text>}
+                    </span>
+                  }
+                  description={
+                    <span>
+                      {item.artistName}
+                      {item.trackCount && <Text type="secondary"> · {item.trackCount} tracks</Text>}
+                      {item.type && <Text type="secondary"> · {item.type}</Text>}
+                      {item.country && <Text type="secondary"> · {item.country}</Text>}
+                    </span>
+                  }
+                />
+              </List.Item>
+            )}
+          />
+        )}
       </Card>
 
       {/* Imported Artist Alert */}
