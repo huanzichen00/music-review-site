@@ -22,7 +22,16 @@ public class GenreResponse {
                 .id(genre.getId())
                 .name(genre.getName())
                 .description(genre.getDescription())
-                .albumCount(genre.getAlbums() != null ? genre.getAlbums().size() : 0)
+                .albumCount(0) // Will be set by service if needed
+                .build();
+    }
+    
+    public static GenreResponse fromEntity(Genre genre, int albumCount) {
+        return GenreResponse.builder()
+                .id(genre.getId())
+                .name(genre.getName())
+                .description(genre.getDescription())
+                .albumCount(albumCount)
                 .build();
     }
 }
