@@ -14,6 +14,45 @@ const { Title } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
+// Common countries for music artists
+const COUNTRIES = [
+  'United States',
+  'United Kingdom',
+  'Germany',
+  'France',
+  'Italy',
+  'Japan',
+  'Canada',
+  'Australia',
+  'Sweden',
+  'Norway',
+  'Netherlands',
+  'Belgium',
+  'Spain',
+  'Brazil',
+  'Argentina',
+  'Poland',
+  'Russia',
+  'Finland',
+  'Denmark',
+  'Austria',
+  'Switzerland',
+  'Ireland',
+  'New Zealand',
+  'South Korea',
+  'China',
+  'Mexico',
+  'Chile',
+  'Greece',
+  'Portugal',
+  'Czech Republic',
+  'Hungary',
+  'Israel',
+  'Turkey',
+  'South Africa',
+  'India',
+];
+
 const AddAlbum = () => {
   const [form] = Form.useForm();
   const [artistForm] = Form.useForm();
@@ -258,7 +297,18 @@ const AddAlbum = () => {
             <Input placeholder="e.g. Pink Floyd" />
           </Form.Item>
           <Form.Item name="country" label="Country">
-            <Input placeholder="e.g. United Kingdom" />
+            <Select 
+              placeholder="Select country" 
+              showSearch
+              optionFilterProp="children"
+              allowClear
+            >
+              {COUNTRIES.map((country) => (
+                <Option key={country} value={country}>
+                  {country}
+                </Option>
+              ))}
+            </Select>
           </Form.Item>
           <Form.Item name="formedYear" label="Formed Year">
             <InputNumber 
