@@ -73,8 +73,8 @@ public class AlbumResponse {
                 .coverUrl(album.getCoverUrl())
                 .description(album.getDescription())
                 .createdAt(album.getCreatedAt())
-                .artistId(album.getArtist().getId())
-                .artistName(album.getArtist().getName());
+                .artistId(album.getArtist() != null ? album.getArtist().getId() : null)
+                .artistName(album.getArtist() != null ? album.getArtist().getName() : null);
 
         // Safely copy tracks
         List<TrackDTO> trackList = new ArrayList<>();
@@ -155,8 +155,8 @@ public class AlbumResponse {
                 .titleInitial(album.getTitleInitial())
                 .releaseYear(album.getReleaseYear())
                 .coverUrl(album.getCoverUrl())
-                .artistId(album.getArtist().getId())
-                .artistName(album.getArtist().getName())
+                .artistId(album.getArtist() != null ? album.getArtist().getId() : null)
+                .artistName(album.getArtist() != null ? album.getArtist().getName() : null)
                 .build();
     }
 

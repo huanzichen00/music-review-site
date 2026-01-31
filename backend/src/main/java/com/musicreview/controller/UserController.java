@@ -57,7 +57,10 @@ public class UserController {
             }
             
             User saved = userRepository.save(user);
-            return ResponseEntity.ok(UserProfileResponse.fromEntity(saved));
+            // Get counts to include in response
+            int reviewCount = reviewRepository.countByUserId(saved.getId());
+            int favoriteCount = favoriteRepository.countByUserId(saved.getId());
+            return ResponseEntity.ok(UserProfileResponse.fromEntity(saved, reviewCount, favoriteCount));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
