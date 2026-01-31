@@ -52,11 +52,11 @@ const Artists = () => {
           renderItem={(artist) => (
             <List.Item
               actions={
-                canDelete
+                canDelete && artist.albumCount === 0
                   ? [
                       <Popconfirm
                         title="删除艺术家"
-                        description={`确定要删除艺术家 "${artist.name}" 吗？只有没有专辑的艺术家才能被删除。`}
+                        description={`确定要删除艺术家 "${artist.name}" 吗？`}
                         icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
                         onConfirm={() => handleDeleteArtist(artist.id)}
                         okText="确定"
@@ -71,6 +71,17 @@ const Artists = () => {
                           删除
                         </Button>
                       </Popconfirm>,
+                    ]
+                  : canDelete && artist.albumCount > 0
+                  ? [
+                      <Button
+                        disabled
+                        icon={<DeleteOutlined />}
+                        size="small"
+                        title="该艺术家有专辑，无法删除"
+                      >
+                        删除
+                      </Button>,
                     ]
                   : []
               }
