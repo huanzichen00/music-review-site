@@ -42,11 +42,11 @@ const Layout = ({ children }) => {
       icon: <AppstoreOutlined style={{ fontSize: '16px' }} />,
       label: <Link to="/albums" style={menuLinkStyle}>Albums</Link>,
     },
-    ...(isAuthenticated ? [{
+    {
       key: '/add-album',
       icon: <PlusOutlined style={{ fontSize: '16px' }} />,
       label: <Link to="/add-album" style={menuLinkStyle}>Add Album</Link>,
-    }] : []),
+    },
   ];
 
   const userMenuItems = [
