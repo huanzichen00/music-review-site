@@ -57,11 +57,14 @@ const COUNTRIES = [
 const AddAlbum = () => {
   const [form] = Form.useForm();
   const [artistForm] = Form.useForm();
+  const [genreForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [artists, setArtists] = useState([]);
   const [genres, setGenres] = useState([]);
   const [artistModalVisible, setArtistModalVisible] = useState(false);
   const [artistLoading, setArtistLoading] = useState(false);
+  const [genreModalVisible, setGenreModalVisible] = useState(false);
+  const [genreLoading, setGenreLoading] = useState(false);
   const [importUrl, setImportUrl] = useState('');
   const [importing, setImporting] = useState(false);
   const [importedArtist, setImportedArtist] = useState(null);
@@ -190,6 +193,24 @@ const AddAlbum = () => {
     }
   };
 
+  const handleAddGenre = async (values) => {
+    setGenreLoading(true);
+    try {
+      const response = await genresApi.create(values);
+      message.success('Genre created successfully!');
+      setGenres([...genres, response.data]);
+      // Add to current selection
+      const currentGenres = form.getFieldValue('genreIds') || [];
+      form.setFieldValue('genreIds', [...currentGenres, response.data.id]);
+      setGenreModalVisible(false);
+      genreForm.resetFields();
+    } catch (error) {
+      message.error(error.response?.data?.error || 'Failed to create genre');
+    } finally {
+      setGenreLoading(false);
+    }
+  };
+
   return (
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
       <Title level={2}>Add New Album</Title>
@@ -313,6 +334,20 @@ const AddAlbum = () => {
               mode="multiple"
               placeholder="Select genres"
               optionFilterProp="children"
+              dropdownRender={(menu) => (
+                <>
+                  {menu}
+                  <Divider style={{ margin: '8px 0' }} />
+                  <Button 
+                    type="text" 
+                    icon={<PlusOutlined />} 
+                    onClick={() => setGenreModalVisible(true)}
+                    style={{ width: '100%' }}
+                  >
+                    Add New Genre
+                  </Button>
+                </>
+              )}
             >
               {genres.map((genre) => (
                 <Option key={genre.id} value={genre.id}>
@@ -396,6 +431,32 @@ const AddAlbum = () => {
           </Form.Item>
         </Form>
       </Card>
+
+      {/* Add Genre Modal */}
+      <Modal
+        title="Add New Genre"
+        open={genreModalVisible}
+        onCancel={() => setGenreModalVisible(false)}
+        footer={null}
+      >
+        <Form form={genreForm} layout="vertical" onFinish={handleAddGenre}>
+          <Form.Item
+            name="name"
+            label="Genre Name"
+            rules={[{ required: true, message: 'Please enter genre name' }]}
+          >
+            <Input placeholder="e.g. Symphonic Prog" />
+          </Form.Item>
+          <Form.Item name="description" label="Description">
+            <TextArea rows={3} placeholder="Genre description..." />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" loading={genreLoading} block>
+              Create Genre
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
 
       {/* Add Artist Modal */}
       <Modal

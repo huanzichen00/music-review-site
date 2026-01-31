@@ -1,9 +1,12 @@
 package com.musicreview.service;
 
+import com.musicreview.dto.genre.GenreRequest;
 import com.musicreview.dto.genre.GenreResponse;
+import com.musicreview.entity.Genre;
 import com.musicreview.repository.GenreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,5 +33,24 @@ public class GenreService {
         return genreRepository.findById(id)
                 .map(GenreResponse::fromEntity)
                 .orElseThrow(() -> new RuntimeException("Genre not found with id: " + id));
+    }
+
+    /**
+     * Create a new genre
+     */
+    @Transactional
+    public GenreResponse createGenre(GenreRequest request) {
+        // Check if genre already exists
+        if (genreRepository.existsByName(request.getName())) {
+            throw new RuntimeException("Genre already exists: " + request.getName());
+        }
+
+        Genre genre = Genre.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .build();
+
+        Genre saved = genreRepository.save(genre);
+        return GenreResponse.fromEntity(saved);
     }
 }
