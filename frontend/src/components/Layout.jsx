@@ -99,12 +99,12 @@ const Layout = ({ children }) => {
             mode="horizontal"
             selectedKeys={[location.pathname]}
             items={menuItems}
-            overflowedIndicator={null}
+            disabledOverflow={true}
             style={{ 
-              flex: 'none',
               background: 'transparent',
               borderBottom: 'none',
               fontSize: '16px',
+              minWidth: 'auto',
             }}
             theme="dark"
           />
