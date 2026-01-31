@@ -66,23 +66,24 @@ const styles = {
   },
   reviewUsername: {
     fontFamily: "'Cormorant Garamond', serif",
-    fontSize: '17px',
+    fontSize: '20px',
     fontWeight: 700,
     color: '#4E342E',
   },
   reviewAlbum: {
     fontFamily: "'Playfair Display', serif",
-    fontSize: '15px',
+    fontSize: '18px',
     fontWeight: 600,
-    color: '#6D4C41',
+    color: '#5D4037',
     cursor: 'pointer',
   },
   reviewContent: {
     fontFamily: "'Noto Serif SC', serif",
-    fontSize: '15px',
+    fontSize: '17px',
     fontWeight: 500,
-    color: '#5D4037',
-    marginTop: '8px',
+    color: '#4E342E',
+    marginTop: '10px',
+    lineHeight: 1.6,
     display: '-webkit-box',
     WebkitLineClamp: 2,
     WebkitBoxOrient: 'vertical',
@@ -90,9 +91,9 @@ const styles = {
   },
   reviewDate: {
     fontFamily: "'Cormorant Garamond', serif",
-    fontSize: '14px',
+    fontSize: '16px',
     fontWeight: 600,
-    color: '#8D6E63',
+    color: '#6D4C41',
   },
 };
 
