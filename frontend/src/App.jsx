@@ -9,6 +9,7 @@ import AlbumDetail from './pages/AlbumDetail';
 import Favorites from './pages/Favorites';
 import AddAlbum from './pages/AddAlbum';
 import Profile from './pages/Profile';
+import Artists from './pages/Artists';
 
 // 暖色系主题配置
 const warmTheme = {
@@ -60,6 +61,7 @@ function App() {
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/add-album" element={<AddAlbum />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/artists" element={<Artists />} />
             </Routes>
           </Layout>
         </Router>

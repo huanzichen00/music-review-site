@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Typography, Card, Row, Col, Tag, Rate, Button, List, 
-  Avatar, Spin, message, Modal, Form, Input, Divider 
+  Avatar, Spin, message, Modal, Form, Input, Divider, Popconfirm 
 } from 'antd';
 import { 
   HeartOutlined, HeartFilled, EditOutlined, 
   DeleteOutlined, UserOutlined, MessageOutlined,
-  SendOutlined
+  SendOutlined, ExclamationCircleOutlined
 } from '@ant-design/icons';
 import { albumsApi } from '../api/albums';
 import { reviewsApi } from '../api/reviews';
@@ -327,6 +327,16 @@ const AlbumDetail = () => {
     }
   };
 
+  const handleDeleteAlbum = async () => {
+    try {
+      await albumsApi.delete(id);
+      message.success('Album deleted successfully');
+      navigate('/');
+    } catch (error) {
+      message.error(error.response?.data?.error || 'Failed to delete album');
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '100px' }}>
@@ -422,6 +432,30 @@ const AlbumDetail = () => {
             >
               {myReview ? 'Edit Review' : 'Write Review'}
             </Button>
+            {user?.username === 'Huan' && (
+              <Popconfirm
+                title="删除专辑"
+                description="确定要删除这个专辑吗？此操作无法撤销。"
+                icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
+                onConfirm={handleDeleteAlbum}
+                okText="确定"
+                cancelText="取消"
+                okButtonProps={{ danger: true }}
+              >
+                <Button 
+                  danger
+                  icon={<DeleteOutlined />}
+                  size="large"
+                  style={{ 
+                    marginLeft: '12px',
+                    borderRadius: '8px',
+                    fontFamily: "'Noto Serif SC', serif",
+                  }}
+                >
+                  删除专辑
+                </Button>
+              </Popconfirm>
+            )}
           </div>
 
           {album.description && (

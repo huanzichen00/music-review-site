@@ -3,6 +3,7 @@ package com.musicreview.service;
 import com.musicreview.dto.artist.ArtistRequest;
 import com.musicreview.dto.artist.ArtistResponse;
 import com.musicreview.entity.Artist;
+import com.musicreview.entity.User;
 import com.musicreview.repository.ArtistRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 public class ArtistService {
 
     private final ArtistRepository artistRepository;
+    private final AuthService authService;
 
     /**
      * Get all artists
@@ -91,10 +93,16 @@ public class ArtistService {
     }
 
     /**
-     * Delete an artist
+     * Delete an artist (only allowed for user "Huan")
      */
     @Transactional
     public void deleteArtist(Long id) {
+        // Check permission - only user "Huan" can delete
+        User currentUser = authService.getCurrentUser();
+        if (!"Huan".equals(currentUser.getUsername())) {
+            throw new RuntimeException("Only user 'Huan' can delete artists");
+        }
+        
         if (!artistRepository.existsById(id)) {
             throw new RuntimeException("Artist not found with id: " + id);
         }

@@ -207,10 +207,16 @@ public class AlbumService {
     }
 
     /**
-     * Delete an album
+     * Delete an album (only allowed for user "Huan")
      */
     @Transactional
     public void deleteAlbum(Long id) {
+        // Check permission - only user "Huan" can delete
+        User currentUser = authService.getCurrentUser();
+        if (!"Huan".equals(currentUser.getUsername())) {
+            throw new RuntimeException("Only user 'Huan' can delete albums");
+        }
+        
         if (!albumRepository.existsById(id)) {
             throw new RuntimeException("Album not found with id: " + id);
         }
