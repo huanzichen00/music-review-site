@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 import { 
   Form, Input, Button, Card, Typography, message, Select, 
-  InputNumber, Space, Divider, Modal 
+  InputNumber, Space, Divider, Modal, Alert 
 } from 'antd';
-import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, MinusCircleOutlined, CloudDownloadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { albumsApi } from '../api/albums';
 import { artistsApi } from '../api/artists';
 import { genresApi } from '../api/genres';
+import { importApi } from '../api/import';
 import { useAuth } from '../context/AuthContext';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
@@ -61,6 +62,9 @@ const AddAlbum = () => {
   const [genres, setGenres] = useState([]);
   const [artistModalVisible, setArtistModalVisible] = useState(false);
   const [artistLoading, setArtistLoading] = useState(false);
+  const [importUrl, setImportUrl] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importedArtist, setImportedArtist] = useState(null);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -83,6 +87,63 @@ const AddAlbum = () => {
       setGenres(genresRes.data);
     } catch (error) {
       message.error('Failed to load data');
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importUrl.trim()) {
+      message.warning('Please enter a NetEase Music album URL');
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const response = await importApi.fromNetease(importUrl);
+      const data = response.data;
+
+      // Fill form with imported data
+      form.setFieldsValue({
+        title: data.title,
+        releaseYear: data.releaseYear,
+        coverUrl: data.coverUrl,
+        description: data.description,
+        tracks: data.tracks?.map(track => ({
+          title: track.title,
+          minutes: track.minutes,
+          seconds: track.seconds,
+        })) || [{ title: '' }],
+      });
+
+      // Store imported artist info for later use
+      if (data.artist) {
+        setImportedArtist(data.artist);
+      }
+
+      message.success('Album imported successfully! Please select or create an artist.');
+    } catch (error) {
+      message.error(error.response?.data?.error || 'Failed to import from NetEase Music');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleCreateImportedArtist = async () => {
+    if (!importedArtist) return;
+
+    setArtistLoading(true);
+    try {
+      const response = await artistsApi.create({
+        name: importedArtist.name,
+        photoUrl: importedArtist.photoUrl,
+      });
+      message.success('Artist created successfully!');
+      setArtists([...artists, response.data]);
+      form.setFieldValue('artistId', response.data.id);
+      setImportedArtist(null);
+    } catch (error) {
+      message.error(error.response?.data?.error || 'Failed to create artist');
+    } finally {
+      setArtistLoading(false);
     }
   };
 
@@ -132,6 +193,61 @@ const AddAlbum = () => {
   return (
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
       <Title level={2}>Add New Album</Title>
+
+      {/* Import from NetEase */}
+      <Card style={{ marginBottom: 16 }}>
+        <Title level={4}>
+          <CloudDownloadOutlined style={{ marginRight: 8 }} />
+          Import from NetEase Music
+        </Title>
+        <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+          Paste a NetEase Music album link to auto-fill album info and track list
+        </Text>
+        <Space.Compact style={{ width: '100%' }}>
+          <Input
+            placeholder="https://music.163.com/#/album?id=xxxxx"
+            value={importUrl}
+            onChange={(e) => setImportUrl(e.target.value)}
+            onPressEnter={handleImport}
+            style={{ flex: 1 }}
+          />
+          <Button 
+            type="primary" 
+            onClick={handleImport} 
+            loading={importing}
+            icon={<CloudDownloadOutlined />}
+          >
+            Import
+          </Button>
+        </Space.Compact>
+      </Card>
+
+      {/* Imported Artist Alert */}
+      {importedArtist && (
+        <Alert
+          message="Artist from Import"
+          description={
+            <div>
+              <Text>Imported artist: <strong>{importedArtist.name}</strong></Text>
+              <br />
+              <Button 
+                type="link" 
+                onClick={handleCreateImportedArtist}
+                loading={artistLoading}
+                style={{ padding: 0, marginTop: 8 }}
+              >
+                Click to create this artist
+              </Button>
+              <Text type="secondary"> or select an existing artist below</Text>
+            </div>
+          }
+          type="info"
+          showIcon
+          closable
+          onClose={() => setImportedArtist(null)}
+          style={{ marginBottom: 16 }}
+        />
+      )}
 
       <Card>
         <Form
