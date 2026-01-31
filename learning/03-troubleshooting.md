@@ -273,6 +273,47 @@ Optional<Album> findById(Long id);
 
 ---
 
+## 7. Hibernate Schema Validation 失败
+
+### 问题描述
+启动后端时报错：
+```
+Schema-validation: missing column [avatar_url] in table [users]
+```
+
+### 原因分析
+`application.properties` 中配置了 `spring.jpa.hibernate.ddl-auto=validate`，Hibernate 会验证数据库表结构是否与实体类匹配。当实体类添加了新字段但数据库表没有对应列时，验证失败。
+
+### 解决方案
+
+#### 方案1：修改 ddl-auto 为 update（开发环境）
+```properties
+spring.jpa.hibernate.ddl-auto=update
+```
+Hibernate 会自动添加缺失的列。
+
+#### 方案2：手动执行 SQL（生产环境推荐）
+```sql
+ALTER TABLE users ADD COLUMN avatar_url VARCHAR(255);
+ALTER TABLE users ADD COLUMN bio TEXT;
+```
+
+### ddl-auto 选项说明
+| 值 | 说明 | 使用场景 |
+|---|------|---------|
+| `none` | 不做任何操作 | 生产环境 |
+| `validate` | 只验证，不修改 | 生产环境 |
+| `update` | 自动添加缺失的列/表 | 开发环境 |
+| `create` | 每次启动删除重建 | 测试 |
+| `create-drop` | 启动时创建，关闭时删除 | 单元测试 |
+
+### 最佳实践
+- **开发环境**：使用 `update` 方便迭代
+- **生产环境**：使用 `validate` + 手动 SQL 迁移
+- **使用 Flyway/Liquibase**：专业的数据库版本管理工具
+
+---
+
 ## 调试技巧
 
 ### 1. 检查后端日志
