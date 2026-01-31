@@ -49,16 +49,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                             SecurityContextHolder.getContext().setAuthentication(authToken);
                         } else {
-                            logger.warn("Token validation failed for user: {}", username);
+                            logger.warn("Token validation failed for user: " + username);
                         }
                     }
                 } catch (JwtException | IllegalArgumentException e) {
-                    logger.error("JWT parsing/validation error: {}", e.getMessage());
+                    logger.error("JWT parsing/validation error: " + e.getMessage(), e);
                     // Don't set authentication, let it fail
                 }
             }
         } catch (Exception e) {
-            logger.error("Cannot set user authentication: {}", e.getMessage(), e);
+            logger.error("Cannot set user authentication: " + e.getMessage(), e);
         }
 
         filterChain.doFilter(request, response);
