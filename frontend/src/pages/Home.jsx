@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Typography, Row, Col, Card, Spin, message } from 'antd';
+import { Typography, Row, Col, Card, Spin, message, List, Avatar, Rate } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { albumsApi } from '../api/albums';
 import { genresApi } from '../api/genres';
+import { reviewsApi } from '../api/reviews';
 import AlbumCard from '../components/AlbumCard';
 import AlphabetFilter from '../components/AlphabetFilter';
 
@@ -54,13 +57,46 @@ const styles = {
     fontFamily: "'Noto Serif SC', serif",
     padding: '40px',
   },
+  reviewCard: {
+    borderRadius: '12px',
+    background: 'linear-gradient(145deg, #FFFCF8 0%, #FFF8F0 100%)',
+  },
+  reviewUsername: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: '16px',
+    fontWeight: 600,
+    color: '#5D4037',
+  },
+  reviewAlbum: {
+    fontFamily: "'Playfair Display', serif",
+    fontSize: '15px',
+    color: '#8D6E63',
+    cursor: 'pointer',
+  },
+  reviewContent: {
+    fontFamily: "'Noto Serif SC', serif",
+    fontSize: '14px',
+    color: '#6D4C41',
+    marginTop: '8px',
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
+    overflow: 'hidden',
+  },
+  reviewDate: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: '13px',
+    color: '#A1887F',
+  },
 };
 
 const Home = () => {
   const [albums, setAlbums] = useState([]);
   const [genres, setGenres] = useState([]);
+  const [recentReviews, setRecentReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedLetter, setSelectedLetter] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadData();
@@ -69,19 +105,42 @@ const Home = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [albumsRes, genresRes] = await Promise.all([
+      const [albumsRes, genresRes, reviewsRes] = await Promise.all([
         selectedLetter 
           ? albumsApi.getByInitial(selectedLetter)
           : albumsApi.getAll(),
         genresApi.getAll(),
+        reviewsApi.getRecent(),
       ]);
       setAlbums(albumsRes.data);
       setGenres(genresRes.data);
+      setRecentReviews(reviewsRes.data);
     } catch (error) {
       message.error('Failed to load data');
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+      if (diffHours === 0) {
+        const diffMinutes = Math.floor(diffTime / (1000 * 60));
+        return `${diffMinutes} minutes ago`;
+      }
+      return `${diffHours} hours ago`;
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    }
+    return date.toLocaleDateString();
   };
 
   return (
@@ -115,6 +174,59 @@ const Home = () => {
             </Row>
           )}
 
+          {/* Recent Reviews Section */}
+          {recentReviews.length > 0 && (
+            <div style={{ marginTop: '60px' }}>
+              <h2 style={styles.sectionTitle}>💬 Recent Reviews</h2>
+              <Card style={styles.reviewCard}>
+                <List
+                  itemLayout="horizontal"
+                  dataSource={recentReviews}
+                  renderItem={(review) => (
+                    <List.Item style={{ padding: '16px 0' }}>
+                      <List.Item.Meta
+                        avatar={
+                          <Avatar 
+                            src={review.userAvatar} 
+                            icon={!review.userAvatar && <UserOutlined />}
+                            size={48}
+                            style={{ border: '2px solid #E8D5C4' }}
+                          />
+                        }
+                        title={
+                          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                            <span style={styles.reviewUsername}>{review.username}</span>
+                            <Rate 
+                              disabled 
+                              value={review.rating} 
+                              allowHalf 
+                              style={{ fontSize: '14px', color: '#D4A574' }} 
+                            />
+                            <span style={styles.reviewDate}>{formatDate(review.createdAt)}</span>
+                          </div>
+                        }
+                        description={
+                          <div>
+                            <div 
+                              style={styles.reviewAlbum}
+                              onClick={() => navigate(`/albums/${review.albumId}`)}
+                            >
+                              🎵 {review.albumTitle} - {review.artistName}
+                            </div>
+                            {review.content && (
+                              <p style={styles.reviewContent}>{review.content}</p>
+                            )}
+                          </div>
+                        }
+                      />
+                    </List.Item>
+                  )}
+                />
+              </Card>
+            </div>
+          )}
+
+          {/* Genres Section */}
           {genres.length > 0 && (
             <div style={{ marginTop: '60px' }}>
               <h2 style={styles.sectionTitle}>🎸 Genres</h2>

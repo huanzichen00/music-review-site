@@ -116,4 +116,13 @@ public class ReviewService {
     public long getReviewCount(Long albumId) {
         return reviewRepository.countByAlbumId(albumId);
     }
+
+    /**
+     * Get recent reviews (top 10)
+     */
+    public List<ReviewResponse> getRecentReviews() {
+        return reviewRepository.findTop10ByOrderByCreatedAtDesc().stream()
+                .map(ReviewResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
 }

@@ -19,6 +19,15 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     /**
+     * Get recent reviews (top 10)
+     * GET /api/reviews/recent
+     */
+    @GetMapping("/recent")
+    public ResponseEntity<List<ReviewResponse>> getRecentReviews() {
+        return ResponseEntity.ok(reviewService.getRecentReviews());
+    }
+
+    /**
      * Get reviews for an album
      * GET /api/reviews/album/{albumId}
      */

@@ -26,4 +26,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     long countByAlbumId(Long albumId);
 
     int countByUserId(Long userId);
+
+    // Get recent reviews ordered by creation time
+    List<Review> findTop10ByOrderByCreatedAtDesc();
 }
