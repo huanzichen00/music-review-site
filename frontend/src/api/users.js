@@ -9,4 +9,15 @@ export const usersApi = {
   
   // Get user profile by ID (public)
   getUserProfile: (id) => api.get(`/users/${id}`),
+
+  // Upload avatar
+  uploadAvatar: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/files/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 };

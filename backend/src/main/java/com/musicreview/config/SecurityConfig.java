@@ -53,6 +53,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/reviews/album/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/stats/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/{id}").permitAll()
+                        // File access
+                        .requestMatchers(HttpMethod.GET, "/api/files/**").permitAll()
                         // All other endpoints require authentication
                         .anyRequest().authenticated()
                 )
