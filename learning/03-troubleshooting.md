@@ -1,0 +1,238 @@
+# 问题排查与解决记录
+
+本文档记录了项目开发过程中遇到的问题及其解决方案。
+
+---
+
+## 1. Spring Security 403 Forbidden 错误
+
+### 问题描述
+创建专辑后回到主页，显示 "Failed to load data"。浏览器控制台显示：
+```
+Failed to load resource: the server responded with a status of 403 (Forbidden)
+```
+
+### 原因分析
+Spring Security 默认配置下，所有 API 端点都需要认证。主页需要访问 `/api/albums` 和 `/api/genres`，但这些端点没有配置为公开访问。
+
+### 解决方案
+修改 `SecurityConfig.java`，将需要公开访问的 GET 请求端点添加到白名单：
+
+```java
+.authorizeHttpRequests(auth -> auth
+    // Public endpoints
+    .requestMatchers("/api/auth/**").permitAll()
+    .requestMatchers("/api/public/**").permitAll()
+    .requestMatchers("/api/import/**").permitAll()
+    // Public read access for albums, artists, genres, reviews
+    .requestMatchers(HttpMethod.GET, "/api/albums").permitAll()
+    .requestMatchers(HttpMethod.GET, "/api/albums/**").permitAll()
+    .requestMatchers(HttpMethod.GET, "/api/artists").permitAll()
+    .requestMatchers(HttpMethod.GET, "/api/artists/**").permitAll()
+    .requestMatchers(HttpMethod.GET, "/api/genres").permitAll()
+    .requestMatchers(HttpMethod.GET, "/api/genres/**").permitAll()
+    .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
+    // All other endpoints require authentication
+    .anyRequest().authenticated()
+)
+```
+
+### 关键点
+- 使用 `HttpMethod.GET` 只开放读取权限，写入操作仍需认证
+- `/**` 通配符匹配子路径，如 `/api/albums/1`
+
+---
+
+## 2. CORS 跨域配置问题
+
+### 问题描述
+前端运行在 `localhost:3000` 或 `localhost:3001`，但 CORS 配置只允许特定端口，导致跨域请求被拒绝。
+
+### 解决方案
+使用 `addAllowedOriginPattern("*")` 允许所有来源：
+
+```java
+@Bean
+public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.addAllowedOriginPattern("*");  // 允许所有来源
+    configuration.addAllowedMethod("*");         // 允许所有 HTTP 方法
+    configuration.addAllowedHeader("*");         // 允许所有请求头
+    configuration.setAllowCredentials(true);     // 允许携带凭证
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
+}
+```
+
+### 注意事项
+- 生产环境应该限制具体的域名，不要使用 `*`
+- `setAllowCredentials(true)` 允许发送 Cookie 和 Authorization 头
+
+---
+
+## 3. ConcurrentModificationException 并发修改异常
+
+### 问题描述
+访问 `/api/genres` 时后端报错：
+```
+java.util.ConcurrentModificationException: null
+```
+
+### 原因分析
+在 `GenreResponse.fromEntity()` 方法中直接访问了懒加载的集合：
+
+```java
+// 问题代码
+.albumCount(genre.getAlbums() != null ? genre.getAlbums().size() : 0)
+```
+
+JPA 的懒加载集合（`@ManyToMany` 关系）在被访问时会触发数据库查询。当多个线程同时访问时，可能导致并发修改异常。
+
+### 解决方案
+避免在 DTO 转换时直接访问懒加载集合：
+
+```java
+public static GenreResponse fromEntity(Genre genre) {
+    return GenreResponse.builder()
+            .id(genre.getId())
+            .name(genre.getName())
+            .description(genre.getDescription())
+            .albumCount(0)  // 避免访问懒加载集合
+            .build();
+}
+
+// 如果需要 albumCount，使用单独的方法
+public static GenreResponse fromEntity(Genre genre, int albumCount) {
+    return GenreResponse.builder()
+            .id(genre.getId())
+            .name(genre.getName())
+            .description(genre.getDescription())
+            .albumCount(albumCount)
+            .build();
+}
+```
+
+### 更好的解决方案
+使用 JPQL 查询直接获取计数：
+
+```java
+@Query("SELECT COUNT(a) FROM Album a JOIN a.genres g WHERE g.id = :genreId")
+long countAlbumsByGenreId(@Param("genreId") Long genreId);
+```
+
+### 关键点
+- **懒加载集合**：JPA 默认对 `@OneToMany` 和 `@ManyToMany` 使用懒加载
+- **避免 N+1 问题**：不要在循环中访问懒加载集合
+- **使用 DTO 投影**：通过查询直接获取需要的数据，而不是加载整个实体
+
+---
+
+## 4. 网易云音乐 API 限制
+
+### 问题描述
+尝试从网易云音乐导入专辑信息时，API 返回错误码 `-462`，提示需要登录验证。
+
+### 原因分析
+网易云音乐加强了 API 的反爬虫措施，直接调用其 API 需要登录认证。
+
+### 解决方案
+改用 **MusicBrainz** 开源音乐数据库 API：
+
+```java
+// 搜索专辑
+String url = "https://musicbrainz.org/ws/2/release/?query=release:\"" 
+    + albumName + "\" AND artist:\"" + artistName + "\"&fmt=json";
+
+// 获取专辑详情（包含曲目）
+String url = "https://musicbrainz.org/ws/2/release/" + mbid 
+    + "?inc=recordings+artist-credits&fmt=json";
+```
+
+### MusicBrainz API 要点
+- **免费使用**：无需 API Key
+- **User-Agent 要求**：必须设置有意义的 User-Agent
+- **请求限制**：每秒最多 1 个请求
+- **数据丰富**：包含专辑、艺术家、曲目、时长等信息
+
+---
+
+## 5. Vite 代理配置
+
+### 问题描述
+前端使用相对路径 `/api` 调用后端，需要配置代理将请求转发到后端服务器。
+
+### 配置方法
+`vite.config.js`:
+
+```javascript
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 3000,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      }
+    }
+  }
+})
+```
+
+### 工作原理
+1. 前端代码请求 `/api/albums`
+2. Vite 开发服务器拦截以 `/api` 开头的请求
+3. 将请求转发到 `http://localhost:8080/api/albums`
+4. 返回后端响应给前端
+
+### 注意事项
+- 这只在开发环境有效
+- 生产环境需要配置 Nginx 或其他反向代理
+
+---
+
+## 调试技巧
+
+### 1. 检查后端日志
+```bash
+tail -f backend.log
+grep -a "ERROR\|Exception" backend.log
+```
+
+### 2. 测试 API 响应
+```bash
+# 查看响应状态码
+curl -v http://localhost:8080/api/genres
+
+# 查看响应内容
+curl -s http://localhost:8080/api/genres | python3 -m json.tool
+```
+
+### 3. 检查进程状态
+```bash
+# 查看占用端口的进程
+lsof -i:8080
+
+# 强制释放端口
+lsof -ti:8080 | xargs kill -9
+```
+
+### 4. 清理重新构建
+```bash
+cd backend
+./mvnw clean spring-boot:run
+```
+
+---
+
+## 常见错误速查表
+
+| 错误 | 可能原因 | 解决方案 |
+|------|----------|----------|
+| 403 Forbidden | Security 配置未开放端点 | 添加 `.permitAll()` |
+| CORS error | 跨域配置不正确 | 检查 `CorsConfiguration` |
+| ConcurrentModificationException | 懒加载集合并发访问 | 避免直接访问懒加载集合 |
+| Connection refused | 后端未启动 | 检查进程和端口 |
+| 401 Unauthorized | Token 过期或无效 | 重新登录获取 Token |
