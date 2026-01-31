@@ -82,15 +82,34 @@ public class FileController {
     @GetMapping("/avatars/{filename}")
     public ResponseEntity<?> getAvatar(@PathVariable String filename) {
         try {
-            Path filePath = Paths.get(uploadDir, "avatars", filename);
+            // Sanitize filename to prevent directory traversal
+            String safeFilename = filename.replaceAll("[^a-zA-Z0-9._-]", "");
+            
+            Path filePath = Paths.get(uploadDir, "avatars", safeFilename);
             if (!Files.exists(filePath)) {
                 return ResponseEntity.notFound().build();
             }
 
             byte[] fileContent = Files.readAllBytes(filePath);
-            String contentType = Files.probeContentType(filePath);
-            if (contentType == null) {
-                contentType = "image/jpeg";
+            
+            // Determine content type based on file extension
+            String contentType = "image/jpeg"; // default
+            String lowerFilename = safeFilename.toLowerCase();
+            if (lowerFilename.endsWith(".png")) {
+                contentType = "image/png";
+            } else if (lowerFilename.endsWith(".gif")) {
+                contentType = "image/gif";
+            } else if (lowerFilename.endsWith(".webp")) {
+                contentType = "image/webp";
+            } else {
+                try {
+                    String detectedType = Files.probeContentType(filePath);
+                    if (detectedType != null && detectedType.startsWith("image/")) {
+                        contentType = detectedType;
+                    }
+                } catch (Exception e) {
+                    // Use default
+                }
             }
 
             return ResponseEntity.ok()
@@ -98,7 +117,9 @@ public class FileController {
                     .body(fileContent);
 
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to read file"));
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to read file: " + e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to read file: " + e.getMessage()));
         }
     }
 }

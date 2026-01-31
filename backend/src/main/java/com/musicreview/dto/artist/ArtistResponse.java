@@ -25,6 +25,17 @@ public class ArtistResponse {
     private Integer albumCount;
 
     public static ArtistResponse fromEntity(Artist artist) {
+        // Safely handle lazy-loaded albums collection
+        int albumCount = 0;
+        try {
+            if (artist.getAlbums() != null) {
+                albumCount = artist.getAlbums().size();
+            }
+        } catch (Exception e) {
+            // Lazy loading exception - ignore and set to 0
+            albumCount = 0;
+        }
+        
         return ArtistResponse.builder()
                 .id(artist.getId())
                 .name(artist.getName())
@@ -34,7 +45,7 @@ public class ArtistResponse {
                 .description(artist.getDescription())
                 .photoUrl(artist.getPhotoUrl())
                 .createdAt(artist.getCreatedAt())
-                .albumCount(artist.getAlbums() != null ? artist.getAlbums().size() : 0)
+                .albumCount(albumCount)
                 .build();
     }
 }
