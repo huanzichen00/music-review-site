@@ -193,6 +193,86 @@ export default defineConfig({
 
 ---
 
+## 6. 专辑详情页 404 错误
+
+### 问题描述
+点击专辑进入详情页时，显示 "Failed to load album"，控制台报 404 错误。
+
+### 原因分析
+`AlbumResponse.fromEntity()` 方法访问了多个懒加载集合：
+- `album.getTracks()`
+- `album.getGenres()`
+- `album.getReviews()`
+- `album.getFavorites()`
+
+这些集合在事务外被访问时会触发 `ConcurrentModificationException`，被 Controller 捕获后返回 404。
+
+### 解决方案
+
+#### 方案1：使用 JOIN FETCH 预加载关联数据
+
+在 Repository 中添加专门的查询方法：
+
+```java
+@Query("SELECT a FROM Album a " +
+       "LEFT JOIN FETCH a.artist " +
+       "LEFT JOIN FETCH a.genres " +
+       "WHERE a.id = :id")
+Optional<Album> findByIdWithDetails(@Param("id") Long id);
+```
+
+Service 中使用新方法：
+
+```java
+@Transactional(readOnly = true)
+public AlbumResponse getAlbumById(Long id) {
+    Album album = albumRepository.findByIdWithDetails(id)
+            .orElseThrow(() -> new RuntimeException("Album not found"));
+    return AlbumResponse.fromEntity(album);
+}
+```
+
+#### 方案2：安全复制集合
+
+在 DTO 转换时使用 try-catch 包裹：
+
+```java
+List<TrackDTO> trackList = new ArrayList<>();
+try {
+    if (album.getTracks() != null) {
+        for (Track track : new ArrayList<>(album.getTracks())) {
+            trackList.add(TrackDTO.fromEntity(track));
+        }
+    }
+} catch (Exception e) {
+    // Ignore lazy loading errors
+}
+```
+
+### 注意事项
+- **避免多个集合的 JOIN FETCH**：同时 fetch 多个集合会产生笛卡尔积，导致数据重复
+- **使用 @Transactional**：确保懒加载在事务内执行
+- **考虑使用 @EntityGraph**：Spring Data JPA 提供的声明式预加载方式
+
+### 相关概念
+
+#### JOIN FETCH vs 普通 JOIN
+```java
+// 普通 JOIN - 只用于过滤，不加载关联数据
+@Query("SELECT a FROM Album a JOIN a.genres g WHERE g.id = :id")
+
+// JOIN FETCH - 同时加载关联数据到内存
+@Query("SELECT a FROM Album a LEFT JOIN FETCH a.genres WHERE a.id = :id")
+```
+
+#### @EntityGraph 方式
+```java
+@EntityGraph(attributePaths = {"artist", "genres", "tracks"})
+Optional<Album> findById(Long id);
+```
+
+---
+
 ## 调试技巧
 
 ### 1. 检查后端日志
