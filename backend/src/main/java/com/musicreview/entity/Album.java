@@ -29,7 +29,7 @@ public class Album {
     @Column(nullable = false, length = 200)
     private String title;
 
-    @Column(name = "title_initial", nullable = false, length = 1)
+    @Column(name = "title_initial", nullable = false, columnDefinition = "CHAR(1)")
     private String titleInitial;
 
     @ManyToOne(fetch = FetchType.LAZY)

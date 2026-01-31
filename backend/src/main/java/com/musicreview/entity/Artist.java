@@ -26,7 +26,7 @@ public class Artist {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(name = "name_initial", nullable = false, length = 1)
+    @Column(name = "name_initial", nullable = false, columnDefinition = "CHAR(1)")
     private String nameInitial;
 
     @Column(length = 50)
