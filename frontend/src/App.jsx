@@ -35,10 +35,12 @@ const warmTheme = {
       colorBgContainer: '#FFFCF8',
     },
     Menu: {
-      colorItemBg: 'transparent',
-      colorItemText: '#FFF8E7',
-      colorItemTextSelected: '#FFE4B5',
-      colorItemBgSelected: 'rgba(255, 228, 181, 0.2)',
+      itemBg: 'transparent',
+      itemColor: '#FFF8E7',
+      itemSelectedColor: '#FFE4B5',
+      itemSelectedBg: 'rgba(255, 228, 181, 0.2)',
+      itemHoverColor: '#FFE4B5',
+      itemHoverBg: 'rgba(255, 228, 181, 0.1)',
     },
   },
 };
