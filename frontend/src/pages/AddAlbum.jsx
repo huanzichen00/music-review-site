@@ -212,14 +212,11 @@ const AddAlbum = () => {
       
       // Handle 403 Forbidden - usually means token expired or invalid
       if (error.response?.status === 403) {
-        message.error('Access denied. Please try logging out and logging in again.');
-        // Optionally redirect to login after a delay
+        message.error('认证失败，请重新登录', 5);
         setTimeout(() => {
-          if (confirm('Your session may have expired. Would you like to login again?')) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            navigate('/login');
-          }
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
         }, 2000);
       } else if (error.response?.status === 401) {
         message.warning('Please login again');

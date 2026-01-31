@@ -31,14 +31,20 @@ api.interceptors.response.use(
       localStorage.removeItem('user');
       window.location.href = '/login';
     } else if (error.response?.status === 403) {
-      // Forbidden - might be token issue
-      console.error('403 Forbidden - Token might be expired or invalid');
+      // Forbidden - token expired or invalid, need to re-login
+      console.error('403 Forbidden - Token expired or invalid');
       const token = localStorage.getItem('token');
       if (!token) {
         console.error('No token found in localStorage');
         window.location.href = '/login';
       } else {
-        console.error('Token exists but request was forbidden. Token:', token.substring(0, 20) + '...');
+        console.error('Token exists but was rejected. This usually means the token was signed with an old secret. Please re-login.');
+        // Auto redirect to login after a short delay
+        setTimeout(() => {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+        }, 1000);
       }
     }
     return Promise.reject(error);
