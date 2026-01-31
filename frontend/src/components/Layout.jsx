@@ -13,6 +13,14 @@ import { useAuth } from '../context/AuthContext';
 
 const { Header, Content, Footer } = AntLayout;
 
+// 导航菜单链接样式
+const menuLinkStyle = {
+  fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
+  fontSize: '17px',
+  fontWeight: 500,
+  letterSpacing: '0.5px',
+};
+
 const Layout = ({ children }) => {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -26,18 +34,18 @@ const Layout = ({ children }) => {
   const menuItems = [
     {
       key: '/',
-      icon: <HomeOutlined />,
-      label: <Link to="/">Home</Link>,
+      icon: <HomeOutlined style={{ fontSize: '16px' }} />,
+      label: <Link to="/" style={menuLinkStyle}>Home</Link>,
     },
     {
       key: '/albums',
-      icon: <AppstoreOutlined />,
-      label: <Link to="/albums">Albums</Link>,
+      icon: <AppstoreOutlined style={{ fontSize: '16px' }} />,
+      label: <Link to="/albums" style={menuLinkStyle}>Albums</Link>,
     },
     ...(isAuthenticated ? [{
       key: '/add-album',
-      icon: <PlusOutlined />,
-      label: <Link to="/add-album">Add Album</Link>,
+      icon: <PlusOutlined style={{ fontSize: '16px' }} />,
+      label: <Link to="/add-album" style={menuLinkStyle}>Add Album</Link>,
     }] : []),
   ];
 
@@ -45,13 +53,13 @@ const Layout = ({ children }) => {
     {
       key: 'favorites',
       icon: <HeartOutlined />,
-      label: 'My Favorites',
+      label: <span style={menuLinkStyle}>My Favorites</span>,
       onClick: () => navigate('/favorites'),
     },
     {
       key: 'profile',
       icon: <UserOutlined />,
-      label: 'Profile',
+      label: <span style={menuLinkStyle}>Profile</span>,
       onClick: () => navigate('/profile'),
     },
     {
@@ -60,7 +68,7 @@ const Layout = ({ children }) => {
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: 'Logout',
+      label: <span style={menuLinkStyle}>Logout</span>,
       onClick: handleLogout,
     },
   ];
@@ -78,11 +86,12 @@ const Layout = ({ children }) => {
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Link to="/" style={{ 
             color: '#FFF8E7', 
-            fontSize: '22px', 
-            fontWeight: 'bold',
+            fontSize: '24px', 
+            fontWeight: 600,
             marginRight: '40px',
             textShadow: '1px 1px 2px rgba(0,0,0,0.2)',
-            fontFamily: "'Noto Serif SC', Georgia, serif",
+            fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
+            letterSpacing: '1px',
           }}>
             🎵 Music Review
           </Link>
@@ -95,6 +104,7 @@ const Layout = ({ children }) => {
               minWidth: 0,
               background: 'transparent',
               borderBottom: 'none',
+              fontSize: '16px',
             }}
             theme="dark"
           />
@@ -112,7 +122,14 @@ const Layout = ({ children }) => {
                     border: '2px solid #FFE4B5',
                   }} 
                 />
-                <span style={{ color: '#FFF8E7', fontWeight: 500 }}>{user?.username}</span>
+                <span style={{ 
+                  color: '#FFF8E7', 
+                  fontWeight: 500,
+                  fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
+                  fontSize: '16px',
+                }}>
+                  {user?.username}
+                </span>
               </div>
             </Dropdown>
           ) : (
@@ -121,7 +138,11 @@ const Layout = ({ children }) => {
                 type="text" 
                 icon={<LoginOutlined />}
                 onClick={() => navigate('/login')}
-                style={{ color: '#FFF8E7' }}
+                style={{ 
+                  color: '#FFF8E7',
+                  fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
+                  fontSize: '16px',
+                }}
               >
                 Login
               </Button>
@@ -132,6 +153,8 @@ const Layout = ({ children }) => {
                   border: 'none',
                   color: '#8B4513',
                   fontWeight: 500,
+                  fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
+                  fontSize: '16px',
                 }}
               >
                 Register
@@ -155,7 +178,10 @@ const Layout = ({ children }) => {
         borderTop: '1px solid #E8D5C4',
         padding: '16px 50px',
       }}>
-        <span style={{ fontFamily: "'Noto Serif SC', Georgia, serif" }}>
+        <span style={{ 
+          fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
+          fontSize: '15px',
+        }}>
           Music Review Site ©{new Date().getFullYear()} - Built with React + Spring Boot
         </span>
       </Footer>

@@ -191,3 +191,34 @@ body {
 .ant-descriptions-item-label {
   color: var(--warm-text-secondary);
 }
+
+/* 导航菜单样式 */
+.ant-menu-horizontal {
+  font-family: 'Playfair Display', 'Noto Serif SC', Georgia, serif !important;
+}
+
+.ant-menu-horizontal .ant-menu-item,
+.ant-menu-horizontal .ant-menu-item a {
+  font-family: 'Playfair Display', 'Noto Serif SC', Georgia, serif !important;
+  font-size: 17px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.5px !important;
+}
+
+.ant-menu-horizontal .ant-menu-item-selected a {
+  color: #FFE4B5 !important;
+}
+
+.ant-menu-horizontal .ant-menu-item:hover a {
+  color: #FFE4B5 !important;
+}
+
+/* 下拉菜单字体 */
+.ant-dropdown-menu-item {
+  font-family: 'Playfair Display', 'Noto Serif SC', Georgia, serif !important;
+  font-size: 15px !important;
+}
+
+.ant-dropdown-menu-item .anticon {
+  font-size: 14px !important;
+}
