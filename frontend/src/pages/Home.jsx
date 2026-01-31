@@ -61,7 +61,8 @@ const styles = {
   },
   reviewCard: {
     borderRadius: '12px',
-    background: 'linear-gradient(145deg, #FFFCF8 0%, #FFF8F0 100%)',
+    background: 'linear-gradient(145deg, #F5E6D3 0%, #EDE0D4 100%)',
+    border: '1px solid #D4A574',
   },
   reviewUsername: {
     fontFamily: "'Cormorant Garamond', serif",
