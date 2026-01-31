@@ -68,6 +68,8 @@ const AddAlbum = () => {
   const [importUrl, setImportUrl] = useState('');
   const [importing, setImporting] = useState(false);
   const [importedArtist, setImportedArtist] = useState(null);
+  const [batchTrackModalVisible, setBatchTrackModalVisible] = useState(false);
+  const [batchTrackText, setBatchTrackText] = useState('');
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -211,6 +213,61 @@ const AddAlbum = () => {
     }
   };
 
+  // Parse batch track text and fill form
+  const handleBatchTrackImport = () => {
+    if (!batchTrackText.trim()) {
+      message.warning('Please enter track list');
+      return;
+    }
+
+    const lines = batchTrackText.trim().split('\n');
+    const tracks = [];
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      
+      // Try to parse: "1. Track Name 3:45" or "Track Name 3:45" or just "Track Name"
+      // Remove leading numbers like "1." or "01."
+      let trackLine = trimmed.replace(/^\d+[\.\)]\s*/, '');
+      
+      // Try to extract duration at the end (formats: 3:45, 03:45, 3:45:00)
+      const durationMatch = trackLine.match(/\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*$/);
+      let minutes = null;
+      let seconds = null;
+      
+      if (durationMatch) {
+        if (durationMatch[3]) {
+          // Format: H:MM:SS
+          minutes = parseInt(durationMatch[1]) * 60 + parseInt(durationMatch[2]);
+          seconds = parseInt(durationMatch[3]);
+        } else {
+          // Format: M:SS
+          minutes = parseInt(durationMatch[1]);
+          seconds = parseInt(durationMatch[2]);
+        }
+        trackLine = trackLine.replace(/\s+\d{1,2}:\d{2}(?::\d{2})?\s*$/, '');
+      }
+      
+      if (trackLine) {
+        tracks.push({
+          title: trackLine.trim(),
+          minutes,
+          seconds,
+        });
+      }
+    }
+    
+    if (tracks.length > 0) {
+      form.setFieldValue('tracks', tracks);
+      message.success(`Imported ${tracks.length} tracks!`);
+      setBatchTrackModalVisible(false);
+      setBatchTrackText('');
+    } else {
+      message.warning('No valid tracks found');
+    }
+  };
+
   return (
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
       <Title level={2}>Add New Album</Title>
@@ -222,7 +279,10 @@ const AddAlbum = () => {
           Import from NetEase Music
         </Title>
         <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-          Paste a NetEase Music album link to auto-fill album info and track list
+          Paste a NetEase Music album link to auto-fill album info and track list<br />
+          <Text type="warning" style={{ fontSize: '12px' }}>
+            Note: NetEase API may be restricted. Use "Batch Import Tracks" below as alternative.
+          </Text>
         </Text>
         <Space.Compact style={{ width: '100%' }}>
           <Input
@@ -411,14 +471,22 @@ const AddAlbum = () => {
                   </Space>
                 ))}
                 <Form.Item>
-                  <Button 
-                    type="dashed" 
-                    onClick={() => add()} 
-                    icon={<PlusOutlined />}
-                    style={{ width: '100%' }}
-                  >
-                    Add Track
-                  </Button>
+                  <Space style={{ width: '100%' }} direction="vertical">
+                    <Button 
+                      type="dashed" 
+                      onClick={() => add()} 
+                      icon={<PlusOutlined />}
+                      style={{ width: '100%' }}
+                    >
+                      Add Track
+                    </Button>
+                    <Button 
+                      onClick={() => setBatchTrackModalVisible(true)}
+                      style={{ width: '100%' }}
+                    >
+                      Batch Import Tracks (Paste Text)
+                    </Button>
+                  </Space>
                 </Form.Item>
               </>
             )}
@@ -504,6 +572,37 @@ const AddAlbum = () => {
             </Button>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* Batch Track Import Modal */}
+      <Modal
+        title="Batch Import Tracks"
+        open={batchTrackModalVisible}
+        onCancel={() => setBatchTrackModalVisible(false)}
+        onOk={handleBatchTrackImport}
+        okText="Import"
+        width={600}
+      >
+        <p style={{ marginBottom: 16, color: '#666' }}>
+          Paste your track list below. Each track on a new line.<br />
+          Supported formats:
+        </p>
+        <ul style={{ marginBottom: 16, color: '#666', fontSize: '13px' }}>
+          <li>Track Name</li>
+          <li>1. Track Name</li>
+          <li>Track Name 3:45</li>
+          <li>1. Track Name 3:45</li>
+        </ul>
+        <TextArea
+          rows={10}
+          value={batchTrackText}
+          onChange={(e) => setBatchTrackText(e.target.value)}
+          placeholder={`Example:
+1. Intro 1:23
+2. First Song 4:56
+3. Second Song 5:12
+4. Outro 2:34`}
+        />
       </Modal>
     </div>
   );

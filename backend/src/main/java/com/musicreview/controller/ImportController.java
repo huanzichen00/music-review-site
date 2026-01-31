@@ -1,7 +1,7 @@
 package com.musicreview.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -27,15 +27,40 @@ public class ImportController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Invalid NetEase Music URL"));
             }
 
-            // Call NetEase API
+            // Call NetEase API with proper headers
             RestTemplate restTemplate = new RestTemplate();
             String apiUrl = "https://music.163.com/api/album/" + albumId;
             
-            @SuppressWarnings("unchecked")
-            Map<String, Object> response = restTemplate.getForObject(apiUrl, Map.class);
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+            headers.set("Referer", "https://music.163.com/");
+            headers.set("Accept", "application/json");
             
-            if (response == null || !Integer.valueOf(200).equals(response.get("code"))) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Failed to fetch album from NetEase"));
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            
+            ResponseEntity<Map> responseEntity = restTemplate.exchange(
+                apiUrl, 
+                HttpMethod.GET, 
+                entity, 
+                Map.class
+            );
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = responseEntity.getBody();
+            
+            if (response == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Failed to connect to NetEase Music API"));
+            }
+            
+            Object code = response.get("code");
+            if (code != null && !Integer.valueOf(200).equals(code)) {
+                // NetEase API returns error codes for various reasons
+                if (Integer.valueOf(-462).equals(code)) {
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "error", "NetEase Music API requires login verification. This feature is currently unavailable due to API restrictions."
+                    ));
+                }
+                return ResponseEntity.badRequest().body(Map.of("error", "Failed to fetch album. Error code: " + code));
             }
 
             @SuppressWarnings("unchecked")
@@ -43,11 +68,18 @@ public class ImportController {
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> songs = (List<Map<String, Object>>) response.get("songs");
 
+            if (album == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Album data not found"));
+            }
+
             // Build result
             Map<String, Object> result = new HashMap<>();
             result.put("title", album.get("name"));
             result.put("coverUrl", album.get("picUrl"));
-            result.put("description", album.get("description"));
+            
+            // Get description - handle null
+            Object desc = album.get("description");
+            result.put("description", desc != null ? desc.toString() : "");
             
             // Get publish time and extract year
             Object publishTime = album.get("publishTime");
@@ -70,7 +102,7 @@ public class ImportController {
 
             // Get tracks
             List<Map<String, Object>> tracks = new ArrayList<>();
-            if (songs != null) {
+            if (songs != null && !songs.isEmpty()) {
                 int trackNumber = 1;
                 for (Map<String, Object> song : songs) {
                     Map<String, Object> track = new HashMap<>();
@@ -80,7 +112,8 @@ public class ImportController {
                     // Duration in milliseconds
                     Object duration = song.get("duration");
                     if (duration != null) {
-                        int durationSeconds = ((Number) duration).intValue() / 1000;
+                        int durationMs = ((Number) duration).intValue();
+                        int durationSeconds = durationMs / 1000;
                         track.put("duration", durationSeconds);
                         track.put("minutes", durationSeconds / 60);
                         track.put("seconds", durationSeconds % 60);
@@ -90,9 +123,11 @@ public class ImportController {
                 }
             }
             result.put("tracks", tracks);
+            result.put("trackCount", tracks.size());
 
             return ResponseEntity.ok(result);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", "Failed to import: " + e.getMessage()));
         }
     }
