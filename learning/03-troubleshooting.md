@@ -348,6 +348,126 @@ cd backend
 
 ---
 
+## 8. ngrok 域名被 Vite 拦截
+
+### 问题描述
+使用 ngrok 暴露本地服务后，访问 ngrok 域名时显示：
+```
+Blocked request. This host ("xxx.ngrok-free.dev") is not allowed.
+```
+
+### 原因分析
+Vite 的安全机制默认只允许 `localhost` 访问，会拦截其他域名的请求。
+
+### 解决方案
+在 `vite.config.js` 中配置 `allowedHosts`：
+
+```javascript
+server: {
+  host: true,
+  port: 3000,
+  allowedHosts: ['.ngrok-free.dev', '.ngrok.io'],
+  proxy: {
+    '/api': {
+      target: 'http://localhost:8080',
+      changeOrigin: true,
+    }
+  }
+}
+```
+
+### 注意事项
+- 使用 `.ngrok-free.dev` 可以匹配所有 ngrok 子域名
+- 也可以指定具体域名如 `xxx-xxx.ngrok-free.dev`
+
+---
+
+## 9. Ant Design Menu Token 已弃用警告
+
+### 问题描述
+控制台显示警告：
+```
+Warning: Component Token `colorItemText` of Menu is deprecated. Please use `itemColor` instead.
+```
+
+### 原因分析
+Ant Design 5.x 版本更新了 Menu 组件的 Token 命名。
+
+### 解决方案
+更新主题配置中的 Token 名称：
+
+```javascript
+// 旧版（已弃用）
+Menu: {
+  colorItemBg: 'transparent',
+  colorItemText: '#FFF8E7',
+  colorItemTextSelected: '#FFE4B5',
+  colorItemBgSelected: 'rgba(255, 228, 181, 0.2)',
+}
+
+// 新版
+Menu: {
+  itemBg: 'transparent',
+  itemColor: '#FFF8E7',
+  itemSelectedColor: '#FFE4B5',
+  itemSelectedBg: 'rgba(255, 228, 181, 0.2)',
+  itemHoverColor: '#FFE4B5',
+  itemHoverBg: 'rgba(255, 228, 181, 0.1)',
+}
+```
+
+### Token 对照表
+| 旧 Token | 新 Token |
+|----------|----------|
+| `colorItemBg` | `itemBg` |
+| `colorItemText` | `itemColor` |
+| `colorItemTextSelected` | `itemSelectedColor` |
+| `colorItemBgSelected` | `itemSelectedBg` |
+
+---
+
+## 10. ngrok authtoken 配置错误
+
+### 问题描述
+启动 ngrok 时报错：
+```
+ERROR: authentication failed: The authtoken you specified does not look like a proper ngrok authtoken.
+```
+
+### 原因分析
+用户在配置 authtoken 时使用了字面值 `YOUR_AUTHTOKEN` 而不是实际的 token。
+
+### 解决方案
+1. 登录 https://dashboard.ngrok.com/get-started/your-authtoken
+2. 复制实际的 authtoken（类似 `2abcd1234efgh5678...`）
+3. 重新运行配置命令：
+```bash
+ngrok config add-authtoken 你的实际token
+```
+
+---
+
+## 11. ngrok 免费账户需要创建域名
+
+### 问题描述
+启动 ngrok 时报错：
+```
+ERROR: Your account is requesting a dev domain that does not exist.
+```
+
+### 原因分析
+ngrok 免费账户需要先在 dashboard 创建一个域名才能使用。
+
+### 解决方案
+1. 打开 https://dashboard.ngrok.com/domains
+2. 点击 **Create Domain** 创建免费域名
+3. 启动 ngrok 时指定域名：
+```bash
+ngrok http 3000 --domain=your-domain.ngrok-free.dev
+```
+
+---
+
 ## 常见错误速查表
 
 | 错误 | 可能原因 | 解决方案 |
@@ -357,3 +477,6 @@ cd backend
 | ConcurrentModificationException | 懒加载集合并发访问 | 避免直接访问懒加载集合 |
 | Connection refused | 后端未启动 | 检查进程和端口 |
 | 401 Unauthorized | Token 过期或无效 | 重新登录获取 Token |
+| Blocked request (Vite) | 域名不在白名单 | 配置 `allowedHosts` |
+| ngrok auth failed | authtoken 配置错误 | 重新配置正确的 token |
+| Port already in use | 端口被占用 | `lsof -ti:PORT \| xargs kill -9` |
