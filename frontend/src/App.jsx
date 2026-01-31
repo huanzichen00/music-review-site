@@ -8,6 +8,7 @@ import Register from './pages/Register';
 import AlbumDetail from './pages/AlbumDetail';
 import Favorites from './pages/Favorites';
 import AddAlbum from './pages/AddAlbum';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/add-album" element={<AddAlbum />} />
+              <Route path="/profile" element={<Profile />} />
             </Routes>
           </Layout>
         </Router>

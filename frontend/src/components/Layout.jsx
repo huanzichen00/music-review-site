@@ -96,7 +96,11 @@ const Layout = ({ children }) => {
           {isAuthenticated ? (
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
               <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                <Avatar icon={<UserOutlined />} style={{ marginRight: 8 }} />
+                <Avatar 
+                  src={user?.avatarUrl} 
+                  icon={!user?.avatarUrl && <UserOutlined />} 
+                  style={{ marginRight: 8 }} 
+                />
                 <span style={{ color: '#fff' }}>{user?.username}</span>
               </div>
             </Dropdown>

@@ -59,7 +59,8 @@ public class AuthController {
                     "username", user.getUsername(),
                     "email", user.getEmail(),
                     "role", user.getRole(),
-                    "avatar", user.getAvatar() != null ? user.getAvatar() : ""
+                    "avatarUrl", user.getAvatarUrl() != null ? user.getAvatarUrl() : "",
+                    "bio", user.getBio() != null ? user.getBio() : ""
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

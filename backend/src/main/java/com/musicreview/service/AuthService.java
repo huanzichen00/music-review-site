@@ -59,6 +59,8 @@ public class AuthService {
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
+                user.getAvatarUrl(),
+                user.getBio(),
                 user.getRole()
         );
     }
@@ -78,12 +80,18 @@ public class AuthService {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         String token = jwtUtils.generateToken(userDetails);
 
+        // Get full user to include avatar and bio
+        User user = userRepository.findById(userDetails.getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         return new AuthResponse(
                 token,
-                userDetails.getId(),
-                userDetails.getUsername(),
-                userDetails.getEmail(),
-                userDetails.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "")
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getAvatarUrl(),
+                user.getBio(),
+                user.getRole()
         );
     }
 

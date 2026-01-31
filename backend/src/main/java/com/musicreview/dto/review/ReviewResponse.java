@@ -33,7 +33,7 @@ public class ReviewResponse {
                 .id(review.getId())
                 .userId(review.getUser().getId())
                 .username(review.getUser().getUsername())
-                .userAvatar(review.getUser().getAvatar())
+                .userAvatar(review.getUser().getAvatarUrl())
                 .albumId(review.getAlbum().getId())
                 .albumTitle(review.getAlbum().getTitle())
                 .albumCoverUrl(review.getAlbum().getCoverUrl())

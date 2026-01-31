@@ -24,4 +24,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Double getAverageRatingByAlbumId(@Param("albumId") Long albumId);
 
     long countByAlbumId(Long albumId);
+
+    int countByUserId(Long userId);
 }

@@ -16,13 +16,17 @@ public class AuthResponse {
     private Long id;
     private String username;
     private String email;
+    private String avatarUrl;
+    private String bio;
     private String role;
 
-    public AuthResponse(String token, Long id, String username, String email, String role) {
+    public AuthResponse(String token, Long id, String username, String email, String avatarUrl, String bio, String role) {
         this.token = token;
         this.id = id;
         this.username = username;
         this.email = email;
+        this.avatarUrl = avatarUrl;
+        this.bio = bio;
         this.role = role;
     }
 }

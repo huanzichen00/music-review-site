@@ -31,8 +31,11 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(length = 255)
-    private String avatar;
+    @Column(name = "avatar_url", length = 255)
+    private String avatarUrl;
+
+    @Column(columnDefinition = "TEXT")
+    private String bio;
 
     @Column(length = 20)
     @Builder.Default
