@@ -34,8 +34,8 @@ const styles = {
   title: {
     fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
     fontSize: '17px',
-    fontWeight: 600,
-    color: '#5D4037',
+    fontWeight: 700,
+    color: '#4E342E',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
@@ -44,14 +44,16 @@ const styles = {
   artist: {
     fontFamily: "'Cormorant Garamond', 'Noto Serif SC', Georgia, serif",
     fontSize: '15px',
-    color: '#8D6E63',
+    fontWeight: 600,
+    color: '#6D4C41',
     display: 'block',
     marginBottom: '2px',
   },
   year: {
     fontFamily: "'Cormorant Garamond', serif",
     fontSize: '14px',
-    color: '#A1887F',
+    fontWeight: 600,
+    color: '#8D6E63',
   },
   rating: {
     marginTop: '8px',

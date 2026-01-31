@@ -20,10 +20,20 @@
 
 body {
   font-family: 'Noto Serif SC', 'Georgia', serif;
+  font-weight: 500;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: var(--warm-bg-primary);
   color: var(--warm-text);
+}
+
+/* 全局字体加粗 */
+p, span, div, li, td, th, label {
+  font-weight: 500;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
 }
 
 /* 全局背景渐变 */
@@ -202,7 +212,7 @@ body {
 .ant-menu-horizontal .ant-menu-item a {
   font-family: 'Playfair Display', 'Noto Serif SC', Georgia, serif !important;
   font-size: 17px !important;
-  font-weight: 500 !important;
+  font-weight: 600 !important;
   letter-spacing: 0.5px !important;
 }
 
