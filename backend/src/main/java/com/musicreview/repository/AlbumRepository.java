@@ -7,9 +7,16 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface AlbumRepository extends JpaRepository<Album, Long> {
+
+    @Query("SELECT a FROM Album a " +
+           "LEFT JOIN FETCH a.artist " +
+           "LEFT JOIN FETCH a.genres " +
+           "WHERE a.id = :id")
+    Optional<Album> findByIdWithDetails(@Param("id") Long id);
 
     List<Album> findByTitleInitialOrderByTitleAsc(String titleInitial);
 

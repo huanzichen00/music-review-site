@@ -1,15 +1,17 @@
 package com.musicreview.dto.album;
 
-import com.musicreview.dto.artist.ArtistResponse;
 import com.musicreview.entity.Album;
 import com.musicreview.entity.Genre;
+import com.musicreview.entity.Track;
+import com.musicreview.entity.Review;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -63,24 +65,7 @@ public class AlbumResponse {
     }
 
     public static AlbumResponse fromEntity(Album album) {
-        // Calculate total duration
-        int totalDuration = album.getTracks() != null
-                ? album.getTracks().stream()
-                    .filter(t -> t.getDuration() != null)
-                    .mapToInt(t -> t.getDuration())
-                    .sum()
-                : 0;
-
-        // Calculate average rating
-        Double avgRating = album.getReviews() != null && !album.getReviews().isEmpty()
-                ? album.getReviews().stream()
-                    .filter(r -> r.getRating() != null)
-                    .mapToDouble(r -> r.getRating().doubleValue())
-                    .average()
-                    .orElse(0.0)
-                : null;
-
-        return AlbumResponse.builder()
+        AlbumResponse.AlbumResponseBuilder builder = AlbumResponse.builder()
                 .id(album.getId())
                 .title(album.getTitle())
                 .titleInitial(album.getTitleInitial())
@@ -89,24 +74,78 @@ public class AlbumResponse {
                 .description(album.getDescription())
                 .createdAt(album.getCreatedAt())
                 .artistId(album.getArtist().getId())
-                .artistName(album.getArtist().getName())
-                .genres(album.getGenres() != null
-                        ? album.getGenres().stream()
-                            .map(GenreDTO::fromEntity)
-                            .collect(Collectors.toSet())
-                        : null)
-                .tracks(album.getTracks() != null
-                        ? album.getTracks().stream()
-                            .map(TrackDTO::fromEntity)
-                            .collect(Collectors.toList())
-                        : null)
-                .trackCount(album.getTracks() != null ? album.getTracks().size() : 0)
-                .totalDuration(totalDuration)
-                .formattedTotalDuration(formatDuration(totalDuration))
-                .averageRating(avgRating != null ? Math.round(avgRating * 10.0) / 10.0 : null)
-                .reviewCount(album.getReviews() != null ? album.getReviews().size() : 0)
-                .favoriteCount(album.getFavorites() != null ? album.getFavorites().size() : 0)
-                .build();
+                .artistName(album.getArtist().getName());
+
+        // Safely copy tracks
+        List<TrackDTO> trackList = new ArrayList<>();
+        int totalDuration = 0;
+        try {
+            if (album.getTracks() != null) {
+                for (Track track : new ArrayList<>(album.getTracks())) {
+                    trackList.add(TrackDTO.fromEntity(track));
+                    if (track.getDuration() != null) {
+                        totalDuration += track.getDuration();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Ignore lazy loading errors
+        }
+        builder.tracks(trackList);
+        builder.trackCount(trackList.size());
+        builder.totalDuration(totalDuration);
+        builder.formattedTotalDuration(formatDuration(totalDuration));
+
+        // Safely copy genres
+        Set<GenreDTO> genreSet = new HashSet<>();
+        try {
+            if (album.getGenres() != null) {
+                for (Genre genre : new HashSet<>(album.getGenres())) {
+                    genreSet.add(GenreDTO.fromEntity(genre));
+                }
+            }
+        } catch (Exception e) {
+            // Ignore lazy loading errors
+        }
+        builder.genres(genreSet);
+
+        // Safely get review stats
+        Double avgRating = null;
+        int reviewCount = 0;
+        try {
+            if (album.getReviews() != null && !album.getReviews().isEmpty()) {
+                List<Review> reviews = new ArrayList<>(album.getReviews());
+                reviewCount = reviews.size();
+                double sum = 0;
+                int count = 0;
+                for (Review r : reviews) {
+                    if (r.getRating() != null) {
+                        sum += r.getRating().doubleValue();
+                        count++;
+                    }
+                }
+                if (count > 0) {
+                    avgRating = Math.round(sum / count * 10.0) / 10.0;
+                }
+            }
+        } catch (Exception e) {
+            // Ignore lazy loading errors
+        }
+        builder.averageRating(avgRating);
+        builder.reviewCount(reviewCount);
+
+        // Safely get favorite count
+        int favoriteCount = 0;
+        try {
+            if (album.getFavorites() != null) {
+                favoriteCount = album.getFavorites().size();
+            }
+        } catch (Exception e) {
+            // Ignore lazy loading errors
+        }
+        builder.favoriteCount(favoriteCount);
+
+        return builder.build();
     }
 
     public static AlbumResponse fromEntitySimple(Album album) {

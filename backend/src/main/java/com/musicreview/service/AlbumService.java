@@ -52,8 +52,9 @@ public class AlbumService {
     /**
      * Get album by ID with full details
      */
+    @Transactional(readOnly = true)
     public AlbumResponse getAlbumById(Long id) {
-        Album album = albumRepository.findById(id)
+        Album album = albumRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new RuntimeException("Album not found with id: " + id));
         return AlbumResponse.fromEntity(album);
     }

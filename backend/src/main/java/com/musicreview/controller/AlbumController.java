@@ -44,8 +44,10 @@ public class AlbumController {
     public ResponseEntity<?> getAlbumById(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(albumService.getAlbumById(id));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            return ResponseEntity.status(404).body(Map.of("error", errorMsg));
         }
     }
 
