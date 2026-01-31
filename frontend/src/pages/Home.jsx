@@ -88,6 +88,9 @@ const styles = {
     WebkitLineClamp: 2,
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden',
+    textDecoration: 'underline',
+    textDecorationColor: '#D4A574',
+    textUnderlineOffset: '4px',
   },
   reviewDate: {
     fontFamily: "'Cormorant Garamond', serif",
