@@ -145,6 +145,10 @@ const styles = {
 const AlbumDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const resolveCoverUrl = (url) => {
+    if (!url) return '';
+    return url.startsWith('/api') ? `http://localhost:8080${url}` : url;
+  };
   const { isAuthenticated, user } = useAuth();
   
   const [album, setAlbum] = useState(null);
@@ -188,11 +192,15 @@ const AlbumDetail = () => {
         }
       }
     } catch (error) {
-      message.error('Failed to load album');
+      message.error('加载专辑失败');
       navigate('/');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditAlbum = () => {
+    navigate(`/albums/${id}/edit`);
   };
 
   const loadReplies = async (reviewId) => {
@@ -203,7 +211,7 @@ const AlbumDetail = () => {
         [reviewId]: response.data
       }));
     } catch (error) {
-      message.error('Failed to load replies');
+      message.error('加载回复失败');
     }
   };
 
@@ -220,7 +228,7 @@ const AlbumDetail = () => {
 
   const handleFavorite = async () => {
     if (!isAuthenticated) {
-      message.info('Please login to add favorites');
+      message.info('请先登录后再收藏');
       navigate('/login');
       return;
     }
@@ -229,20 +237,20 @@ const AlbumDetail = () => {
       if (isFavorited) {
         await favoritesApi.removeFavorite(id);
         setIsFavorited(false);
-        message.success('Removed from favorites');
+        message.success('已取消收藏');
       } else {
         await favoritesApi.addFavorite(id);
         setIsFavorited(true);
-        message.success('Added to favorites');
+        message.success('已加入收藏');
       }
     } catch (error) {
-      message.error('Operation failed');
+      message.error('操作失败');
     }
   };
 
   const openReviewModal = () => {
     if (!isAuthenticated) {
-      message.info('Please login to write a review');
+      message.info('请先登录后再写评论');
       navigate('/login');
       return;
     }
@@ -266,11 +274,11 @@ const AlbumDetail = () => {
         rating: values.rating,
         content: values.content,
       });
-      message.success(myReview ? 'Review updated!' : 'Review submitted!');
+      message.success(myReview ? '评论已更新！' : '评论已提交！');
       setReviewModalVisible(false);
       loadAlbum();
     } catch (error) {
-      message.error('Failed to submit review');
+      message.error('提交评论失败');
     } finally {
       setSubmitting(false);
     }
@@ -279,23 +287,23 @@ const AlbumDetail = () => {
   const handleDeleteReview = async (reviewId) => {
     try {
       await reviewsApi.delete(reviewId);
-      message.success('Review deleted');
+      message.success('评论已删除');
       setMyReview(null);
       loadAlbum();
     } catch (error) {
-      message.error('Failed to delete review');
+      message.error('删除评论失败');
     }
   };
 
   const handleSubmitReply = async (reviewId) => {
     if (!isAuthenticated) {
-      message.info('Please login to reply');
+      message.info('请先登录后再回复');
       navigate('/login');
       return;
     }
 
     if (!replyContent.trim()) {
-      message.warning('Please enter your reply');
+      message.warning('请输入回复内容');
       return;
     }
 
@@ -305,13 +313,13 @@ const AlbumDetail = () => {
         reviewId: reviewId,
         content: replyContent,
       });
-      message.success('Reply submitted!');
+      message.success('回复已提交！');
       setReplyContent('');
       setReplyingTo(null);
       await loadReplies(reviewId);
       setExpandedReplies(prev => ({ ...prev, [reviewId]: true }));
     } catch (error) {
-      message.error('Failed to submit reply');
+      message.error('提交回复失败');
     } finally {
       setSubmittingReply(false);
     }
@@ -320,20 +328,20 @@ const AlbumDetail = () => {
   const handleDeleteReply = async (replyId, reviewId) => {
     try {
       await repliesApi.delete(replyId);
-      message.success('Reply deleted');
+      message.success('回复已删除');
       await loadReplies(reviewId);
     } catch (error) {
-      message.error('Failed to delete reply');
+      message.error('删除回复失败');
     }
   };
 
   const handleDeleteAlbum = async () => {
     try {
       await albumsApi.delete(id);
-      message.success('Album deleted successfully');
+      message.success('专辑已删除');
       navigate('/');
     } catch (error) {
-      message.error(error.response?.data?.error || 'Failed to delete album');
+      message.error(error.response?.data?.error || '删除专辑失败');
     }
   };
 
@@ -355,7 +363,7 @@ const AlbumDetail = () => {
           <div style={styles.coverContainer}>
             {album.coverUrl ? (
               <img 
-                src={album.coverUrl} 
+                src={resolveCoverUrl(album.coverUrl)} 
                 alt={album.title}
                 style={styles.coverImage}
               />
@@ -402,7 +410,7 @@ const AlbumDetail = () => {
                 fontSize: '18px',
                 color: '#8D6E63',
               }}>
-                {album.averageRating?.toFixed(1)} ({album.reviewCount} reviews)
+                {album.averageRating?.toFixed(1)}（{album.reviewCount} 条评论）
               </Text>
             </div>
           )}
@@ -419,7 +427,7 @@ const AlbumDetail = () => {
                 fontFamily: "'Noto Serif SC', serif",
               }}
             >
-              {isFavorited ? 'Favorited' : 'Add to Favorites'}
+              {isFavorited ? '已收藏' : '加入收藏'}
             </Button>
             <Button 
               icon={<EditOutlined />}
@@ -430,31 +438,45 @@ const AlbumDetail = () => {
                 fontFamily: "'Noto Serif SC', serif",
               }}
             >
-              {myReview ? 'Edit Review' : 'Write Review'}
+              {myReview ? '编辑评论' : '写评论'}
             </Button>
             {user?.username === 'Huan' && (
-              <Popconfirm
-                title="删除专辑"
-                description="确定要删除这个专辑吗？此操作无法撤销。"
-                icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
-                onConfirm={handleDeleteAlbum}
-                okText="确定"
-                cancelText="取消"
-                okButtonProps={{ danger: true }}
-              >
+              <>
                 <Button 
-                  danger
-                  icon={<DeleteOutlined />}
+                  icon={<EditOutlined />}
                   size="large"
+                  onClick={handleEditAlbum}
                   style={{ 
                     marginLeft: '12px',
                     borderRadius: '8px',
                     fontFamily: "'Noto Serif SC', serif",
                   }}
                 >
-                  删除专辑
+                  编辑专辑
                 </Button>
-              </Popconfirm>
+                <Popconfirm
+                  title="删除专辑"
+                  description="确定要删除这个专辑吗？此操作无法撤销。"
+                  icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
+                  onConfirm={handleDeleteAlbum}
+                  okText="确定"
+                  cancelText="取消"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button 
+                    danger
+                    icon={<DeleteOutlined />}
+                    size="large"
+                    style={{ 
+                      marginLeft: '12px',
+                      borderRadius: '8px',
+                      fontFamily: "'Noto Serif SC', serif",
+                    }}
+                  >
+                  删除专辑
+                  </Button>
+                </Popconfirm>
+              </>
             )}
           </div>
 
@@ -467,7 +489,7 @@ const AlbumDetail = () => {
       {/* Track List */}
       {album.tracks && album.tracks.length > 0 && (
         <Card 
-          title={<span style={styles.cardTitle}>📀 Track List</span>}
+          title={<span style={styles.cardTitle}>📀 曲目列表</span>}
           style={{ marginTop: '40px', borderRadius: '16px' }}
         >
           <List
@@ -492,7 +514,7 @@ const AlbumDetail = () => {
               fontSize: '16px',
               color: '#8D6E63',
             }}>
-              Total: {album.formattedTotalDuration}
+              合计：{album.formattedTotalDuration}
             </div>
           )}
         </Card>
@@ -500,12 +522,12 @@ const AlbumDetail = () => {
 
       {/* Reviews */}
       <Card 
-        title={<span style={styles.cardTitle}>💬 Reviews ({reviews.length})</span>}
+        title={<span style={styles.cardTitle}>💬 评论（{reviews.length}）</span>}
         style={{ marginTop: '32px', borderRadius: '16px' }}
       >
         {reviews.length === 0 ? (
           <div style={styles.emptyText}>
-            No reviews yet. Be the first to review!
+            还没有评论，快来抢沙发！
           </div>
         ) : (
           <List
@@ -520,7 +542,7 @@ const AlbumDetail = () => {
                       onClick={() => toggleReplies(review.id)}
                       style={{ color: '#8D6E63' }}
                     >
-                      {expandedReplies[review.id] ? 'Hide' : 'Replies'}
+                      {expandedReplies[review.id] ? '收起' : '回复'}
                     </Button>,
                     ...(user?.id === review.userId ? [
                       <Button 
@@ -583,7 +605,7 @@ const AlbumDetail = () => {
                             setReplyingTo(review.id);
                             setReplyContent(e.target.value);
                           }}
-                          placeholder="Write a reply..."
+                          placeholder="写下你的回复..."
                           autoSize={{ minRows: 1, maxRows: 3 }}
                           style={{ flex: 1 }}
                           onFocus={() => setReplyingTo(review.id)}
@@ -595,7 +617,7 @@ const AlbumDetail = () => {
                           onClick={() => handleSubmitReply(review.id)}
                           disabled={!replyContent.trim() || replyingTo !== review.id}
                         >
-                          Reply
+                          回复
                         </Button>
                       </div>
                     )}
@@ -637,7 +659,7 @@ const AlbumDetail = () => {
                       ))
                     ) : (
                       <Text type="secondary" style={{ fontSize: '14px' }}>
-                        No replies yet. Be the first to reply!
+                        暂无回复，快来回复！
                       </Text>
                     )}
                   </div>
@@ -656,7 +678,7 @@ const AlbumDetail = () => {
             fontSize: '20px',
             color: '#5D4037',
           }}>
-            {myReview ? 'Edit Review' : 'Write Review'}
+            {myReview ? '编辑评论' : '写评论'}
           </span>
         }
         open={reviewModalVisible}
@@ -670,18 +692,18 @@ const AlbumDetail = () => {
         >
           <Form.Item
             name="rating"
-            label={<span style={{ fontFamily: "'Noto Serif SC', serif" }}>Rating</span>}
-            rules={[{ required: true, message: 'Please select a rating' }]}
+            label={<span style={{ fontFamily: "'Noto Serif SC', serif" }}>评分</span>}
+            rules={[{ required: true, message: '请选择评分' }]}
           >
             <Rate allowHalf style={{ fontSize: '28px', color: '#D4A574' }} />
           </Form.Item>
           <Form.Item
             name="content"
-            label={<span style={{ fontFamily: "'Noto Serif SC', serif" }}>Review</span>}
+            label={<span style={{ fontFamily: "'Noto Serif SC', serif" }}>评论内容</span>}
           >
             <TextArea 
               rows={4} 
-              placeholder="Write your review..." 
+              placeholder="写下你的评论..." 
               style={{ fontFamily: "'Noto Serif SC', serif" }}
             />
           </Form.Item>
@@ -697,7 +719,7 @@ const AlbumDetail = () => {
                 borderRadius: '8px',
               }}
             >
-              {myReview ? 'Update Review' : 'Submit Review'}
+              {myReview ? '更新评论' : '提交评论'}
             </Button>
           </Form.Item>
         </Form>

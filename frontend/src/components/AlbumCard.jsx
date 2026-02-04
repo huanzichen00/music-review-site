@@ -62,6 +62,10 @@ const styles = {
 
 const AlbumCard = ({ album }) => {
   const navigate = useNavigate();
+  const resolveCoverUrl = (url) => {
+    if (!url) return '';
+    return url.startsWith('/api') ? `http://localhost:8080${url}` : url;
+  };
 
   return (
     <Card
@@ -72,7 +76,7 @@ const AlbumCard = ({ album }) => {
           {album.coverUrl ? (
             <img 
               alt={album.title} 
-              src={album.coverUrl} 
+              src={resolveCoverUrl(album.coverUrl)} 
               style={styles.coverImage}
               onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
               onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
@@ -83,7 +87,7 @@ const AlbumCard = ({ album }) => {
         </div>
       }
       onClick={() => navigate(`/albums/${album.id}`)}
-      bodyStyle={{ padding: '16px' }}
+      styles={{ body: { padding: '16px' } }}
     >
       <div style={styles.title} title={album.title}>
         {album.title}

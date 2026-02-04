@@ -4,7 +4,7 @@ import {
   InputNumber, Space, Divider, Modal, Alert, Spin, Tabs, Upload
 } from 'antd';
 import { PlusOutlined, MinusCircleOutlined, SearchOutlined, LoadingOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { albumsApi } from '../api/albums';
 import { artistsApi } from '../api/artists';
 import { genresApi } from '../api/genres';
@@ -55,7 +55,7 @@ const COUNTRIES = [
   'India',
 ];
 
-const AddAlbum = () => {
+const EditAlbum = () => {
   const [form] = Form.useForm();
   const [artistForm] = Form.useForm();
   const [genreForm] = Form.useForm();
@@ -77,7 +77,8 @@ const AddAlbum = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [importing, setImporting] = useState(false);
-  
+
+  const { id } = useParams();
   const { isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const coverPreviewUrl = Form.useWatch('coverUrl', form);
@@ -96,15 +97,44 @@ const AddAlbum = () => {
 
   const loadData = async () => {
     try {
-      const [artistsRes, genresRes] = await Promise.all([
+      const [artistsRes, genresRes, albumRes] = await Promise.all([
         artistsApi.getAll(),
         genresApi.getAll(),
+        albumsApi.getById(id),
       ]);
       setArtists(artistsRes.data);
       setGenres(genresRes.data);
+      hydrateForm(albumRes.data);
     } catch (error) {
-      message.error('加载数据失败');
+      message.error('加载专辑数据失败');
+      navigate('/albums');
     }
+  };
+
+  const hydrateForm = (album) => {
+    const genreIds = album.genres ? Array.from(album.genres).map((g) => g.id) : [];
+    const tracks = album.tracks?.length
+      ? album.tracks.map((track) => {
+          const duration = track.duration ?? null;
+          const minutes = duration != null ? Math.floor(duration / 60) : null;
+          const seconds = duration != null ? duration % 60 : null;
+          return {
+            title: track.title,
+            minutes,
+            seconds,
+          };
+        })
+      : [{ title: '' }];
+
+    form.setFieldsValue({
+      title: album.title,
+      artistId: album.artistId,
+      releaseYear: album.releaseYear,
+      coverUrl: album.coverUrl,
+      description: album.description,
+      genreIds,
+      tracks,
+    });
   };
 
   // Search albums from MusicBrainz
@@ -238,24 +268,22 @@ const AddAlbum = () => {
         })) : null,
       };
 
-      console.log('提交专辑数据:', albumData);
-      const response = await albumsApi.create(albumData);
-      message.success('专辑创建成功！');
+      const response = await albumsApi.update(id, albumData);
+      message.success('专辑更新成功！');
       navigate(`/albums/${response.data.id}`);
     } catch (error) {
-      console.error('创建专辑出错:', error);
       const errorMessage = error.response?.data?.error || 
                           error.response?.data?.message || 
                           error.message || 
-                          '创建专辑失败';
+                          '更新专辑失败';
       
       if (error.response?.status === 401) {
         message.warning('登入已過期，請重新登入');
         navigate('/login');
       } else if (error.response?.status === 403) {
-        message.error(error.response?.data?.error || '權限不足，無法建立專輯');
+        message.error(error.response?.data?.error || '權限不足，無法更新專輯');
       } else {
-        message.error(`创建专辑失败：${errorMessage}`);
+        message.error(`更新专辑失败：${errorMessage}`);
       }
     } finally {
       setLoading(false);
@@ -353,7 +381,7 @@ const AddAlbum = () => {
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
-      <Title level={2}>添加新专辑</Title>
+      <Title level={2}>编辑专辑</Title>
 
       {/* Search and Import from MusicBrainz */}
       <Card style={{ marginBottom: 16 }}>
@@ -586,104 +614,50 @@ const AddAlbum = () => {
 
           {/* 曲目列表 */}
           <Divider />
-          <Title level={4}>曲目列表</Title>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Title level={4}>曲目列表</Title>
+            <Button onClick={() => setBatchTrackModalVisible(true)}>
+              批量导入
+            </Button>
+          </div>
 
           <Form.List name="tracks">
             {(fields, { add, remove }) => (
               <>
-                {fields.map(({ key, name, ...restField }, index) => (
-                  <Space 
-                    key={key} 
-                    style={{ display: 'flex', marginBottom: 8 }} 
-                    align="baseline"
-                  >
-                    <span style={{ width: 30 }}>{index + 1}.</span>
+                {fields.map(({ key, name, ...restField }) => (
+                  <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
                     <Form.Item
                       {...restField}
                       name={[name, 'title']}
                       rules={[{ required: true, message: '请输入曲目名称' }]}
-                      style={{ marginBottom: 0, flex: 1, minWidth: 200 }}
                     >
                       <Input placeholder="曲目名称" />
                     </Form.Item>
-                    <Form.Item
-                      {...restField}
-                      name={[name, 'minutes']}
-                      style={{ marginBottom: 0, width: 70 }}
-                    >
+                    <Form.Item {...restField} name={[name, 'minutes']}>
                       <InputNumber min={0} placeholder="分" />
                     </Form.Item>
-                    <span>:</span>
-                    <Form.Item
-                      {...restField}
-                      name={[name, 'seconds']}
-                      style={{ marginBottom: 0, width: 70 }}
-                    >
+                    <Form.Item {...restField} name={[name, 'seconds']}>
                       <InputNumber min={0} max={59} placeholder="秒" />
                     </Form.Item>
-                    {fields.length > 1 && (
-                      <MinusCircleOutlined 
-                        onClick={() => remove(name)} 
-                        style={{ color: '#ff4d4f' }}
-                      />
-                    )}
+                    <MinusCircleOutlined onClick={() => remove(name)} />
                   </Space>
                 ))}
                 <Form.Item>
-                  <Space style={{ width: '100%' }} direction="vertical">
-                    <Button 
-                      type="dashed" 
-                      onClick={() => add()} 
-                      icon={<PlusOutlined />}
-                      style={{ width: '100%' }}
-                    >
-                      添加曲目
-                    </Button>
-                    <Button 
-                      onClick={() => setBatchTrackModalVisible(true)}
-                      style={{ width: '100%' }}
-                    >
-                      批量导入曲目（粘贴文本）
-                    </Button>
-                  </Space>
+                  <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                    添加曲目
+                  </Button>
                 </Form.Item>
               </>
             )}
           </Form.List>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} size="large" block>
-              创建专辑
+            <Button type="primary" htmlType="submit" loading={loading} block>
+              保存修改
             </Button>
           </Form.Item>
         </Form>
       </Card>
-
-      {/* Add Genre Modal */}
-      <Modal
-        title="新增风格"
-        open={genreModalVisible}
-        onCancel={() => setGenreModalVisible(false)}
-        footer={null}
-      >
-        <Form form={genreForm} layout="vertical" onFinish={handleAddGenre}>
-          <Form.Item
-            name="name"
-            label="风格名称"
-            rules={[{ required: true, message: '请输入风格名称' }]}
-          >
-            <Input placeholder="例如 Symphonic Prog" />
-          </Form.Item>
-          <Form.Item name="description" label="简介">
-            <TextArea rows={3} placeholder="风格简介..." />
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" loading={genreLoading} block>
-              创建风格
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
 
       {/* Add Artist Modal */}
       <Modal
@@ -698,15 +672,11 @@ const AddAlbum = () => {
             label="艺术家名称"
             rules={[{ required: true, message: '请输入艺术家名称' }]}
           >
-            <Input placeholder="e.g. Pink Floyd" />
+            <Input placeholder="艺术家名称" />
           </Form.Item>
+
           <Form.Item name="country" label="国家/地区">
-            <Select 
-              placeholder="选择国家/地区" 
-              showSearch
-              optionFilterProp="children"
-              allowClear
-            >
+            <Select placeholder="选择国家/地区" showSearch optionFilterProp="children">
               {COUNTRIES.map((country) => (
                 <Option key={country} value={country}>
                   {country}
@@ -714,20 +684,50 @@ const AddAlbum = () => {
               ))}
             </Select>
           </Form.Item>
+
           <Form.Item name="formedYear" label="成立年份">
-            <InputNumber 
-              min={1900} 
-              max={new Date().getFullYear()} 
-              placeholder="例如 1965"
-              style={{ width: '100%' }}
-            />
+            <InputNumber min={1900} max={new Date().getFullYear()} style={{ width: '100%' }} />
           </Form.Item>
+
+          <Form.Item name="photoUrl" label="照片 URL">
+            <Input placeholder="https://example.com/photo.jpg" />
+          </Form.Item>
+
           <Form.Item name="description" label="简介">
-            <TextArea rows={3} placeholder="艺术家简介..." />
+            <TextArea rows={3} />
           </Form.Item>
+
           <Form.Item>
             <Button type="primary" htmlType="submit" loading={artistLoading} block>
               创建艺术家
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Add Genre Modal */}
+      <Modal
+        title="新增风格"
+        open={genreModalVisible}
+        onCancel={() => setGenreModalVisible(false)}
+        footer={null}
+      >
+        <Form form={genreForm} layout="vertical" onFinish={handleAddGenre}>
+          <Form.Item
+            name="name"
+            label="风格名称"
+            rules={[{ required: true, message: '请输入风格名称' }]}
+          >
+            <Input placeholder="风格名称" />
+          </Form.Item>
+
+          <Form.Item name="description" label="简介">
+            <TextArea rows={3} />
+          </Form.Item>
+
+          <Form.Item>
+            <Button type="primary" htmlType="submit" loading={genreLoading} block>
+              创建风格
             </Button>
           </Form.Item>
         </Form>
@@ -739,32 +739,19 @@ const AddAlbum = () => {
         open={batchTrackModalVisible}
         onCancel={() => setBatchTrackModalVisible(false)}
         onOk={handleBatchTrackImport}
-        okText="导入"
-        width={600}
       >
-        <p style={{ marginBottom: 16, color: '#666' }}>
-          请将曲目列表粘贴到下方，每行一首。<br />
-          支持的格式：
-        </p>
-        <ul style={{ marginBottom: 16, color: '#666', fontSize: '13px' }}>
-          <li>曲目名称</li>
-          <li>1. 曲目名称</li>
-          <li>曲目名称 3:45</li>
-          <li>1. 曲目名称 3:45</li>
-        </ul>
+        <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+          粘贴曲目列表（例如“1. 曲目名称 3:45”）
+        </Text>
         <TextArea
-          rows={10}
+          rows={8}
           value={batchTrackText}
           onChange={(e) => setBatchTrackText(e.target.value)}
-          placeholder={`示例：
-1. 序曲 1:23
-2. 第一首 4:56
-3. 第二首 5:12
-4. 尾声 2:34`}
+          placeholder="1. 曲目一 3:45&#10;2. 曲目二 4:12"
         />
       </Modal>
     </div>
   );
 };
 
-export default AddAlbum;
+export default EditAlbum;
