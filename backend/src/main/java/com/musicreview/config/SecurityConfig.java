@@ -19,9 +19,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableWebSecurity
@@ -42,25 +44,40 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/import/**").permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/**", HttpMethod.OPTIONS.name())).permitAll()
                         // Public read access for albums, artists, genres, reviews
-                        .requestMatchers(HttpMethod.GET, "/api/albums").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/albums/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/artists").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/artists/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/genres").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/genres/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/reviews/recent").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/reviews/album/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/reviews/stats/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/replies/review/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/users/{id}").permitAll()
-                        // File access
-                        .requestMatchers(HttpMethod.GET, "/api/files/**").permitAll()
+                        .requestMatchers(
+                                new AntPathRequestMatcher("/api/albums", HttpMethod.GET.name()),
+                                new AntPathRequestMatcher("/api/albums/**", HttpMethod.GET.name()),
+                                new AntPathRequestMatcher("/api/artists", HttpMethod.GET.name()),
+                                new AntPathRequestMatcher("/api/artists/**", HttpMethod.GET.name()),
+                                new AntPathRequestMatcher("/api/genres", HttpMethod.GET.name()),
+                                new AntPathRequestMatcher("/api/genres/**", HttpMethod.GET.name()),
+                                new AntPathRequestMatcher("/api/reviews/recent", HttpMethod.GET.name()),
+                                new AntPathRequestMatcher("/api/reviews/album/**", HttpMethod.GET.name()),
+                                new AntPathRequestMatcher("/api/reviews/stats/**", HttpMethod.GET.name()),
+                                new AntPathRequestMatcher("/api/replies/review/**", HttpMethod.GET.name()),
+                                new AntPathRequestMatcher("/api/users/*", HttpMethod.GET.name()),
+                                new AntPathRequestMatcher("/api/files/**", HttpMethod.GET.name()),
+                                new AntPathRequestMatcher("/api/files/album-cover", HttpMethod.POST.name())
+                        ).permitAll()
                         // All other endpoints require authentication
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\":\"Unauthorized\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\":\"Forbidden\"}");
+                        })
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

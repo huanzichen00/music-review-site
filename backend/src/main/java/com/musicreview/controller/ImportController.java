@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
 public class ImportController {
 
     private static final String MUSICBRAINZ_BASE = "https://musicbrainz.org/ws/2";
-    private static final String COVERART_BASE = "https://coverartarchive.org";
     private static final String USER_AGENT = "MusicReviewSite/1.0 (https://github.com/huanzichen00/music-review-site)";
 
     /**
@@ -159,11 +158,7 @@ public class ImportController {
                 }
             }
 
-            // Get cover art URL
-            try {
-                String coverUrl = COVERART_BASE + "/release/" + mbid + "/front-250";
-                result.put("coverUrl", coverUrl);
-            } catch (Exception ignored) {}
+            // Cover art URL not set here to avoid VPN-restricted services in China.
 
             // Get tracks from all media
             List<Map<String, Object>> tracks = new ArrayList<>();

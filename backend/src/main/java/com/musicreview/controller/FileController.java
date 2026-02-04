@@ -76,6 +76,53 @@ public class FileController {
     }
 
     /**
+     * Upload album cover image
+     * POST /api/files/album-cover
+     */
+    @PostMapping("/album-cover")
+    public ResponseEntity<?> uploadAlbumCover(@RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Please select a file"));
+            }
+
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Only image files are allowed"));
+            }
+
+            // Check file size (max 8MB)
+            if (file.getSize() > 8 * 1024 * 1024) {
+                return ResponseEntity.badRequest().body(Map.of("error", "File size must be less than 8MB"));
+            }
+
+            Path uploadPath = Paths.get(uploadDir, "album-covers");
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            String newFilename = UUID.randomUUID().toString() + extension;
+
+            Path filePath = uploadPath.resolve(newFilename);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            String fileUrl = "/api/files/album-covers/" + newFilename;
+            return ResponseEntity.ok(Map.of(
+                "url", fileUrl,
+                "filename", newFilename
+            ));
+
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to upload file: " + e.getMessage()));
+        }
+    }
+
+    /**
      * Serve avatar image
      * GET /api/files/avatars/{filename}
      */
@@ -94,6 +141,51 @@ public class FileController {
             
             // Determine content type based on file extension
             String contentType = "image/jpeg"; // default
+            String lowerFilename = safeFilename.toLowerCase();
+            if (lowerFilename.endsWith(".png")) {
+                contentType = "image/png";
+            } else if (lowerFilename.endsWith(".gif")) {
+                contentType = "image/gif";
+            } else if (lowerFilename.endsWith(".webp")) {
+                contentType = "image/webp";
+            } else {
+                try {
+                    String detectedType = Files.probeContentType(filePath);
+                    if (detectedType != null && detectedType.startsWith("image/")) {
+                        contentType = detectedType;
+                    }
+                } catch (Exception e) {
+                    // Use default
+                }
+            }
+
+            return ResponseEntity.ok()
+                    .header("Content-Type", contentType)
+                    .body(fileContent);
+
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to read file: " + e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to read file: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Serve album cover image
+     * GET /api/files/album-covers/{filename}
+     */
+    @GetMapping("/album-covers/{filename}")
+    public ResponseEntity<?> getAlbumCover(@PathVariable String filename) {
+        try {
+            String safeFilename = filename.replaceAll("[^a-zA-Z0-9._-]", "");
+            Path filePath = Paths.get(uploadDir, "album-covers", safeFilename);
+            if (!Files.exists(filePath)) {
+                return ResponseEntity.notFound().build();
+            }
+
+            byte[] fileContent = Files.readAllBytes(filePath);
+
+            String contentType = "image/jpeg";
             String lowerFilename = safeFilename.toLowerCase();
             if (lowerFilename.endsWith(".png")) {
                 contentType = "image/png";
