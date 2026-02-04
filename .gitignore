@@ -65,3 +65,6 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Uploaded files
+backend/uploads/
