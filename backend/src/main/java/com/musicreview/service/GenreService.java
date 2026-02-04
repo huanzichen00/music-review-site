@@ -20,18 +20,20 @@ public class GenreService {
     /**
      * Get all genres
      */
+    @Transactional(readOnly = true)
     public List<GenreResponse> getAllGenres() {
         return genreRepository.findAllByOrderByNameAsc().stream()
-                .map(GenreResponse::fromEntity)
+                .map(genre -> GenreResponse.fromEntity(genre, getAlbumCount(genre)))
                 .collect(Collectors.toList());
     }
 
     /**
      * Get genre by ID
      */
+    @Transactional(readOnly = true)
     public GenreResponse getGenreById(Long id) {
         return genreRepository.findById(id)
-                .map(GenreResponse::fromEntity)
+                .map(genre -> GenreResponse.fromEntity(genre, getAlbumCount(genre)))
                 .orElseThrow(() -> new RuntimeException("Genre not found with id: " + id));
     }
 
@@ -51,6 +53,13 @@ public class GenreService {
                 .build();
 
         Genre saved = genreRepository.save(genre);
-        return GenreResponse.fromEntity(saved);
+        return GenreResponse.fromEntity(saved, 0);
+    }
+
+    private int getAlbumCount(Genre genre) {
+        if (genre == null || genre.getAlbums() == null) {
+            return 0;
+        }
+        return genre.getAlbums().size();
     }
 }

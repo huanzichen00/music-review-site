@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -15,6 +17,8 @@ import java.util.List;
 import java.util.Set;
 
 @Data
+@EqualsAndHashCode(exclude = {"artist", "createdBy", "genres", "tracks", "reviews", "favorites"})
+@ToString(exclude = {"artist", "createdBy", "genres", "tracks", "reviews", "favorites"})
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
