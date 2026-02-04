@@ -16,7 +16,7 @@ const AlphabetFilter = ({ selected, onChange }) => {
         size="small"
         onClick={() => onChange(null)}
       >
-        All
+        全部
       </Button>
       {LETTERS.map((letter) => (
         <Button

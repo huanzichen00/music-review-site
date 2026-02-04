@@ -8,14 +8,26 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on mount
     const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    
-    if (token && savedUser) {
-      setUser(JSON.parse(savedUser));
+    if (!token) {
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    authApi.getMe()
+      .then((response) => {
+        const userData = response.data;
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+      })
+      .catch(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   const login = async (username, password) => {

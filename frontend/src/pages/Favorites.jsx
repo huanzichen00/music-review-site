@@ -10,16 +10,19 @@ const { Title } = Typography;
 const Favorites = () => {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
     loadFavorites();
-  }, [isAuthenticated]);
+  }, [authLoading, isAuthenticated]);
 
   const loadFavorites = async () => {
     setLoading(true);
@@ -27,7 +30,7 @@ const Favorites = () => {
       const response = await favoritesApi.getMyFavorites();
       setFavorites(response.data);
     } catch (error) {
-      message.error('Failed to load favorites');
+      message.error('加载收藏失败');
     } finally {
       setLoading(false);
     }
@@ -43,11 +46,11 @@ const Favorites = () => {
 
   return (
     <div>
-      <Title level={2}>My Favorites</Title>
+      <Title level={2}>我的收藏</Title>
 
       {favorites.length === 0 ? (
         <Card>
-          <Empty description="No favorites yet. Start browsing albums!" />
+          <Empty description="还没有收藏，去逛逛专辑吧！" />
         </Card>
       ) : (
         <Row gutter={[16, 16]}>

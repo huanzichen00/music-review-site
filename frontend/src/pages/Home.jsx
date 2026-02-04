@@ -1,30 +1,29 @@
 import { useState, useEffect } from 'react';
-import { Typography, Row, Col, Card, Spin, message, List, Avatar, Rate } from 'antd';
+import { Row, Col, Card, Spin, message, List, Avatar, Rate } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { albumsApi } from '../api/albums';
 import { genresApi } from '../api/genres';
 import { reviewsApi } from '../api/reviews';
 import AlbumCard from '../components/AlbumCard';
-import AlphabetFilter from '../components/AlphabetFilter';
 
-const { Title, Text } = Typography;
+const HOME_ALBUM_LIMIT = 12;
 
 // 自定义样式
 const styles = {
   pageTitle: {
-    fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
-    fontSize: '42px',
-    fontWeight: 700,
+    fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
+    fontSize: '48px',
+    fontWeight: 500,
     color: '#4E342E',
     marginBottom: '24px',
     letterSpacing: '1px',
     textShadow: '1px 1px 2px rgba(139, 69, 19, 0.15)',
   },
   sectionTitle: {
-    fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
-    fontSize: '32px',
-    fontWeight: 700,
+    fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
+    fontSize: '36px',
+    fontWeight: 500,
     color: '#5D4037',
     marginBottom: '20px',
     letterSpacing: '0.5px',
@@ -61,8 +60,8 @@ const styles = {
   },
   reviewCard: {
     borderRadius: '12px',
-    background: 'linear-gradient(145deg, #F5E6D3 0%, #EDE0D4 100%)',
-    border: '1px solid #D4A574',
+    background: 'linear-gradient(145deg, #FFF8EE 0%, #FFE9D6 100%)',
+    border: '1px solid #E5B992',
   },
   reviewUsername: {
     fontFamily: "'Cormorant Garamond', serif",
@@ -107,20 +106,18 @@ const Home = () => {
   const [genres, setGenres] = useState([]);
   const [recentReviews, setRecentReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedLetter, setSelectedLetter] = useState(null);
   const navigate = useNavigate();
+  const visibleGenres = genres.filter((genre) => (genre.albumCount ?? 0) > 0);
 
   useEffect(() => {
     loadData();
-  }, [selectedLetter]);
+  }, []);
 
   const loadData = async () => {
     setLoading(true);
     try {
       const [albumsRes, genresRes, reviewsRes] = await Promise.all([
-        selectedLetter 
-          ? albumsApi.getByInitial(selectedLetter)
-          : albumsApi.getAll(),
+        albumsApi.getAll(),
         genresApi.getAll(),
         reviewsApi.getRecent(),
       ]);
@@ -128,7 +125,7 @@ const Home = () => {
       setGenres(genresRes.data);
       setRecentReviews(reviewsRes.data);
     } catch (error) {
-      message.error('Failed to load data');
+      message.error('加载数据失败');
     } finally {
       setLoading(false);
     }
@@ -144,25 +141,20 @@ const Home = () => {
       const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
       if (diffHours === 0) {
         const diffMinutes = Math.floor(diffTime / (1000 * 60));
-        return `${diffMinutes} minutes ago`;
+        return `${diffMinutes} 分钟前`;
       }
-      return `${diffHours} hours ago`;
+      return `${diffHours} 小时前`;
     } else if (diffDays === 1) {
-      return 'Yesterday';
+      return '昨天';
     } else if (diffDays < 7) {
-      return `${diffDays} days ago`;
+      return `${diffDays} 天前`;
     }
     return date.toLocaleDateString();
   };
 
   return (
     <div>
-      <h1 style={styles.pageTitle}>🎵 Browse Albums</h1>
-      
-      <AlphabetFilter 
-        selected={selectedLetter} 
-        onChange={setSelectedLetter} 
-      />
+      <h1 style={styles.pageTitle}>精选专辑</h1>
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px' }}>
@@ -173,12 +165,12 @@ const Home = () => {
           {albums.length === 0 ? (
             <Card style={{ borderRadius: '12px' }}>
               <p style={styles.emptyText}>
-                No albums found. {selectedLetter && `Try selecting a different letter.`}
+                暂无专辑。
               </p>
             </Card>
           ) : (
             <Row gutter={[24, 24]}>
-              {albums.map((album) => (
+              {albums.slice(0, HOME_ALBUM_LIMIT).map((album) => (
                 <Col key={album.id} xs={12} sm={8} md={6} lg={4}>
                   <AlbumCard album={album} />
                 </Col>
@@ -189,7 +181,7 @@ const Home = () => {
           {/* Recent Reviews Section */}
           {recentReviews.length > 0 && (
             <div style={{ marginTop: '60px' }}>
-              <h2 style={styles.sectionTitle}>💬 Recent Reviews</h2>
+              <h2 style={styles.sectionTitle}>💬 最新评论</h2>
               <Card style={styles.reviewCard}>
                 <List
                   itemLayout="horizontal"
@@ -223,7 +215,7 @@ const Home = () => {
                               style={styles.reviewAlbum}
                               onClick={() => navigate(`/albums/${review.albumId}`)}
                             >
-                              🎵 {review.albumTitle} - {review.artistName}
+                              {review.albumTitle} - {review.artistName}
                             </div>
                             {review.content && (
                               <p style={styles.reviewContent}>{review.content}</p>
@@ -239,11 +231,11 @@ const Home = () => {
           )}
 
           {/* Genres Section */}
-          {genres.length > 0 && (
+          {visibleGenres.length > 0 && (
             <div style={{ marginTop: '60px' }}>
-              <h2 style={styles.sectionTitle}>🎸 Genres</h2>
+              <h2 style={styles.sectionTitle}>🎸 风格</h2>
               <Row gutter={[20, 20]}>
-                {genres.map((genre) => (
+                {visibleGenres.map((genre) => (
                   <Col key={genre.id} xs={12} sm={8} md={6} lg={4}>
                     <Card 
                       hoverable
@@ -253,7 +245,7 @@ const Home = () => {
                       <div style={styles.genreName}>{genre.name}</div>
                       {genre.albumCount > 0 && (
                         <div style={styles.genreCount}>
-                          {genre.albumCount} albums
+                          {genre.albumCount} 张专辑
                         </div>
                       )}
                     </Card>

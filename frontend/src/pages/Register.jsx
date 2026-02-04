@@ -15,10 +15,10 @@ const Register = () => {
     setLoading(true);
     try {
       await register(values.username, values.email, values.password);
-      message.success('Registration successful!');
+      message.success('注册成功！');
       navigate('/');
     } catch (error) {
-      message.error(error.response?.data?.error || 'Registration failed');
+      message.error(error.response?.data?.error || '注册失败');
     } finally {
       setLoading(false);
     }
@@ -33,7 +33,7 @@ const Register = () => {
     }}>
       <Card style={{ width: 400 }}>
         <Title level={2} style={{ textAlign: 'center', marginBottom: '24px' }}>
-          Register
+          注册
         </Title>
         
         <Form
@@ -45,13 +45,13 @@ const Register = () => {
           <Form.Item
             name="username"
             rules={[
-              { required: true, message: 'Please enter your username' },
-              { min: 3, message: 'Username must be at least 3 characters' }
+              { required: true, message: '请输入用户名' },
+              { min: 3, message: '用户名至少 3 个字符' }
             ]}
           >
             <Input 
               prefix={<UserOutlined />} 
-              placeholder="Username" 
+              placeholder="用户名" 
               size="large"
             />
           </Form.Item>
@@ -59,13 +59,13 @@ const Register = () => {
           <Form.Item
             name="email"
             rules={[
-              { required: true, message: 'Please enter your email' },
-              { type: 'email', message: 'Please enter a valid email' }
+              { required: true, message: '请输入邮箱' },
+              { type: 'email', message: '请输入有效的邮箱地址' }
             ]}
           >
             <Input 
               prefix={<MailOutlined />} 
-              placeholder="Email" 
+              placeholder="邮箱" 
               size="large"
             />
           </Form.Item>
@@ -73,13 +73,13 @@ const Register = () => {
           <Form.Item
             name="password"
             rules={[
-              { required: true, message: 'Please enter your password' },
-              { min: 6, message: 'Password must be at least 6 characters' }
+              { required: true, message: '请输入密码' },
+              { min: 6, message: '密码至少 6 个字符' }
             ]}
           >
             <Input.Password 
               prefix={<LockOutlined />} 
-              placeholder="Password" 
+              placeholder="密码" 
               size="large"
             />
           </Form.Item>
@@ -88,20 +88,20 @@ const Register = () => {
             name="confirmPassword"
             dependencies={['password']}
             rules={[
-              { required: true, message: 'Please confirm your password' },
+              { required: true, message: '请确认密码' },
               ({ getFieldValue }) => ({
                 validator(_, value) {
                   if (!value || getFieldValue('password') === value) {
                     return Promise.resolve();
                   }
-                  return Promise.reject(new Error('Passwords do not match'));
+                  return Promise.reject(new Error('两次密码不一致'));
                 },
               }),
             ]}
           >
             <Input.Password 
               prefix={<LockOutlined />} 
-              placeholder="Confirm Password" 
+              placeholder="确认密码" 
               size="large"
             />
           </Form.Item>
@@ -114,14 +114,14 @@ const Register = () => {
               block
               size="large"
             >
-              Register
+              注册
             </Button>
           </Form.Item>
         </Form>
 
         <div style={{ textAlign: 'center' }}>
           <Text>Already have an account? </Text>
-          <Link to="/login">Login</Link>
+          <Link to="/login">登录</Link>
         </div>
       </Card>
     </div>

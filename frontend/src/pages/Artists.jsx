@@ -23,7 +23,7 @@ const Artists = () => {
       const response = await artistsApi.getAll();
       setArtists(response.data);
     } catch (error) {
-      message.error('Failed to load artists');
+      message.error('加载艺术家失败');
     } finally {
       setLoading(false);
     }
@@ -32,10 +32,10 @@ const Artists = () => {
   const handleDeleteArtist = async (artistId) => {
     try {
       await artistsApi.delete(artistId);
-      message.success('Artist deleted successfully');
+      message.success('艺术家删除成功');
       loadArtists();
     } catch (error) {
-      message.error(error.response?.data?.error || 'Failed to delete artist');
+      message.error(error.response?.data?.error || '删除艺术家失败');
     }
   };
 
@@ -43,7 +43,7 @@ const Artists = () => {
 
   return (
     <div>
-      <Title level={2}>Artists</Title>
+      <Title level={2}>艺术家</Title>
       
       <Card loading={loading}>
         <List

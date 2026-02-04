@@ -6,11 +6,11 @@
 
 :root {
   /* 暖色系配色变量 */
-  --warm-bg-primary: #FDF5ED;
-  --warm-bg-secondary: #FFF8F0;
-  --warm-bg-card: #FFFCF8;
+  --warm-bg-primary: #F8E9D6;
+  --warm-bg-secondary: #FBE6D2;
+  --warm-bg-card: #FFF1E3;
   --warm-header: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #CD853F 100%);
-  --warm-footer: #F5E6D3;
+  --warm-footer: #F0DCC5;
   --warm-text: #5D4037;
   --warm-text-secondary: #8D6E63;
   --warm-border: #E8D5C4;
@@ -39,7 +39,12 @@ h1, h2, h3, h4, h5, h6 {
 /* 全局背景渐变 */
 #root {
   min-height: 100vh;
-  background: linear-gradient(180deg, #FDF5ED 0%, #FFF8F0 50%, #FFEFD5 100%);
+  background: linear-gradient(180deg, #F8E2C8 0%, #FDE4C7 50%, #FFE0BD 100%);
+}
+
+/* Ensure Ant Layout doesn't cover the page gradient */
+.ant-layout {
+  background: transparent !important;
 }
 
 /* Custom scrollbar - 暖色系 */
@@ -118,6 +123,14 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* 分割线 */
+
+/* 顶部导航字体强制覆盖 */
+.nav-menu .ant-menu-item,
+.nav-menu .ant-menu-title-content,
+.nav-menu .ant-menu-item .anticon {
+  font-family: 'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive !important;
+  font-size: 24px !important;
+}
 .ant-divider {
   border-color: var(--warm-border);
 }
