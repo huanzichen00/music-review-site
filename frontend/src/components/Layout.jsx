@@ -29,6 +29,10 @@ const Layout = ({ children }) => {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const resolveAvatarUrl = (url) => {
+    if (!url) return '';
+    return url.startsWith('/api') ? new URL(url, window.location.origin).toString() : url;
+  };
 
   const handleLogout = () => {
     logout();
@@ -127,7 +131,7 @@ const Layout = ({ children }) => {
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
               <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                 <Avatar 
-                  src={user?.avatarUrl} 
+                  src={resolveAvatarUrl(user?.avatarUrl)} 
                   icon={!user?.avatarUrl && <UserOutlined />} 
                   size={44}
                   style={{ 

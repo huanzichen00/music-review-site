@@ -107,6 +107,10 @@ const Home = () => {
   const [recentReviews, setRecentReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const resolveAvatarUrl = (url) => {
+    if (!url) return '';
+    return url.startsWith('/api') ? new URL(url, window.location.origin).toString() : url;
+  };
   const visibleGenres = genres.filter((genre) => (genre.albumCount ?? 0) > 0);
 
   useEffect(() => {
@@ -191,7 +195,7 @@ const Home = () => {
                       <List.Item.Meta
                         avatar={
                           <Avatar 
-                            src={review.userAvatar} 
+                            src={resolveAvatarUrl(review.userAvatar)} 
                             icon={!review.userAvatar && <UserOutlined />}
                             size={48}
                             style={{ border: '2px solid #E8D5C4' }}
