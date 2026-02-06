@@ -104,8 +104,18 @@ public class AuthService {
             throw new RuntimeException("User not authenticated");
         }
 
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        return userRepository.findById(userDetails.getId())
+        Object principal = authentication.getPrincipal();
+        String username;
+
+        if (principal instanceof UserDetailsImpl userDetails) {
+            username = userDetails.getUsername();
+        } else if (principal instanceof String s) {
+            username = s; // JWT filter 很可能把 principal 放成了 username 字符串
+        } else {
+            throw new RuntimeException("Unsupported principal type: " + principal.getClass());
+        }
+
+        return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }
