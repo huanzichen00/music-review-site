@@ -17,7 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -137,9 +139,10 @@ public class AlbumService {
 
         Album savedAlbum = albumRepository.save(album);
 
-        // Save tracks
-        if (request.getTracks() != null && !request.getTracks().isEmpty()) {
-            for (TrackDTO trackDTO : request.getTracks()) {
+        // Save tracks (dedupe by trackNumber + title)
+        List<TrackDTO> dedupedTracks = dedupeTracks(request.getTracks());
+        if (!dedupedTracks.isEmpty()) {
+            for (TrackDTO trackDTO : dedupedTracks) {
                 Track track = Track.builder()
                         .album(savedAlbum)
                         .trackNumber(trackDTO.getTrackNumber())
@@ -185,13 +188,14 @@ public class AlbumService {
         album.setDescription(request.getDescription());
         album.setGenres(genres);
 
-        // Update tracks
+        // Update tracks (dedupe by trackNumber + title)
         if (request.getTracks() != null) {
             // Remove old tracks
             trackRepository.deleteByAlbumId(id);
 
             // Add new tracks
-            for (TrackDTO trackDTO : request.getTracks()) {
+            List<TrackDTO> dedupedTracks = dedupeTracks(request.getTracks());
+            for (TrackDTO trackDTO : dedupedTracks) {
                 Track track = Track.builder()
                         .album(album)
                         .trackNumber(trackDTO.getTrackNumber())
@@ -235,5 +239,28 @@ public class AlbumService {
             return String.valueOf(first);
         }
         return "#";
+    }
+
+    private List<TrackDTO> dedupeTracks(List<TrackDTO> tracks) {
+        if (tracks == null || tracks.isEmpty()) {
+            return List.of();
+        }
+        Map<String, TrackDTO> unique = new LinkedHashMap<>();
+        for (TrackDTO track : tracks) {
+            if (track == null || track.getTitle() == null) {
+                continue;
+            }
+            String title = track.getTitle().trim();
+            if (title.isEmpty() || track.getTrackNumber() == null) {
+                continue;
+            }
+            String key = track.getTrackNumber() + "|" + title.toLowerCase();
+            unique.putIfAbsent(key, TrackDTO.builder()
+                    .trackNumber(track.getTrackNumber())
+                    .title(title)
+                    .duration(track.getDuration())
+                    .build());
+        }
+        return unique.values().stream().collect(Collectors.toList());
     }
 }
