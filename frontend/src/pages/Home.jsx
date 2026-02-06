@@ -109,7 +109,13 @@ const Home = () => {
   const navigate = useNavigate();
   const resolveAvatarUrl = (url) => {
     if (!url) return '';
-    return url.startsWith('/api') ? new URL(url, window.location.origin).toString() : url;
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    if (url.startsWith('/api') || url.startsWith('/')) {
+      return new URL(url, window.location.origin).toString();
+    }
+    return new URL(`/api/files/avatars/${url}`, window.location.origin).toString();
   };
   const visibleGenres = genres.filter((genre) => (genre.albumCount ?? 0) > 0);
 
