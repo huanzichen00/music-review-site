@@ -139,7 +139,7 @@ const Profile = () => {
                 {avatarUrl ? (
                   <Avatar 
                     size={100} 
-                    src={avatarUrl.startsWith('/api') ? `http://localhost:8080${avatarUrl}` : avatarUrl}
+                    src={avatarUrl?.startsWith('/api') ? new URL(avatarUrl, window.location.origin).toString() : avatarUrl}
                     icon={<UserOutlined />}
                   />
                 ) : (
@@ -153,7 +153,7 @@ const Profile = () => {
           ) : (
             <Avatar 
               size={120} 
-              src={profile?.avatarUrl?.startsWith('/api') ? `http://localhost:8080${profile.avatarUrl}` : profile?.avatarUrl}
+              src={profile?.avatarUrl?.startsWith('/api') ? new URL(profile.avatarUrl, window.location.origin).toString() : profile?.avatarUrl}
               icon={<UserOutlined />}
               style={{ marginRight: 24, flexShrink: 0 }}
             />

@@ -187,7 +187,7 @@ const AddAlbum = () => {
 
   const resolveCoverUrl = (url) => {
     if (!url) return '';
-    return url.startsWith('/api') ? `http://localhost:8080${url}` : url;
+    return url.startsWith('/api') ? new URL(url, window.location.origin).toString() : url;
   };
 
   const handleCoverUpload = async (file) => {
