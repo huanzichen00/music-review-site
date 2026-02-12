@@ -11,6 +11,7 @@ import com.musicreview.entity.User;
 import com.musicreview.repository.AlbumRepository;
 import com.musicreview.repository.ArtistRepository;
 import com.musicreview.repository.GenreRepository;
+import com.musicreview.repository.TrackRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,7 @@ public class AlbumService {
     private final AlbumRepository albumRepository;
     private final ArtistRepository artistRepository;
     private final GenreRepository genreRepository;
+    private final TrackRepository trackRepository;
     private final AuthService authService;
 
     /**
@@ -185,7 +187,8 @@ public class AlbumService {
 
         // Update tracks (dedupe by trackNumber + title)
         if (request.getTracks() != null) {
-            // Keep ORM relationship state and DB state consistent to avoid duplicate inserts.
+            // Hard delete existing rows first to avoid stale ORM state causing duplicated inserts.
+            trackRepository.deleteByAlbumId(album.getId());
             album.getTracks().clear();
             List<TrackDTO> dedupedTracks = dedupeTracks(request.getTracks());
             for (TrackDTO trackDTO : dedupedTracks) {

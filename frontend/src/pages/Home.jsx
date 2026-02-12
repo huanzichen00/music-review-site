@@ -32,21 +32,42 @@ const styles = {
     textAlign: 'center',
     background: 'linear-gradient(145deg, #FFFCF8 0%, #FFF8F0 100%)',
     borderRadius: '12px',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    border: '1px solid #E5B992',
+    aspectRatio: '1 / 1',
   },
-  genreIcon: {
-    fontSize: '36px',
-    marginBottom: '12px',
+  genreCardWithCover: {
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  genreCardOverlay: {
+    position: 'absolute',
+    inset: 0,
+    background: 'linear-gradient(180deg, rgba(24, 17, 13, 0.35) 0%, rgba(24, 17, 13, 0.65) 100%)',
+  },
+  genreCardContent: {
+    position: 'relative',
+    zIndex: 1,
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    textAlign: 'center',
+    padding: '12px',
   },
   genreName: {
     fontFamily: "'Cormorant Garamond', 'Noto Serif SC', Georgia, serif",
-    fontSize: '18px',
+    fontSize: 'clamp(17px, 2.2vw, 22px)',
     fontWeight: 700,
     color: '#4E342E',
+    lineHeight: 1.25,
   },
   genreCount: {
     fontFamily: "'Cormorant Garamond', serif",
     color: '#6D4C41',
-    fontSize: '15px',
+    fontSize: 'clamp(13px, 1.5vw, 16px)',
     fontWeight: 600,
     marginTop: '4px',
   },
@@ -75,6 +96,20 @@ const styles = {
     fontWeight: 600,
     color: '#5D4037',
     cursor: 'pointer',
+    flex: 1,
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  reviewAlbumRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  reviewAlbumCover: {
+    flexShrink: 0,
+    border: '1px solid #E5B992',
   },
   reviewContent: {
     fontFamily: "'Noto Serif SC', serif",
@@ -84,14 +119,15 @@ const styles = {
     marginTop: '12px',
     marginBottom: '8px',
     lineHeight: 1.8,
-    display: '-webkit-box',
-    WebkitLineClamp: 4,
-    WebkitBoxOrient: 'vertical',
-    overflow: 'hidden',
+    maxHeight: '96px',
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
     textDecoration: 'underline',
     textDecorationColor: '#D4A574',
     textUnderlineOffset: '4px',
-    padding: '12px 0',
+    padding: '12px 8px 12px 0',
   },
   reviewDate: {
     fontFamily: "'Cormorant Garamond', serif",
@@ -117,6 +153,16 @@ const Home = () => {
     }
     return new URL(`/api/files/avatars/${url}`, window.location.origin).toString();
   };
+  const resolveMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    if (url.startsWith('/api') || url.startsWith('/')) {
+      return new URL(url, window.location.origin).toString();
+    }
+    return url;
+  };
   const visibleGenres = genres.filter((genre) => (genre.albumCount ?? 0) > 0);
 
   useEffect(() => {
@@ -131,8 +177,26 @@ const Home = () => {
         genresApi.getAll(),
         reviewsApi.getRecent(),
       ]);
+      const genresWithCover = await Promise.all(
+        (genresRes.data || []).map(async (genre) => {
+          if (!genre?.id || (genre.albumCount ?? 0) <= 0) {
+            return genre;
+          }
+          try {
+            const genreAlbumsRes = await albumsApi.getByGenre(genre.id);
+            const genreAlbums = genreAlbumsRes.data || [];
+            const pickedAlbum = genreAlbums.find((a) => a.coverUrl) || genreAlbums[0];
+            return {
+              ...genre,
+              genreCoverUrl: pickedAlbum?.coverUrl || null,
+            };
+          } catch {
+            return genre;
+          }
+        })
+      );
       setAlbums(albumsRes.data);
-      setGenres(genresRes.data);
+      setGenres(genresWithCover);
       setRecentReviews(reviewsRes.data);
     } catch (error) {
       message.error('加载数据失败');
@@ -221,11 +285,21 @@ const Home = () => {
                         }
                         description={
                           <div>
-                            <div 
-                              style={styles.reviewAlbum}
-                              onClick={() => navigate(`/albums/${review.albumId}`)}
-                            >
-                              {review.albumTitle} - {review.artistName}
+                            <div style={styles.reviewAlbumRow}>
+                              <div 
+                                style={styles.reviewAlbum}
+                                onClick={() => navigate(`/albums/${review.albumId}`)}
+                                title={`${review.albumTitle} - ${review.artistName}`}
+                              >
+                                {review.albumTitle} - {review.artistName}
+                              </div>
+                              {review.albumCoverUrl && (
+                                <Avatar
+                                  src={resolveMediaUrl(review.albumCoverUrl)}
+                                  size={26}
+                                  style={styles.reviewAlbumCover}
+                                />
+                              )}
                             </div>
                             {review.content && (
                               <p style={styles.reviewContent}>{review.content}</p>
@@ -249,15 +323,41 @@ const Home = () => {
                   <Col key={genre.id} xs={12} sm={8} md={6} lg={4}>
                     <Card 
                       hoverable
-                      style={styles.genreCard}
+                      style={{
+                        ...styles.genreCard,
+                        ...(genre.genreCoverUrl
+                          ? {
+                              ...styles.genreCardWithCover,
+                              backgroundImage: `url(${resolveMediaUrl(genre.genreCoverUrl)})`,
+                            }
+                          : {}),
+                      }}
                     >
-                      <div style={styles.genreIcon}>🎸</div>
-                      <div style={styles.genreName}>{genre.name}</div>
-                      {genre.albumCount > 0 && (
-                        <div style={styles.genreCount}>
-                          {genre.albumCount} 张专辑
+                      {genre.genreCoverUrl && <div style={styles.genreCardOverlay} />}
+                      <div style={styles.genreCardContent}>
+                        <div
+                          style={{
+                            ...styles.genreName,
+                            ...(genre.genreCoverUrl
+                              ? { color: '#FFF7EE', textShadow: '0 1px 3px rgba(0,0,0,0.55)' }
+                              : {}),
+                          }}
+                        >
+                          {genre.name}
                         </div>
-                      )}
+                        {genre.albumCount > 0 && (
+                          <div
+                            style={{
+                              ...styles.genreCount,
+                              ...(genre.genreCoverUrl
+                                ? { color: '#FFEBD9', textShadow: '0 1px 3px rgba(0,0,0,0.55)' }
+                                : {}),
+                            }}
+                          >
+                            {genre.albumCount} 张专辑
+                          </div>
+                        )}
+                      </div>
                     </Card>
                   </Col>
                 ))}
