@@ -1,13 +1,13 @@
 import { Layout as AntLayout, Menu, Button, Dropdown, Avatar } from 'antd';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
-  HomeOutlined, 
   UserOutlined, 
   HeartOutlined,
   LogoutOutlined,
   LoginOutlined,
   AppstoreOutlined,
-  PlusOutlined
+  HomeOutlined,
+  BookOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 
@@ -36,26 +36,51 @@ const Layout = ({ children }) => {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate('/music/home');
   };
+
+  const getSelectedMenuKey = (pathname) => {
+    if (
+      pathname === '/' ||
+      pathname.startsWith('/music/') ||
+      pathname.startsWith('/albums') ||
+      pathname.startsWith('/add-album')
+    ) {
+      return '/music';
+    }
+    if (pathname.startsWith('/blog')) {
+      return '/blog';
+    }
+    return pathname;
+  };
+
+  const selectedMenuKey = getSelectedMenuKey(location.pathname);
+  const isMusicSection =
+    location.pathname === '/' ||
+    location.pathname.startsWith('/music/') ||
+    location.pathname.startsWith('/albums') ||
+    location.pathname.startsWith('/add-album');
+  const selectedMusicSubKey = (() => {
+    if (location.pathname.startsWith('/music/add-album') || location.pathname.startsWith('/add-album')) {
+      return '/music/add-album';
+    }
+    if (location.pathname.startsWith('/music/albums') || location.pathname.startsWith('/albums')) {
+      return '/music/albums';
+    }
+    return '/music/home';
+  })();
 
   const menuItems = [
     {
-      key: '/',
-      icon: <HomeOutlined style={{ fontSize: '18px' }} />,
-      label: <Link to="/" style={menuLinkStyle}>首页</Link>,
-      style: menuItemStyle,
-    },
-    {
-      key: '/albums',
+      key: '/music',
       icon: <AppstoreOutlined style={{ fontSize: '18px' }} />,
-      label: <Link to="/albums" style={menuLinkStyle}>专辑</Link>,
+      label: <Link to="/music/home" style={menuLinkStyle}>音乐</Link>,
       style: menuItemStyle,
     },
     {
-      key: '/add-album',
-      icon: <PlusOutlined style={{ fontSize: '18px' }} />,
-      label: <Link to="/add-album" style={menuLinkStyle}>添加专辑</Link>,
+      key: '/blog',
+      icon: <BookOutlined style={{ fontSize: '18px' }} />,
+      label: <Link to="/blog" style={menuLinkStyle}>博客</Link>,
       style: menuItemStyle,
     },
   ];
@@ -98,20 +123,24 @@ const Layout = ({ children }) => {
         borderBottom: '1.5px solid #E8D5C4',
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Link to="/" style={{ 
+          <Link to="/music/home" style={{ 
             color: '#FFF8E7', 
-            fontSize: '36px', 
+            fontSize: '34px', 
             fontWeight: 700,
             marginRight: '40px',
             textShadow: '2px 2px 4px rgba(0,0,0,0.25)',
-            fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
-            letterSpacing: '1.5px',
+            fontFamily: "'Playfair Display', 'Noto Sans SC', sans-serif",
+            letterSpacing: '0.8px',
+            lineHeight: 1.05,
+            display: 'inline-flex',
+            flexDirection: 'column',
           }}>
-            好曲共鉴
+            <span>Blog</span>
+            <span>For Everyone</span>
           </Link>
           <Menu
             mode="horizontal"
-            selectedKeys={[location.pathname]}
+            selectedKeys={[selectedMenuKey]}
             items={menuItems}
             disabledOverflow={true}
             className="nav-menu"
@@ -180,6 +209,44 @@ const Layout = ({ children }) => {
           )}
         </div>
       </Header>
+
+      {isMusicSection && (
+      <div style={{ padding: '10px 50px 0' }}>
+        <div
+          style={{
+            display: 'inline-flex',
+            gap: 8,
+            padding: '8px 10px',
+            borderRadius: 10,
+            border: '1px solid #E8D5C4',
+            background: 'linear-gradient(180deg, #FFF8EF 0%, #FFF2E6 100%)',
+            boxShadow: '0 1px 4px rgba(139, 69, 19, 0.08)',
+          }}
+        >
+          <Button
+            type={selectedMusicSubKey === '/music/home' ? 'primary' : 'default'}
+            icon={<HomeOutlined />}
+            onClick={() => navigate('/music/home')}
+          >
+            首页
+          </Button>
+          <Button
+            type={selectedMusicSubKey === '/music/albums' ? 'primary' : 'default'}
+            icon={<AppstoreOutlined />}
+            onClick={() => navigate('/music/albums')}
+          >
+            专辑
+          </Button>
+          <Button
+            type={selectedMusicSubKey === '/music/add-album' ? 'primary' : 'default'}
+            icon={<AppstoreOutlined />}
+            onClick={() => navigate('/music/add-album')}
+          >
+            添加专辑
+          </Button>
+        </div>
+      </div>
+      )}
       
       <Content style={{ 
         padding: '24px 50px',

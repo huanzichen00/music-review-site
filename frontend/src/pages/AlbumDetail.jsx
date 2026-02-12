@@ -193,14 +193,14 @@ const AlbumDetail = () => {
       }
     } catch (error) {
       message.error('加载专辑失败');
-      navigate('/');
+      navigate('/music/home');
     } finally {
       setLoading(false);
     }
   };
 
   const handleEditAlbum = () => {
-    navigate(`/albums/${id}/edit`);
+    navigate(`/music/albums/${id}/edit`);
   };
 
   const loadReplies = async (reviewId) => {
@@ -339,7 +339,7 @@ const AlbumDetail = () => {
     try {
       await albumsApi.delete(id);
       message.success('专辑已删除');
-      navigate('/');
+      navigate('/music/home');
     } catch (error) {
       message.error(error.response?.data?.error || '删除专辑失败');
     }

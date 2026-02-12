@@ -241,7 +241,7 @@ const AddAlbum = () => {
       console.log('提交专辑数据:', albumData);
       const response = await albumsApi.create(albumData);
       message.success('专辑创建成功！');
-      navigate(`/albums/${response.data.id}`);
+      navigate(`/music/albums/${response.data.id}`);
     } catch (error) {
       console.error('创建专辑出错:', error);
       const errorMessage = error.response?.data?.error || 

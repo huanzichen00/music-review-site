@@ -19,7 +19,7 @@ const Login = () => {
     try {
       await login(values.username, values.password);
       message.success('登录成功！');
-      navigate('/');
+      navigate('/music/home');
     } catch (error) {
       message.error(error.response?.data?.error || '登录失败');
     } finally {

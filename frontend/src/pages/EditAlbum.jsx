@@ -107,7 +107,7 @@ const EditAlbum = () => {
       hydrateForm(albumRes.data);
     } catch (error) {
       message.error('加载专辑数据失败');
-      navigate('/albums');
+      navigate('/music/albums');
     }
   };
 
@@ -270,7 +270,7 @@ const EditAlbum = () => {
 
       const response = await albumsApi.update(id, albumData);
       message.success('专辑更新成功！');
-      navigate(`/albums/${response.data.id}`);
+      navigate(`/music/albums/${response.data.id}`);
     } catch (error) {
       const errorMessage = error.response?.data?.error || 
                           error.response?.data?.message || 

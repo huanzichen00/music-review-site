@@ -148,6 +148,25 @@ CREATE TABLE review_replies (
 CREATE INDEX idx_replies_review ON review_replies(review_id);
 
 -- =====================================================
+-- 10. 博客文章表
+-- =====================================================
+CREATE TABLE blog_posts (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL COMMENT '作者用户ID',
+    album_id BIGINT COMMENT '关联专辑ID',
+    title VARCHAR(200) NOT NULL COMMENT '文章标题',
+    content TEXT NOT NULL COMMENT '文章内容',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE SET NULL
+) COMMENT '博客文章表';
+
+CREATE INDEX idx_blog_posts_user ON blog_posts(user_id);
+CREATE INDEX idx_blog_posts_album ON blog_posts(album_id);
+
+-- =====================================================
 -- 初始数据: 流派
 -- =====================================================
 INSERT INTO genres (name, description) VALUES

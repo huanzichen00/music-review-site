@@ -288,7 +288,7 @@ const Home = () => {
                             <div style={styles.reviewAlbumRow}>
                               <div 
                                 style={styles.reviewAlbum}
-                                onClick={() => navigate(`/albums/${review.albumId}`)}
+                                onClick={() => navigate(`/music/albums/${review.albumId}`)}
                                 title={`${review.albumTitle} - ${review.artistName}`}
                               >
                                 {review.albumTitle} - {review.artistName}

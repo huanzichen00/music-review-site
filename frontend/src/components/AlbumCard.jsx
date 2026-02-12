@@ -86,7 +86,7 @@ const AlbumCard = ({ album }) => {
           )}
         </div>
       }
-      onClick={() => navigate(`/albums/${album.id}`)}
+      onClick={() => navigate(`/music/albums/${album.id}`)}
       styles={{ body: { padding: '16px' } }}
     >
       <div style={styles.title} title={album.title}>

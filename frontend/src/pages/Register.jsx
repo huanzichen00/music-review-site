@@ -16,7 +16,7 @@ const Register = () => {
     try {
       await register(values.username, values.email, values.password);
       message.success('注册成功！');
-      navigate('/');
+      navigate('/music/home');
     } catch (error) {
       message.error(error.response?.data?.error || '注册失败');
     } finally {
