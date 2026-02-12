@@ -11,7 +11,6 @@ import com.musicreview.entity.User;
 import com.musicreview.repository.AlbumRepository;
 import com.musicreview.repository.ArtistRepository;
 import com.musicreview.repository.GenreRepository;
-import com.musicreview.repository.TrackRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +29,6 @@ public class AlbumService {
     private final AlbumRepository albumRepository;
     private final ArtistRepository artistRepository;
     private final GenreRepository genreRepository;
-    private final TrackRepository trackRepository;
     private final AuthService authService;
 
     /**
@@ -137,25 +135,22 @@ public class AlbumService {
                 .createdBy(currentUser)
                 .build();
 
-        Album savedAlbum = albumRepository.save(album);
-
-        // Save tracks (dedupe by trackNumber + title)
+        // Attach tracks (dedupe by trackNumber + title)
         List<TrackDTO> dedupedTracks = dedupeTracks(request.getTracks());
         if (!dedupedTracks.isEmpty()) {
             for (TrackDTO trackDTO : dedupedTracks) {
                 Track track = Track.builder()
-                        .album(savedAlbum)
+                        .album(album)
                         .trackNumber(trackDTO.getTrackNumber())
                         .title(trackDTO.getTitle())
                         .duration(trackDTO.getDuration())
                         .build();
-                trackRepository.save(track);
+                album.getTracks().add(track);
             }
         }
 
-        // Reload album with tracks
-        Album reloaded = albumRepository.findById(savedAlbum.getId()).orElse(savedAlbum);
-        return AlbumResponse.fromEntity(reloaded);
+        Album savedAlbum = albumRepository.save(album);
+        return AlbumResponse.fromEntity(savedAlbum);
     }
 
     /**
@@ -190,10 +185,8 @@ public class AlbumService {
 
         // Update tracks (dedupe by trackNumber + title)
         if (request.getTracks() != null) {
-            // Remove old tracks
-            trackRepository.deleteByAlbumId(id);
-
-            // Add new tracks
+            // Keep ORM relationship state and DB state consistent to avoid duplicate inserts.
+            album.getTracks().clear();
             List<TrackDTO> dedupedTracks = dedupeTracks(request.getTracks());
             for (TrackDTO trackDTO : dedupedTracks) {
                 Track track = Track.builder()
@@ -202,7 +195,7 @@ public class AlbumService {
                         .title(trackDTO.getTitle())
                         .duration(trackDTO.getDuration())
                         .build();
-                trackRepository.save(track);
+                album.getTracks().add(track);
             }
         }
 
