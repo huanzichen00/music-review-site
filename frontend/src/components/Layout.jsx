@@ -38,8 +38,12 @@ const Layout = ({ children }) => {
   };
 
   const getSelectedMenuKey = (pathname) => {
+    if (pathname.startsWith('/music/guess-band') || pathname.startsWith('/guess-band')) {
+      return '/music/guess-band';
+    }
     if (
       pathname === '/' ||
+      pathname === '/music' ||
       pathname.startsWith('/music/') ||
       pathname.startsWith('/albums') ||
       pathname.startsWith('/add-album')
@@ -55,7 +59,9 @@ const Layout = ({ children }) => {
   const selectedMenuKey = getSelectedMenuKey(location.pathname);
   const isMusicSection =
     location.pathname === '/' ||
+    location.pathname === '/music' ||
     location.pathname.startsWith('/music/') ||
+    location.pathname.startsWith('/guess-band') ||
     location.pathname.startsWith('/albums') ||
     location.pathname.startsWith('/add-album');
   const selectedMusicSubKey = (() => {
@@ -76,6 +82,12 @@ const Layout = ({ children }) => {
       key: '/music',
       icon: <AppstoreOutlined style={{ fontSize: '18px' }} />,
       label: <Link to="/music/home" style={menuLinkStyle}>音乐</Link>,
+      style: menuItemStyle,
+    },
+    {
+      key: '/music/guess-band',
+      icon: <CustomerServiceOutlined style={{ fontSize: '18px' }} />,
+      label: <Link to="/music/guess-band" style={menuLinkStyle}>Guess-Band</Link>,
       style: menuItemStyle,
     },
     {

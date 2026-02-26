@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Row, Col, Card, Spin, message, List, Avatar, Rate } from 'antd';
+import { Row, Col, Card, Spin, message, List, Avatar, Rate, Button, Space } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { albumsApi } from '../api/albums';
 import { genresApi } from '../api/genres';
@@ -19,6 +19,24 @@ const styles = {
     marginBottom: '24px',
     letterSpacing: '1px',
     textShadow: '1px 1px 2px rgba(139, 69, 19, 0.15)',
+  },
+  featureCard: {
+    marginBottom: '24px',
+    borderRadius: '14px',
+    border: '1px solid #D9B99A',
+    background: 'linear-gradient(135deg, #FFF7EB 0%, #FFE7CF 100%)',
+    boxShadow: '0 6px 18px rgba(139, 69, 19, 0.1)',
+  },
+  featureTitle: {
+    fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
+    fontSize: '30px',
+    color: '#5D4037',
+    lineHeight: 1.2,
+  },
+  featureDesc: {
+    marginTop: '6px',
+    color: '#7A5B4E',
+    fontSize: '16px',
   },
   sectionTitle: {
     fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
@@ -219,6 +237,20 @@ const Home = () => {
   return (
     <div>
       <h1 style={styles.pageTitle}>精选专辑</h1>
+      <Card style={styles.featureCard}>
+        <Space
+          size="middle"
+          style={{ width: '100%', justifyContent: 'space-between', flexWrap: 'wrap' }}
+        >
+          <div>
+            <div style={styles.featureTitle}>新功能：Guess-Band 猜乐队</div>
+            <div style={styles.featureDesc}>根据地区、风格、年份和人数提示，挑战你对乐队的熟悉度。</div>
+          </div>
+          <Button type="primary" size="large" onClick={() => navigate('/music/guess-band')}>
+            进入 guess-band
+          </Button>
+        </Space>
+      </Card>
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px' }}>
