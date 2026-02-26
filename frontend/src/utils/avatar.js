@@ -1,5 +1,5 @@
 export const BILIBILI_DEFAULT_AVATAR_URL =
-  'https://i0.hdslb.com/bfs/face/member/noface.jpg';
+  '/bilibili-default-avatar.jpg';
 
 export const resolveAvatarUrl = (url) => {
   if (!url) {
