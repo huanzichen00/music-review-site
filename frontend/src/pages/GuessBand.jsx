@@ -295,7 +295,7 @@ const GuessBand = () => {
           猜乐队
         </Title>
         <Text style={styles.subtitle}>
-          题库数据统一来自后端艺术家接口。输入你猜的乐队名并提交，猜中后可立即开始下一题。
+          题库数据统一来自后端艺术家接口。输入你猜的乐队名并提交，猜中后可立即开始下一题（guess-band）。
         </Text>
 
         {bands.length === 0 ? (
@@ -315,7 +315,7 @@ const GuessBand = () => {
             onChange={(value) => setGuessInput(value)}
             onSelect={(value) => setGuessInput(value)}
             options={filteredBands.map((band) => ({ value: band.name }))}
-            placeholder="输入乐队名，例如：Radiohead / 五月天 / 告五人"
+            placeholder="输入乐队名，例如：Radiohead / Queen / The Beatles"
             style={{ flex: 1, minWidth: 260 }}
             filterOption={(inputValue, option) =>
               option?.value?.toLowerCase().includes(inputValue.toLowerCase())

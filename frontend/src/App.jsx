@@ -59,6 +59,7 @@ function App() {
           <Layout>
             <Routes>
               <Route path="/" element={<Navigate to="/music/home" replace />} />
+              <Route path="/music" element={<Navigate to="/music/home" replace />} />
               <Route path="/music/home" element={<Home />} />
               <Route path="/music/albums" element={<Albums />} />
               <Route path="/music/guess-band" element={<GuessBand />} />
@@ -77,6 +78,7 @@ function App() {
               <Route path="/users/:id" element={<UserHome />} />
               <Route path="/artists" element={<Artists />} />
               <Route path="/blog" element={<Blog />} />
+              <Route path="*" element={<Navigate to="/music/home" replace />} />
             </Routes>
           </Layout>
         </Router>
