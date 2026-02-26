@@ -7,7 +7,8 @@ import {
   LoginOutlined,
   AppstoreOutlined,
   HomeOutlined,
-  BookOutlined
+  BookOutlined,
+  CustomerServiceOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 import { resolveAvatarUrl } from '../utils/avatar';
@@ -58,6 +59,9 @@ const Layout = ({ children }) => {
     location.pathname.startsWith('/albums') ||
     location.pathname.startsWith('/add-album');
   const selectedMusicSubKey = (() => {
+    if (location.pathname.startsWith('/music/guess-band') || location.pathname.startsWith('/guess-band')) {
+      return '/music/guess-band';
+    }
     if (location.pathname.startsWith('/music/add-album') || location.pathname.startsWith('/add-album')) {
       return '/music/add-album';
     }
@@ -232,6 +236,13 @@ const Layout = ({ children }) => {
             onClick={() => navigate('/music/albums')}
           >
             专辑
+          </Button>
+          <Button
+            type={selectedMusicSubKey === '/music/guess-band' ? 'primary' : 'default'}
+            icon={<CustomerServiceOutlined />}
+            onClick={() => navigate('/music/guess-band')}
+          >
+            猜乐队
           </Button>
           <Button
             type={selectedMusicSubKey === '/music/add-album' ? 'primary' : 'default'}

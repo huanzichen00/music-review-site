@@ -14,6 +14,7 @@ import Profile from './pages/Profile';
 import Artists from './pages/Artists';
 import Blog from './pages/Blog';
 import UserHome from './pages/UserHome';
+import GuessBand from './pages/GuessBand';
 
 // 暖色系主题配置
 const warmTheme = {
@@ -60,9 +61,11 @@ function App() {
               <Route path="/" element={<Navigate to="/music/home" replace />} />
               <Route path="/music/home" element={<Home />} />
               <Route path="/music/albums" element={<Albums />} />
+              <Route path="/music/guess-band" element={<GuessBand />} />
               <Route path="/music/albums/:id" element={<AlbumDetail />} />
               <Route path="/music/albums/:id/edit" element={<EditAlbum />} />
               <Route path="/music/add-album" element={<AddAlbum />} />
+              <Route path="/guess-band" element={<GuessBand />} />
               <Route path="/albums" element={<Albums />} />
               <Route path="/albums/:id" element={<AlbumDetail />} />
               <Route path="/albums/:id/edit" element={<EditAlbum />} />

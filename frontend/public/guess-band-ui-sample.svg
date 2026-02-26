@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-label="猜乐队无限模式页面示例">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F8E2C8"/>
+      <stop offset="55%" stop-color="#FDE4C7"/>
+      <stop offset="100%" stop-color="#FFE0BD"/>
+    </linearGradient>
+    <linearGradient id="header" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8B4513"/>
+      <stop offset="55%" stop-color="#A0522D"/>
+      <stop offset="100%" stop-color="#CD853F"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFF8EF"/>
+      <stop offset="100%" stop-color="#FFF2E6"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#8B4513" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="1440" height="900" fill="url(#bg)"/>
+
+  <rect x="0" y="0" width="1440" height="92" fill="url(#header)"/>
+  <text x="72" y="42" fill="#FFF8E7" font-size="30" font-family="'Playfair Display', 'Noto Serif SC', serif" font-weight="700">Blog</text>
+  <text x="72" y="74" fill="#FFF8E7" font-size="30" font-family="'Playfair Display', 'Noto Serif SC', serif" font-weight="700">For Everyone</text>
+
+  <rect x="340" y="28" width="118" height="38" rx="10" fill="#FFE4B533" stroke="#FFE4B577"/>
+  <text x="399" y="52" text-anchor="middle" fill="#FFF8E7" font-size="20" font-family="'ZCOOL KuaiLe', 'Noto Sans SC', sans-serif">音乐</text>
+  <text x="490" y="52" fill="#FFF8E7" font-size="20" font-family="'ZCOOL KuaiLe', 'Noto Sans SC', sans-serif">博客</text>
+  <circle cx="1325" cy="45" r="22" fill="#FFE4B5"/>
+
+  <g filter="url(#shadow)">
+    <rect x="180" y="150" width="1080" height="660" rx="26" fill="url(#card)" stroke="#E8D5C4" stroke-width="2"/>
+  </g>
+
+  <rect x="220" y="190" width="120" height="34" rx="17" fill="#8BC34A22" stroke="#8BC34A77"/>
+  <text x="280" y="212" text-anchor="middle" fill="#5D4037" font-size="16" font-family="'Noto Sans SC', sans-serif">无限模式</text>
+
+  <text x="220" y="280" fill="#5D4037" font-size="52" font-family="'Playfair Display', 'Noto Serif SC', serif" font-weight="700">猜乐队</text>
+  <text x="222" y="318" fill="#8D6E63" font-size="22" font-family="'Noto Sans SC', sans-serif">输入你认为可能的乐队名，提交后立即判定是否猜中。</text>
+
+  <rect x="220" y="360" width="720" height="62" rx="14" fill="#FFFCF8" stroke="#E8D5C4" stroke-width="2"/>
+  <text x="250" y="399" fill="#B8A08D" font-size="24" font-family="'Noto Sans SC', sans-serif">例如: Radiohead / The Beatles / 告五人</text>
+
+  <rect x="960" y="360" width="260" height="62" rx="14" fill="#C4956A"/>
+  <text x="1090" y="399" text-anchor="middle" fill="#FFF8E7" font-size="24" font-family="'ZCOOL KuaiLe', 'Noto Sans SC', sans-serif">提交猜测</text>
+
+  <text x="220" y="470" fill="#5D4037" font-size="26" font-family="'Noto Serif SC', serif" font-weight="600">最近猜测</text>
+
+  <rect x="220" y="502" width="1000" height="78" rx="12" fill="#FFFFFFAA" stroke="#E8D5C4"/>
+  <text x="252" y="550" fill="#5D4037" font-size="28" font-family="'Playfair Display', 'Noto Serif SC', serif">Arctic Monkeys</text>
+  <rect x="1040" y="524" width="160" height="34" rx="17" fill="#E5737322" stroke="#E57373"/>
+  <text x="1120" y="546" text-anchor="middle" fill="#8B2E2E" font-size="18" font-family="'Noto Sans SC', sans-serif">未猜中</text>
+
+  <rect x="220" y="596" width="1000" height="78" rx="12" fill="#FFFFFFAA" stroke="#E8D5C4"/>
+  <text x="252" y="644" fill="#5D4037" font-size="28" font-family="'Playfair Display', 'Noto Serif SC', serif">Nirvana</text>
+  <rect x="1040" y="618" width="160" height="34" rx="17" fill="#E5737322" stroke="#E57373"/>
+  <text x="1120" y="640" text-anchor="middle" fill="#8B2E2E" font-size="18" font-family="'Noto Sans SC', sans-serif">未猜中</text>
+
+  <rect x="220" y="690" width="1000" height="78" rx="12" fill="#FFFFFFAA" stroke="#E8D5C4"/>
+  <text x="252" y="738" fill="#5D4037" font-size="28" font-family="'Playfair Display', 'Noto Serif SC', serif">Queen</text>
+  <rect x="1040" y="712" width="160" height="34" rx="17" fill="#8BC34A22" stroke="#8BC34A"/>
+  <text x="1120" y="734" text-anchor="middle" fill="#386A24" font-size="18" font-family="'Noto Sans SC', sans-serif">猜中</text>
+</svg>
