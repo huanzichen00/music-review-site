@@ -53,8 +53,29 @@ cd backend
 ```bash
 cd frontend
 npm install
-npm start
+npm run dev
 ```
+
+## 🚀 一键上线新功能
+
+在项目根目录执行：
+
+```bash
+./scripts/deploy_feature.sh
+```
+
+常用命令：
+
+```bash
+./scripts/deploy_feature.sh deploy   # 构建 + 重启 + 健康检查
+./scripts/deploy_feature.sh stop     # 停止脚本启动的前后端
+./scripts/deploy_feature.sh status   # 查看运行状态
+./scripts/deploy_feature.sh logs     # 查看最近日志
+```
+
+说明：
+- 前端默认端口 `3000`，后端默认端口 `8080`
+- 运行日志和 PID 文件在 `/tmp/music-review-site`
 
 ## 📊 数据库表
 
