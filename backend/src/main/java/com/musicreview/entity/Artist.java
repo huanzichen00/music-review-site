@@ -35,6 +35,15 @@ public class Artist {
     @Column(name = "formed_year")
     private Integer formedYear;
 
+    @Column(length = 80)
+    private String genre;
+
+    @Column(name = "member_count")
+    private Integer memberCount;
+
+    @Column(length = 20)
+    private String status;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 

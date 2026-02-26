@@ -19,6 +19,9 @@ public class ArtistResponse {
     private String nameInitial;
     private String country;
     private Integer formedYear;
+    private String genre;
+    private Integer memberCount;
+    private String status;
     private String description;
     private String photoUrl;
     private LocalDateTime createdAt;
@@ -42,6 +45,9 @@ public class ArtistResponse {
                 .nameInitial(artist.getNameInitial())
                 .country(artist.getCountry())
                 .formedYear(artist.getFormedYear())
+                .genre(artist.getGenre())
+                .memberCount(artist.getMemberCount())
+                .status(artist.getStatus())
                 .description(artist.getDescription())
                 .photoUrl(artist.getPhotoUrl())
                 .createdAt(artist.getCreatedAt())

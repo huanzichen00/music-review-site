@@ -67,6 +67,9 @@ public class ArtistService {
                 .nameInitial(extractInitial(request.getName()))
                 .country(request.getCountry())
                 .formedYear(request.getFormedYear())
+                .genre(request.getGenre())
+                .memberCount(request.getMemberCount())
+                .status(request.getStatus())
                 .description(request.getDescription())
                 .photoUrl(request.getPhotoUrl())
                 .build();
@@ -87,6 +90,9 @@ public class ArtistService {
         artist.setNameInitial(extractInitial(request.getName()));
         artist.setCountry(request.getCountry());
         artist.setFormedYear(request.getFormedYear());
+        artist.setGenre(request.getGenre());
+        artist.setMemberCount(request.getMemberCount());
+        artist.setStatus(request.getStatus());
         artist.setDescription(request.getDescription());
         artist.setPhotoUrl(request.getPhotoUrl());
 

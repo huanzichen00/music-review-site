@@ -34,6 +34,9 @@ CREATE TABLE artists (
     name_initial CHAR(1) NOT NULL COMMENT '名称首字母(A-Z, #)',
     country VARCHAR(50) COMMENT '国家/地区',
     formed_year INT COMMENT '成立年份',
+    genre VARCHAR(80) COMMENT '乐队风格',
+    member_count INT COMMENT '成员人数',
+    status VARCHAR(20) COMMENT '状态: 活跃/解散',
     description TEXT COMMENT '简介',
     photo_url VARCHAR(255) COMMENT '图片URL',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
