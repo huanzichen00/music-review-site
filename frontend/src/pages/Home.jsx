@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Row, Col, Card, Spin, message, List, Avatar, Rate } from 'antd';
-import { UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { albumsApi } from '../api/albums';
 import { genresApi } from '../api/genres';
 import { reviewsApi } from '../api/reviews';
 import AlbumCard from '../components/AlbumCard';
+import { resolveAvatarUrl } from '../utils/avatar';
 
 const HOME_ALBUM_LIMIT = 12;
 
@@ -143,16 +143,6 @@ const Home = () => {
   const [recentReviews, setRecentReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const resolveAvatarUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    if (url.startsWith('/api') || url.startsWith('/')) {
-      return new URL(url, window.location.origin).toString();
-    }
-    return new URL(`/api/files/avatars/${url}`, window.location.origin).toString();
-  };
   const resolveMediaUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http://') || url.startsWith('https://')) {
@@ -266,7 +256,6 @@ const Home = () => {
                         avatar={
                           <Avatar 
                             src={resolveAvatarUrl(review.userAvatar)} 
-                            icon={!review.userAvatar && <UserOutlined />}
                             size={48}
                             style={{ border: '2px solid #E8D5C4' }}
                           />

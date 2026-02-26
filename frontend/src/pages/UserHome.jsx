@@ -19,6 +19,7 @@ import {
 import { LinkOutlined, UserOutlined } from '@ant-design/icons';
 import { usersApi } from '../api/users';
 import { blogPostsApi } from '../api/blogPosts';
+import { resolveAvatarUrl } from '../utils/avatar';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -49,11 +50,6 @@ const UserHome = () => {
 
     loadUserHome();
   }, [id, navigate]);
-
-  const resolveAvatarUrl = (url) => {
-    if (!url) return '';
-    return url.startsWith('/api') ? new URL(url, window.location.origin).toString() : url;
-  };
 
   const resolveMediaUrl = (url) => {
     if (!url) return '';

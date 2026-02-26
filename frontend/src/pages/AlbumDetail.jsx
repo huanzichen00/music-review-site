@@ -6,7 +6,7 @@ import {
 } from 'antd';
 import { 
   HeartOutlined, HeartFilled, EditOutlined, 
-  DeleteOutlined, UserOutlined, MessageOutlined,
+  DeleteOutlined, MessageOutlined,
   SendOutlined, ExclamationCircleOutlined
 } from '@ant-design/icons';
 import { albumsApi } from '../api/albums';
@@ -14,6 +14,7 @@ import { reviewsApi } from '../api/reviews';
 import { favoritesApi } from '../api/favorites';
 import { repliesApi } from '../api/replies';
 import { useAuth } from '../context/AuthContext';
+import { resolveAvatarUrl } from '../utils/avatar';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -562,8 +563,7 @@ const AlbumDetail = () => {
                   <List.Item.Meta
                     avatar={
                       <Avatar 
-                        icon={<UserOutlined />} 
-                        src={review.userAvatar}
+                        src={resolveAvatarUrl(review.userAvatar)}
                         size={48}
                         style={{ border: '2px solid #E8D5C4' }}
                       />
@@ -639,8 +639,7 @@ const AlbumDetail = () => {
                         }}>
                           <Avatar 
                             size={32} 
-                            src={reply.userAvatar}
-                            icon={<UserOutlined />}
+                            src={resolveAvatarUrl(reply.userAvatar)}
                           />
                           <div style={{ flex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

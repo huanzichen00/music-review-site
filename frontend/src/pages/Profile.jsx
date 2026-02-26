@@ -7,6 +7,7 @@ import { UserOutlined, EditOutlined, SaveOutlined, LoadingOutlined, PlusOutlined
 import { useAuth } from '../context/AuthContext';
 import { usersApi } from '../api/users';
 import { useNavigate } from 'react-router-dom';
+import { resolveAvatarUrl } from '../utils/avatar';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -138,7 +139,7 @@ const Profile = () => {
                 {avatarUrl ? (
                   <Avatar 
                     size={100} 
-                    src={avatarUrl?.startsWith('/api') ? new URL(avatarUrl, window.location.origin).toString() : avatarUrl}
+                    src={resolveAvatarUrl(avatarUrl)}
                     icon={<UserOutlined />}
                   />
                 ) : (
@@ -152,8 +153,7 @@ const Profile = () => {
           ) : (
             <Avatar 
               size={120} 
-              src={profile?.avatarUrl?.startsWith('/api') ? new URL(profile.avatarUrl, window.location.origin).toString() : profile?.avatarUrl}
-              icon={<UserOutlined />}
+              src={resolveAvatarUrl(profile?.avatarUrl)}
               style={{ marginRight: 24, flexShrink: 0 }}
             />
           )}

@@ -10,6 +10,7 @@ import {
   BookOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
+import { resolveAvatarUrl } from '../utils/avatar';
 
 const { Header, Content, Footer } = AntLayout;
 
@@ -29,10 +30,6 @@ const Layout = ({ children }) => {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const resolveAvatarUrl = (url) => {
-    if (!url) return '';
-    return url.startsWith('/api') ? new URL(url, window.location.origin).toString() : url;
-  };
 
   const handleLogout = () => {
     logout();
@@ -161,7 +158,6 @@ const Layout = ({ children }) => {
               <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                 <Avatar 
                   src={resolveAvatarUrl(user?.avatarUrl)} 
-                  icon={!user?.avatarUrl && <UserOutlined />} 
                   size={44}
                   style={{ 
                     marginRight: 8,
