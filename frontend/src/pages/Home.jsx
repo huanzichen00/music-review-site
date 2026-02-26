@@ -198,7 +198,7 @@ const Home = () => {
       setAlbums(albumsRes.data);
       setGenres(genresWithCover);
       setRecentReviews(reviewsRes.data);
-    } catch (error) {
+    } catch {
       message.error('加载数据失败');
     } finally {
       setLoading(false);
@@ -273,7 +273,12 @@ const Home = () => {
                         }
                         title={
                           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                            <span style={styles.reviewUsername}>{review.username}</span>
+                            <span
+                              style={{ ...styles.reviewUsername, cursor: 'pointer' }}
+                              onClick={() => navigate(`/users/${review.userId}`)}
+                            >
+                              {review.username}
+                            </span>
                             <Rate 
                               disabled 
                               value={review.rating} 

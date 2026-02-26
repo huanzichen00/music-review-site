@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Button,
@@ -34,14 +34,7 @@ const Blog = () => {
   const navigate = useNavigate();
   const { isAuthenticated, loading: authLoading, user } = useAuth();
 
-  useEffect(() => {
-    if (authLoading) {
-      return;
-    }
-    loadData();
-  }, [authLoading, isAuthenticated]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const requests = [blogPostsApi.getAll()];
@@ -56,7 +49,14 @@ const Blog = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+    loadData();
+  }, [authLoading, loadData]);
 
   const resetEditor = () => {
     setEditingPostId(null);
@@ -233,7 +233,13 @@ const Blog = () => {
                   title={
                     <Space wrap>
                       <Text strong style={{ fontSize: 18 }}>{post.title}</Text>
-                      <Tag color="geekblue">{post.username || `用户 #${post.userId}`}</Tag>
+                      <Tag
+                        color="geekblue"
+                        style={{ cursor: post.userId ? 'pointer' : 'default' }}
+                        onClick={() => post.userId && navigate(`/users/${post.userId}`)}
+                      >
+                        {post.username || `用户 #${post.userId}`}
+                      </Tag>
                       {post.albumId && (
                         <Tag
                           color="gold"
@@ -248,7 +254,16 @@ const Blog = () => {
                   description={
                     <div>
                       <Text type="secondary">
-                        作者：{post.username || `用户 #${post.userId}`} · 发布于 {new Date(post.createdAt).toLocaleString()}
+                        作者：
+                        <Button
+                          type="link"
+                          size="small"
+                          style={{ padding: '0 4px' }}
+                          onClick={() => post.userId && navigate(`/users/${post.userId}`)}
+                        >
+                          {post.username || `用户 #${post.userId}`}
+                        </Button>
+                        · 发布于 {new Date(post.createdAt).toLocaleString()}
                       </Text>
                       {post.albumCoverUrl && (
                         <div style={{ marginTop: 10 }}>

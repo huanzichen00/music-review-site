@@ -3,7 +3,6 @@ import { Card, List, Button, message, Popconfirm, Typography, Row, Col, Tag } fr
 import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { artistsApi } from '../api/artists';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
 
 const { Title } = Typography;
 
@@ -11,7 +10,6 @@ const Artists = () => {
   const [artists, setArtists] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   useEffect(() => {
     loadArtists();
@@ -22,7 +20,7 @@ const Artists = () => {
     try {
       const response = await artistsApi.getAll();
       setArtists(response.data);
-    } catch (error) {
+    } catch {
       message.error('加载艺术家失败');
     } finally {
       setLoading(false);

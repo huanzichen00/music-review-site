@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Form, Input, Button, Card, Typography, message, Select, 
   InputNumber, Space, Divider, Modal, Alert, Spin, Tabs, Upload
@@ -83,35 +83,7 @@ const EditAlbum = () => {
   const navigate = useNavigate();
   const coverPreviewUrl = Form.useWatch('coverUrl', form);
 
-  useEffect(() => {
-    if (authLoading) {
-      return;
-    }
-    if (!isAuthenticated) {
-      message.info('请先登录');
-      navigate('/login');
-      return;
-    }
-    loadData();
-  }, [authLoading, isAuthenticated]);
-
-  const loadData = async () => {
-    try {
-      const [artistsRes, genresRes, albumRes] = await Promise.all([
-        artistsApi.getAll(),
-        genresApi.getAll(),
-        albumsApi.getById(id),
-      ]);
-      setArtists(artistsRes.data);
-      setGenres(genresRes.data);
-      hydrateForm(albumRes.data);
-    } catch (error) {
-      message.error('加载专辑数据失败');
-      navigate('/music/albums');
-    }
-  };
-
-  const hydrateForm = (album) => {
+  const hydrateForm = useCallback((album) => {
     const genreIds = album.genres ? Array.from(album.genres).map((g) => g.id) : [];
     const tracks = album.tracks?.length
       ? album.tracks.map((track) => {
@@ -135,7 +107,34 @@ const EditAlbum = () => {
       genreIds,
       tracks,
     });
-  };
+  }, [form]);
+
+  useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+    if (!isAuthenticated) {
+      message.info('请先登录');
+      navigate('/login');
+      return;
+    }
+    const loadData = async () => {
+      try {
+        const [artistsRes, genresRes, albumRes] = await Promise.all([
+          artistsApi.getAll(),
+          genresApi.getAll(),
+          albumsApi.getById(id),
+        ]);
+        setArtists(artistsRes.data);
+        setGenres(genresRes.data);
+        hydrateForm(albumRes.data);
+      } catch {
+        message.error('加载专辑数据失败');
+        navigate('/music/albums');
+      }
+    };
+    loadData();
+  }, [authLoading, hydrateForm, id, isAuthenticated, navigate]);
 
   // Search albums from MusicBrainz
   const handleSearch = async () => {
@@ -340,7 +339,7 @@ const EditAlbum = () => {
       
       // Try to parse: "1. Track Name 3:45" or "Track Name 3:45" or just "Track Name"
       // Remove leading numbers like "1." or "01."
-      let trackLine = trimmed.replace(/^\d+[\.\)]\s*/, '');
+      let trackLine = trimmed.replace(/^\d+[.)]\s*/, '');
       
       // Try to extract duration at the end (formats: 3:45, 03:45, 3:45:00)
       const durationMatch = trackLine.match(/\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*$/);

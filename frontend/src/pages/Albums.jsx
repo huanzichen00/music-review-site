@@ -30,22 +30,21 @@ const Albums = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
 
   useEffect(() => {
+    const loadAlbums = async () => {
+      setLoading(true);
+      try {
+        const albumsRes = selectedLetter
+          ? await albumsApi.getByInitial(selectedLetter)
+          : await albumsApi.getAll();
+        setAlbums(albumsRes.data);
+      } catch {
+        message.error('加载专辑失败');
+      } finally {
+        setLoading(false);
+      }
+    };
     loadAlbums();
   }, [selectedLetter]);
-
-  const loadAlbums = async () => {
-    setLoading(true);
-    try {
-      const albumsRes = selectedLetter
-        ? await albumsApi.getByInitial(selectedLetter)
-        : await albumsApi.getAll();
-      setAlbums(albumsRes.data);
-    } catch (error) {
-      message.error('加载专辑失败');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div>

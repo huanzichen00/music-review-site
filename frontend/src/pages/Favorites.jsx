@@ -21,20 +21,19 @@ const Favorites = () => {
       navigate('/login');
       return;
     }
+    const loadFavorites = async () => {
+      setLoading(true);
+      try {
+        const response = await favoritesApi.getMyFavorites();
+        setFavorites(response.data);
+      } catch {
+        message.error('加载收藏失败');
+      } finally {
+        setLoading(false);
+      }
+    };
     loadFavorites();
-  }, [authLoading, isAuthenticated]);
-
-  const loadFavorites = async () => {
-    setLoading(true);
-    try {
-      const response = await favoritesApi.getMyFavorites();
-      setFavorites(response.data);
-    } catch (error) {
-      message.error('加载收藏失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [authLoading, isAuthenticated, navigate]);
 
   if (loading) {
     return (

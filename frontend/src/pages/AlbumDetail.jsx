@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Typography, Card, Row, Col, Tag, Rate, Button, List, 
@@ -167,11 +167,7 @@ const AlbumDetail = () => {
   const [submittingReply, setSubmittingReply] = useState(false);
   const [expandedReplies, setExpandedReplies] = useState({});
 
-  useEffect(() => {
-    loadAlbum();
-  }, [id]);
-
-  const loadAlbum = async () => {
+  const loadAlbum = useCallback(async () => {
     setLoading(true);
     try {
       const [albumRes, reviewsRes] = await Promise.all([
@@ -191,13 +187,17 @@ const AlbumDetail = () => {
           setMyReview(myReviewRes.data);
         }
       }
-    } catch (error) {
+    } catch {
       message.error('加载专辑失败');
       navigate('/music/home');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, isAuthenticated, navigate]);
+
+  useEffect(() => {
+    loadAlbum();
+  }, [loadAlbum]);
 
   const handleEditAlbum = () => {
     navigate(`/music/albums/${id}/edit`);
@@ -210,7 +210,7 @@ const AlbumDetail = () => {
         ...prev,
         [reviewId]: response.data
       }));
-    } catch (error) {
+    } catch {
       message.error('加载回复失败');
     }
   };
@@ -243,7 +243,7 @@ const AlbumDetail = () => {
         setIsFavorited(true);
         message.success('已加入收藏');
       }
-    } catch (error) {
+    } catch {
       message.error('操作失败');
     }
   };
@@ -277,7 +277,7 @@ const AlbumDetail = () => {
       message.success(myReview ? '评论已更新！' : '评论已提交！');
       setReviewModalVisible(false);
       loadAlbum();
-    } catch (error) {
+    } catch {
       message.error('提交评论失败');
     } finally {
       setSubmitting(false);
@@ -290,7 +290,7 @@ const AlbumDetail = () => {
       message.success('评论已删除');
       setMyReview(null);
       loadAlbum();
-    } catch (error) {
+    } catch {
       message.error('删除评论失败');
     }
   };
@@ -318,7 +318,7 @@ const AlbumDetail = () => {
       setReplyingTo(null);
       await loadReplies(reviewId);
       setExpandedReplies(prev => ({ ...prev, [reviewId]: true }));
-    } catch (error) {
+    } catch {
       message.error('提交回复失败');
     } finally {
       setSubmittingReply(false);
@@ -330,7 +330,7 @@ const AlbumDetail = () => {
       await repliesApi.delete(replyId);
       message.success('回复已删除');
       await loadReplies(reviewId);
-    } catch (error) {
+    } catch {
       message.error('删除回复失败');
     }
   };
@@ -570,7 +570,12 @@ const AlbumDetail = () => {
                     }
                     title={
                       <div>
-                        <span style={styles.reviewUsername}>{review.username}</span>
+                        <span
+                          style={{ ...styles.reviewUsername, cursor: 'pointer' }}
+                          onClick={() => navigate(`/users/${review.userId}`)}
+                        >
+                          {review.username}
+                        </span>
                         <Rate 
                           disabled 
                           value={review.rating} 
@@ -639,7 +644,12 @@ const AlbumDetail = () => {
                           />
                           <div style={{ flex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={styles.replyUsername}>{reply.username}</span>
+                              <span
+                                style={{ ...styles.replyUsername, cursor: 'pointer' }}
+                                onClick={() => navigate(`/users/${reply.userId}`)}
+                              >
+                                {reply.username}
+                              </span>
                               <span style={styles.replyDate}>
                                 {new Date(reply.createdAt).toLocaleDateString()}
                               </span>

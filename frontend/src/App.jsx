@@ -13,6 +13,7 @@ import EditAlbum from './pages/EditAlbum';
 import Profile from './pages/Profile';
 import Artists from './pages/Artists';
 import Blog from './pages/Blog';
+import UserHome from './pages/UserHome';
 
 // 暖色系主题配置
 const warmTheme = {
@@ -70,6 +71,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/users/:id" element={<UserHome />} />
               <Route path="/artists" element={<Artists />} />
               <Route path="/blog" element={<Blog />} />
             </Routes>

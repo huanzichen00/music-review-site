@@ -3,7 +3,7 @@ import {
   Card, Form, Input, Button, Typography, message, Avatar, 
   Spin, Descriptions, Statistic, Row, Col, Divider, Upload
 } from 'antd';
-import { UserOutlined, EditOutlined, SaveOutlined, UploadOutlined, LoadingOutlined, PlusOutlined } from '@ant-design/icons';
+import { UserOutlined, EditOutlined, SaveOutlined, LoadingOutlined, PlusOutlined } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 import { usersApi } from '../api/users';
 import { useNavigate } from 'react-router-dom';
@@ -19,7 +19,7 @@ const Profile = () => {
   const [profile, setProfile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
-  const { isAuthenticated, user, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,24 +31,23 @@ const Profile = () => {
       navigate('/login');
       return;
     }
+    const loadProfile = async () => {
+      setLoading(true);
+      try {
+        const response = await usersApi.getMyProfile();
+        setProfile(response.data);
+        setAvatarUrl(response.data.avatarUrl || '');
+        form.setFieldsValue({
+          bio: response.data.bio || '',
+        });
+      } catch {
+        message.error('加载个人资料失败');
+      } finally {
+        setLoading(false);
+      }
+    };
     loadProfile();
-  }, [authLoading, isAuthenticated]);
-
-  const loadProfile = async () => {
-    setLoading(true);
-    try {
-      const response = await usersApi.getMyProfile();
-      setProfile(response.data);
-      setAvatarUrl(response.data.avatarUrl || '');
-      form.setFieldsValue({
-        bio: response.data.bio || '',
-      });
-    } catch (error) {
-      message.error('加载个人资料失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [authLoading, form, isAuthenticated, navigate]);
 
   const handleUpload = async (file) => {
     // Validate file type
@@ -173,12 +172,17 @@ const Profile = () => {
             </div>
           </div>
           {!editing && (
-            <Button 
-              icon={<EditOutlined />} 
-              onClick={() => setEditing(true)}
-            >
-              编辑资料
-            </Button>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <Button onClick={() => navigate(`/users/${profile?.id}`)}>
+                查看公开主页
+              </Button>
+              <Button
+                icon={<EditOutlined />}
+                onClick={() => setEditing(true)}
+              >
+                编辑资料
+              </Button>
+            </div>
           )}
         </div>
 
