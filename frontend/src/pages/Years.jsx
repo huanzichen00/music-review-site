@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { albumsApi } from '../api/albums';
 import { artistsApi } from '../api/artists';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title } = Typography;
 
 const styles = {
   pageTitle: {
@@ -26,21 +26,20 @@ const styles = {
     color: '#5D4037',
     marginBottom: 8,
   },
-  meta: {
-    color: '#8D6E63',
-    fontWeight: 600,
+  coverWrap: {
+    width: '100%',
+    aspectRatio: '1 / 1',
+    borderRadius: 10,
+    overflow: 'hidden',
+    background: 'linear-gradient(145deg, #F5E6D3 0%, #E8D5C4 100%)',
+    marginBottom: 10,
   },
-};
-
-const getYearHint = (year) => {
-  if (year < 1960) return '约属战后流行音乐早期阶段';
-  if (year < 1970) return '约属摇滚黄金年代开端';
-  if (year < 1980) return '约属经典摇滚与前卫摇滚活跃期';
-  if (year < 1990) return '约属新浪潮与重型音乐扩张期';
-  if (year < 2000) return '约属另类与独立音乐上升期';
-  if (year < 2010) return '约属数字音乐转型早期';
-  if (year < 2020) return '约属流媒体主导阶段';
-  return '约属当代流媒体深度发展阶段';
+  coverImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    display: 'block',
+  },
 };
 
 const Years = () => {
@@ -48,7 +47,12 @@ const Years = () => {
   const [years, setYears] = useState([]);
   const [albumCountByYear, setAlbumCountByYear] = useState(new Map());
   const [formedBandCountByYear, setFormedBandCountByYear] = useState(new Map());
+  const [yearCoverByYear, setYearCoverByYear] = useState(new Map());
   const navigate = useNavigate();
+  const resolveCoverUrl = (url) => {
+    if (!url) return '';
+    return url.startsWith('/api') ? new URL(url, window.location.origin).toString() : url;
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -65,11 +69,16 @@ const Years = () => {
 
         const allAlbums = albumsRes.data || [];
         const albumCountMap = new Map();
+        const coverMap = new Map();
         allAlbums.forEach((album) => {
           if (!album?.releaseYear) return;
           albumCountMap.set(album.releaseYear, (albumCountMap.get(album.releaseYear) || 0) + 1);
+          if (!coverMap.has(album.releaseYear) && album.coverUrl) {
+            coverMap.set(album.releaseYear, album.coverUrl);
+          }
         });
         setAlbumCountByYear(albumCountMap);
+        setYearCoverByYear(coverMap);
 
         const allArtists = artistsRes.data || [];
         const formedCountMap = new Map();
@@ -94,9 +103,9 @@ const Years = () => {
         year,
         albumCount: albumCountByYear.get(year) || 0,
         formedBandCount: formedBandCountByYear.get(year) || 0,
-        hint: getYearHint(year),
+        coverUrl: yearCoverByYear.get(year) || '',
       })),
-    [years, albumCountByYear, formedBandCountByYear]
+    [years, albumCountByYear, formedBandCountByYear, yearCoverByYear]
   );
 
   return (
@@ -120,12 +129,13 @@ const Years = () => {
                 onClick={() => navigate(`/music/years/${item.year}`)}
               >
                 <Title level={4} style={styles.yearName}>{item.year}</Title>
-                <Paragraph>{item.hint}</Paragraph>
+                <div style={styles.coverWrap}>
+                  {item.coverUrl ? (
+                    <img src={resolveCoverUrl(item.coverUrl)} alt={`${item.year} 年专辑封面`} style={styles.coverImage} />
+                  ) : null}
+                </div>
                 <Tag color="gold">{item.albumCount} 张专辑</Tag>
                 <Tag color="processing">{item.formedBandCount} 支当年成立乐队</Tag>
-                <div style={{ marginTop: 10 }}>
-                  <Text style={styles.meta}>点击查看该年份专辑与成立乐队</Text>
-                </div>
               </Card>
             </Col>
           ))}
