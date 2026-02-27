@@ -31,6 +31,32 @@ const styles = {
     border: '1px solid #E5B992',
     background: 'linear-gradient(145deg, #FFF8EE 0%, #FFE9D6 100%)',
   },
+  heroRow: {
+    display: 'flex',
+    gap: 20,
+    alignItems: 'flex-start',
+    flexWrap: 'wrap',
+  },
+  photoWrap: {
+    width: 240,
+    maxWidth: '100%',
+    aspectRatio: '1 / 1',
+    borderRadius: 12,
+    overflow: 'hidden',
+    background: 'linear-gradient(145deg, #F5E6D3 0%, #E8D5C4 100%)',
+    border: '1px solid #E5B992',
+    flexShrink: 0,
+  },
+  photo: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    display: 'block',
+  },
+  heroContent: {
+    flex: 1,
+    minWidth: 280,
+  },
 };
 
 const ArtistDetail = () => {
@@ -38,6 +64,16 @@ const ArtistDetail = () => {
   const [artist, setArtist] = useState(null);
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
+  const resolveMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    if (url.startsWith('/api') || url.startsWith('/')) {
+      return new URL(url, window.location.origin).toString();
+    }
+    return url;
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -77,20 +113,44 @@ const ArtistDetail = () => {
   return (
     <div>
       <Card style={styles.artistCard}>
-        <h1 style={styles.pageTitle}>{artist.name}</h1>
-        <div style={styles.metaRow}>
-          {artist.country ? <Tag color="processing">地区：{artist.country}</Tag> : null}
-          {artist.formedYear ? <Tag color="gold">成立：{artist.formedYear}</Tag> : null}
-          {artist.genre ? <Tag color="purple">风格：{artist.genre}</Tag> : null}
-          {artist.memberCount ? <Tag color="cyan">成员：{artist.memberCount} 人</Tag> : null}
-          {artist.status ? <Tag color={artist.status === '活跃' ? 'success' : 'default'}>{artist.status}</Tag> : null}
-          <Tag color="blue">专辑：{albums.length} 张</Tag>
+        <div style={styles.heroRow}>
+          <div style={styles.photoWrap}>
+            {artist.photoUrl ? (
+              <img src={resolveMediaUrl(artist.photoUrl)} alt={`${artist.name} 成员照`} style={styles.photo} />
+            ) : (
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 80,
+                  opacity: 0.45,
+                }}
+              >
+                🎸
+              </div>
+            )}
+          </div>
+
+          <div style={styles.heroContent}>
+            <h1 style={styles.pageTitle}>{artist.name}</h1>
+            <div style={styles.metaRow}>
+              {artist.country ? <Tag color="processing">地区：{artist.country}</Tag> : null}
+              {artist.formedYear ? <Tag color="gold">成立：{artist.formedYear}</Tag> : null}
+              {artist.genre ? <Tag color="purple">风格：{artist.genre}</Tag> : null}
+              {artist.memberCount ? <Tag color="cyan">成员：{artist.memberCount} 人</Tag> : null}
+              {artist.status ? <Tag color={artist.status === '活跃' ? 'success' : 'default'}>{artist.status}</Tag> : null}
+              <Tag color="blue">专辑：{albums.length} 张</Tag>
+            </div>
+            {artist.description ? (
+              <Paragraph>{artist.description}</Paragraph>
+            ) : (
+              <Text type="secondary">暂无乐队简介</Text>
+            )}
+          </div>
         </div>
-        {artist.description ? (
-          <Paragraph>{artist.description}</Paragraph>
-        ) : (
-          <Text type="secondary">暂无乐队简介</Text>
-        )}
       </Card>
 
       <Title level={3} style={styles.sectionTitle}>专辑</Title>
