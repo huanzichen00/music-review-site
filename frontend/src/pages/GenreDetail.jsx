@@ -3,6 +3,7 @@ import { Card, Col, Empty, Row, Spin, Tag, Typography, message } from 'antd';
 import { useParams } from 'react-router-dom';
 import { genresApi } from '../api/genres';
 import { albumsApi } from '../api/albums';
+import { artistsApi } from '../api/artists';
 import AlbumCard from '../components/AlbumCard';
 
 const { Title, Text, Paragraph } = Typography;
@@ -31,6 +32,7 @@ const GenreDetail = () => {
   const { id } = useParams();
   const [genre, setGenre] = useState(null);
   const [albums, setAlbums] = useState([]);
+  const [artists, setArtists] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,6 +45,14 @@ const GenreDetail = () => {
         ]);
         setGenre(genreRes.data || null);
         setAlbums(albumsRes.data || []);
+
+        const artistsRes = await artistsApi.getAll();
+        const allArtists = artistsRes.data || [];
+        const genreName = (genreRes.data?.name || '').trim().toLowerCase();
+        const sameGenreArtists = allArtists.filter(
+          (artist) => (artist?.genre || '').trim().toLowerCase() === genreName
+        );
+        setArtists(sameGenreArtists);
       } catch {
         message.error('加载风格详情失败');
       } finally {
@@ -53,21 +63,35 @@ const GenreDetail = () => {
   }, [id]);
 
   const bands = useMemo(() => {
-    const bandMap = new Map();
+    const albumCountByArtist = new Map();
     albums.forEach((album) => {
       const key = album.artistId || album.artistName;
       if (!key) return;
-      if (!bandMap.has(key)) {
-        bandMap.set(key, {
-          artistId: album.artistId || null,
-          artistName: album.artistName || '未知乐队',
-          albumCount: 0,
-        });
-      }
-      bandMap.get(key).albumCount += 1;
+      albumCountByArtist.set(key, (albumCountByArtist.get(key) || 0) + 1);
     });
+
+    const bandMap = new Map();
+    artists.forEach((artist) => {
+      const key = artist.id || artist.name;
+      bandMap.set(key, {
+        artistId: artist.id || null,
+        artistName: artist.name || '未知乐队',
+        albumCount: albumCountByArtist.get(key) || 0,
+      });
+    });
+
+    albums.forEach((album) => {
+      const key = album.artistId || album.artistName;
+      if (!key || bandMap.has(key)) return;
+      bandMap.set(key, {
+        artistId: album.artistId || null,
+        artistName: album.artistName || '未知乐队',
+        albumCount: albumCountByArtist.get(key) || 0,
+      });
+    });
+
     return Array.from(bandMap.values()).sort((a, b) => b.albumCount - a.albumCount);
-  }, [albums]);
+  }, [albums, artists]);
 
   if (loading) {
     return (
