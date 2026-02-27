@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, AutoComplete, Button, Card, Input, InputNumber, Space, Spin, Tag, Typography, message } from 'antd';
-import { TrophyOutlined, ReloadOutlined, RocketOutlined, AppstoreOutlined } from '@ant-design/icons';
+import { TrophyOutlined, ReloadOutlined, RocketOutlined, AppstoreOutlined, TagsOutlined } from '@ant-design/icons';
 import { artistsApi } from '../api/artists';
 
 const { Title, Text } = Typography;
@@ -70,6 +70,15 @@ const styles = {
     fontWeight: 700,
     boxShadow: '0 4px 12px rgba(47, 140, 82, 0.24)',
     background: 'linear-gradient(135deg, #2D9A56 0%, #217A44 100%)',
+    border: 'none',
+  },
+  genresLinkButton: {
+    marginTop: 12,
+    height: 44,
+    borderRadius: 10,
+    fontWeight: 700,
+    boxShadow: '0 4px 12px rgba(184, 134, 11, 0.22)',
+    background: 'linear-gradient(135deg, #C99B39 0%, #A4781A 100%)',
     border: 'none',
   },
   actionRow: {
@@ -432,17 +441,30 @@ const GuessBand = () => {
               题库数据统一来自后端艺术家接口。每轮最多猜 {maxAttempts} 次，猜中或用尽机会后可开始下一题。
             </Text>
           </div>
-          <Button
-            type="primary"
-            size="large"
-            icon={<AppstoreOutlined />}
-            href="/music/artists"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={styles.artistsLinkButton}
-          >
-            查看所有乐队
-          </Button>
+          <Space size={10} wrap>
+            <Button
+              type="primary"
+              size="large"
+              icon={<AppstoreOutlined />}
+              href="/music/artists"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={styles.artistsLinkButton}
+            >
+              查看所有乐队
+            </Button>
+            <Button
+              type="primary"
+              size="large"
+              icon={<TagsOutlined />}
+              href="/music/genres"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={styles.genresLinkButton}
+            >
+              查看所有风格
+            </Button>
+          </Space>
         </div>
 
         {bands.length === 0 ? (
