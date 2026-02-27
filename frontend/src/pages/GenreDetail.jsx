@@ -34,6 +34,12 @@ const normalizeGenre = (value) =>
     .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, ' ')
     .trim();
 
+const splitGenres = (value) =>
+  String(value || '')
+    .split(/[\/|,&，、;；]+/)
+    .map((part) => normalizeGenre(part))
+    .filter(Boolean);
+
 const GenreDetail = () => {
   const { id } = useParams();
   const [genre, setGenre] = useState(null);
@@ -57,13 +63,11 @@ const GenreDetail = () => {
         const genreName = normalizeGenre(genreRes.data?.name || '');
         const sameGenreArtists = allArtists.filter(
           (artist) => {
-            const artistGenre = normalizeGenre(artist?.genre || '');
-            if (!artistGenre || !genreName) return false;
-            return (
-              artistGenre === genreName ||
-              artistGenre.includes(genreName) ||
-              genreName.includes(artistGenre)
-            );
+            const artistGenreRaw = artist?.genre || '';
+            if (!artistGenreRaw || !genreName) return false;
+            const parts = splitGenres(artistGenreRaw);
+            if (parts.length === 0) return false;
+            return parts.includes(genreName);
           }
         );
         setArtists(sameGenreArtists);
