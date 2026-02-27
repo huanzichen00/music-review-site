@@ -15,6 +15,7 @@ import Artists from './pages/Artists';
 import ArtistDetail from './pages/ArtistDetail';
 import Genres from './pages/Genres';
 import GenreDetail from './pages/GenreDetail';
+import Years from './pages/Years';
 import YearDetail from './pages/YearDetail';
 import Blog from './pages/Blog';
 import UserHome from './pages/UserHome';
@@ -70,6 +71,7 @@ function App() {
               <Route path="/music/artists/:id" element={<ArtistDetail />} />
               <Route path="/music/genres" element={<Genres />} />
               <Route path="/music/genres/:id" element={<GenreDetail />} />
+              <Route path="/music/years" element={<Years />} />
               <Route path="/music/years/:year" element={<YearDetail />} />
               <Route path="/music/guess-band" element={<GuessBand />} />
               <Route path="/music/albums/:id" element={<AlbumDetail />} />
@@ -89,6 +91,7 @@ function App() {
               <Route path="/artists/:id" element={<ArtistDetail />} />
               <Route path="/genres" element={<Genres />} />
               <Route path="/genres/:id" element={<GenreDetail />} />
+              <Route path="/years" element={<Years />} />
               <Route path="/years/:year" element={<YearDetail />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="*" element={<Navigate to="/music/home" replace />} />
