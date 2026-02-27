@@ -1,10 +1,55 @@
 USE music_review;
 
--- 1) 确保列存在（MySQL 8+）
-ALTER TABLE artists
-  ADD COLUMN IF NOT EXISTS genre VARCHAR(80) NULL COMMENT '乐队风格',
-  ADD COLUMN IF NOT EXISTS member_count INT NULL COMMENT '成员人数',
-  ADD COLUMN IF NOT EXISTS status VARCHAR(20) NULL COMMENT '状态: 活跃/解散';
+-- 1) 确保列存在（兼容 MySQL 5.7/8）
+SET @db_name := DATABASE();
+
+SET @has_genre := (
+  SELECT COUNT(*)
+  FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = @db_name
+    AND TABLE_NAME = 'artists'
+    AND COLUMN_NAME = 'genre'
+);
+SET @sql := IF(
+  @has_genre = 0,
+  "ALTER TABLE artists ADD COLUMN genre VARCHAR(80) NULL COMMENT '乐队风格'",
+  "SELECT 'genre exists' AS msg"
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_member_count := (
+  SELECT COUNT(*)
+  FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = @db_name
+    AND TABLE_NAME = 'artists'
+    AND COLUMN_NAME = 'member_count'
+);
+SET @sql := IF(
+  @has_member_count = 0,
+  "ALTER TABLE artists ADD COLUMN member_count INT NULL COMMENT '成员人数'",
+  "SELECT 'member_count exists' AS msg"
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_status := (
+  SELECT COUNT(*)
+  FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = @db_name
+    AND TABLE_NAME = 'artists'
+    AND COLUMN_NAME = 'status'
+);
+SET @sql := IF(
+  @has_status = 0,
+  "ALTER TABLE artists ADD COLUMN status VARCHAR(20) NULL COMMENT '状态: 活跃/解散'",
+  "SELECT 'status exists' AS msg"
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- 2) 临时数据表
 DROP TEMPORARY TABLE IF EXISTS tmp_artist_seed;
