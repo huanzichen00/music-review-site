@@ -8,7 +8,8 @@ import {
   AppstoreOutlined,
   HomeOutlined,
   BookOutlined,
-  CustomerServiceOutlined
+  CustomerServiceOutlined,
+  TagsOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 import { resolveAvatarUrl } from '../utils/avatar';
@@ -76,6 +77,9 @@ const Layout = ({ children }) => {
     }
     if (location.pathname.startsWith('/music/artists') || location.pathname.startsWith('/artists')) {
       return '/music/artists';
+    }
+    if (location.pathname.startsWith('/music/genres') || location.pathname.startsWith('/genres')) {
+      return '/music/genres';
     }
     return '/music/home';
   })();
@@ -258,6 +262,13 @@ const Layout = ({ children }) => {
             onClick={() => navigate('/music/artists')}
           >
             乐队
+          </Button>
+          <Button
+            type={selectedMusicSubKey === '/music/genres' ? 'primary' : 'default'}
+            icon={<TagsOutlined />}
+            onClick={() => navigate('/music/genres')}
+          >
+            风格
           </Button>
           <Button
             type={selectedMusicSubKey === '/music/guess-band' ? 'primary' : 'default'}
