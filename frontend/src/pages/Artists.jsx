@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
+  Avatar,
   Button,
   Card,
   Form,
@@ -29,6 +30,16 @@ const Artists = () => {
   const [saving, setSaving] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const resolveMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    if (url.startsWith('/api') || url.startsWith('/')) {
+      return new URL(url, window.location.origin).toString();
+    }
+    return url;
+  };
 
   useEffect(() => {
     loadArtists();
@@ -167,6 +178,15 @@ const Artists = () => {
               }
             >
               <List.Item.Meta
+                avatar={
+                  <Avatar
+                    size={52}
+                    src={artist.photoUrl ? resolveMediaUrl(artist.photoUrl) : undefined}
+                    style={{ border: '1px solid #E5B992', backgroundColor: '#E8D5C4' }}
+                  >
+                    🎸
+                  </Avatar>
+                }
                 title={
                   <div>
                     <span style={{ 
