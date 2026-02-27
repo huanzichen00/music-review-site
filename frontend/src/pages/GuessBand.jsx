@@ -4,34 +4,6 @@ import { TrophyOutlined, ReloadOutlined, RocketOutlined } from '@ant-design/icon
 import { artistsApi } from '../api/artists';
 
 const { Title, Text } = Typography;
-const ALLOWED_BAND_NAMES = new Set([
-  'Dream Theater',
-  'The Beatles',
-  'The Rolling Stones',
-  'Pink Floyd',
-  'Queen',
-  'Led Zeppelin',
-  'Nirvana',
-  'Radiohead',
-  'Oasis',
-  'U2',
-  'Metallica',
-  'Iron Maiden',
-  'Black Sabbath',
-  'AC/DC',
-  'Guns N\' Roses',
-  'Green Day',
-  'Blink-182',
-  'Red Hot Chili Peppers',
-  'My Chemical Romance',
-  'Bon Jovi',
-  'Eagles',
-  'The Police',
-  'Scorpions',
-  'Deep Purple',
-  'Journey',
-  'X Japan',
-]);
 
 const styles = {
   wrapper: {
@@ -217,7 +189,6 @@ const GuessBand = () => {
         const allArtists = response.data || [];
         const gameBands = allArtists
           .filter((artist) =>
-            ALLOWED_BAND_NAMES.has((artist?.name || '').trim()) &&
             artist?.name &&
             artist?.country &&
             artist?.formedYear &&
