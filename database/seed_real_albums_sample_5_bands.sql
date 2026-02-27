@@ -172,7 +172,26 @@ INSERT INTO tmp_real_tracks (artist_name, album_title, track_number, track_title
 ('Black Sabbath', 'Master of Reality', 7, 'Solitude', 348),
 ('Black Sabbath', 'Master of Reality', 8, 'Into the Void', 368);
 
--- 3) Insert albums (idempotent)
+-- 2.1) 仅对“当前没有专辑”的艺术家生效，避免与现有专辑冲突
+DROP TEMPORARY TABLE IF EXISTS tmp_seed_scope_artists;
+CREATE TEMPORARY TABLE tmp_seed_scope_artists (
+  artist_id BIGINT PRIMARY KEY,
+  artist_name VARCHAR(100) COLLATE utf8mb4_unicode_ci
+) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO tmp_seed_scope_artists (artist_id, artist_name)
+SELECT
+  a.id,
+  a.name
+FROM artists a
+JOIN (
+  SELECT DISTINCT artist_name FROM tmp_real_albums
+) ra ON ra.artist_name COLLATE utf8mb4_unicode_ci = a.name COLLATE utf8mb4_unicode_ci
+LEFT JOIN albums al ON al.artist_id = a.id
+GROUP BY a.id, a.name
+HAVING COUNT(al.id) = 0;
+
+-- 3) Insert albums (idempotent, scoped)
 INSERT INTO albums (title, title_initial, artist_id, release_year, cover_url, description, created_by)
 SELECT
   ra.album_title,
@@ -180,16 +199,16 @@ SELECT
     WHEN UPPER(LEFT(ra.album_title, 1)) REGEXP '[A-Z]' THEN UPPER(LEFT(ra.album_title, 1))
     ELSE '#'
   END AS title_initial,
-  a.id AS artist_id,
+  ssa.artist_id AS artist_id,
   ra.release_year,
   ra.cover_url,
   ra.description,
   NULL AS created_by
 FROM tmp_real_albums ra
-JOIN artists a
-  ON a.name COLLATE utf8mb4_unicode_ci = ra.artist_name COLLATE utf8mb4_unicode_ci
+JOIN tmp_seed_scope_artists ssa
+  ON ssa.artist_name COLLATE utf8mb4_unicode_ci = ra.artist_name COLLATE utf8mb4_unicode_ci
 LEFT JOIN albums al
-  ON al.artist_id = a.id
+  ON al.artist_id = ssa.artist_id
  AND al.title COLLATE utf8mb4_unicode_ci = ra.album_title COLLATE utf8mb4_unicode_ci
 WHERE al.id IS NULL;
 
@@ -207,10 +226,10 @@ SELECT
   ra.artist_name,
   ra.album_title
 FROM tmp_real_albums ra
-JOIN artists a
-  ON a.name COLLATE utf8mb4_unicode_ci = ra.artist_name COLLATE utf8mb4_unicode_ci
+JOIN tmp_seed_scope_artists ssa
+  ON ssa.artist_name COLLATE utf8mb4_unicode_ci = ra.artist_name COLLATE utf8mb4_unicode_ci
 JOIN albums al
-  ON al.artist_id = a.id
+  ON al.artist_id = ssa.artist_id
  AND al.title COLLATE utf8mb4_unicode_ci = ra.album_title COLLATE utf8mb4_unicode_ci;
 
 -- 5) Insert tracks (idempotent by album_id + track_number)
@@ -265,6 +284,9 @@ WHERE ra.secondary_genre IS NOT NULL
 COMMIT;
 
 -- 8) Preview
+SELECT COUNT(*) AS scoped_artists_count
+FROM tmp_seed_scope_artists;
+
 SELECT
   a.name AS artist_name,
   al.title,
