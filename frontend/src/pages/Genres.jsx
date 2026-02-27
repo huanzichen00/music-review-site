@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { Card, Col, Empty, Row, Spin, Typography, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { genresApi } from '../api/genres';
+import { albumsApi } from '../api/albums';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title } = Typography;
 
 const styles = {
   pageTitle: {
@@ -15,19 +16,49 @@ const styles = {
     letterSpacing: '1px',
   },
   card: {
-    borderRadius: 12,
+    textAlign: 'center',
+    background: 'linear-gradient(145deg, #FFFCF8 0%, #FFF8F0 100%)',
+    borderRadius: '12px',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
     border: '1px solid #E5B992',
-    background: 'linear-gradient(145deg, #FFF8EE 0%, #FFE9D6 100%)',
+    aspectRatio: '1 / 1',
     cursor: 'pointer',
+  },
+  cardWithCover: {
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  cardOverlay: {
+    position: 'absolute',
+    inset: 0,
+    background: 'linear-gradient(180deg, rgba(24, 17, 13, 0.35) 0%, rgba(24, 17, 13, 0.65) 100%)',
+  },
+  cardContent: {
+    position: 'relative',
+    zIndex: 1,
     height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    textAlign: 'center',
+    padding: '12px',
   },
   name: {
-    color: '#5D4037',
-    marginBottom: 8,
+    fontFamily: "'Cormorant Garamond', 'Noto Serif SC', Georgia, serif",
+    fontSize: 'clamp(17px, 2.2vw, 22px)',
+    fontWeight: 700,
+    color: '#4E342E',
+    lineHeight: 1.25,
+    marginBottom: 0,
   },
   count: {
-    color: '#8D6E63',
+    fontFamily: "'Cormorant Garamond', serif",
+    color: '#6D4C41',
+    fontSize: 'clamp(13px, 1.5vw, 16px)',
     fontWeight: 600,
+    marginTop: '4px',
   },
 };
 
@@ -35,13 +66,41 @@ const Genres = () => {
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const resolveMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    if (url.startsWith('/api') || url.startsWith('/')) {
+      return new URL(url, window.location.origin).toString();
+    }
+    return url;
+  };
 
   useEffect(() => {
     const loadGenres = async () => {
       setLoading(true);
       try {
         const response = await genresApi.getAll();
-        setGenres(response.data || []);
+        const genresWithCover = await Promise.all(
+          (response.data || []).map(async (genre) => {
+            if (!genre?.id || (genre.albumCount ?? 0) <= 0) {
+              return genre;
+            }
+            try {
+              const genreAlbumsRes = await albumsApi.getByGenre(genre.id);
+              const genreAlbums = genreAlbumsRes.data || [];
+              const pickedAlbum = genreAlbums.find((a) => a.coverUrl) || genreAlbums[0];
+              return {
+                ...genre,
+                genreCoverUrl: pickedAlbum?.coverUrl || null,
+              };
+            } catch {
+              return genre;
+            }
+          })
+        );
+        setGenres(genresWithCover);
       } catch {
         message.error('加载风格失败');
       } finally {
@@ -68,14 +127,41 @@ const Genres = () => {
             <Col key={genre.id} xs={24} sm={12} md={8} lg={6}>
               <Card
                 hoverable
-                style={styles.card}
+                style={{
+                  ...styles.card,
+                  ...(genre.genreCoverUrl
+                    ? {
+                        ...styles.cardWithCover,
+                        backgroundImage: `url(${resolveMediaUrl(genre.genreCoverUrl)})`,
+                      }
+                    : {}),
+                }}
                 onClick={() => navigate(`/music/genres/${genre.id}`)}
               >
-                <Title level={4} style={styles.name}>{genre.name}</Title>
-                <Paragraph ellipsis={{ rows: 2 }}>
-                  {genre.description || '暂无风格描述'}
-                </Paragraph>
-                <Text style={styles.count}>{genre.albumCount || 0} 张专辑</Text>
+                {genre.genreCoverUrl && <div style={styles.cardOverlay} />}
+                <div style={styles.cardContent}>
+                  <Title
+                    level={4}
+                    style={{
+                      ...styles.name,
+                      ...(genre.genreCoverUrl
+                        ? { color: '#FFF7EE', textShadow: '0 1px 3px rgba(0,0,0,0.55)' }
+                        : {}),
+                    }}
+                  >
+                    {genre.name}
+                  </Title>
+                  <div
+                    style={{
+                      ...styles.count,
+                      ...(genre.genreCoverUrl
+                        ? { color: '#FFEBD9', textShadow: '0 1px 3px rgba(0,0,0,0.55)' }
+                        : {}),
+                    }}
+                  >
+                    {genre.albumCount || 0} 张专辑
+                  </div>
+                </div>
               </Card>
             </Col>
           ))}
