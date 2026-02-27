@@ -28,6 +28,12 @@ const styles = {
   },
 };
 
+const normalizeGenre = (value) =>
+  (value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, ' ')
+    .trim();
+
 const GenreDetail = () => {
   const { id } = useParams();
   const [genre, setGenre] = useState(null);
@@ -48,9 +54,17 @@ const GenreDetail = () => {
 
         const artistsRes = await artistsApi.getAll();
         const allArtists = artistsRes.data || [];
-        const genreName = (genreRes.data?.name || '').trim().toLowerCase();
+        const genreName = normalizeGenre(genreRes.data?.name || '');
         const sameGenreArtists = allArtists.filter(
-          (artist) => (artist?.genre || '').trim().toLowerCase() === genreName
+          (artist) => {
+            const artistGenre = normalizeGenre(artist?.genre || '');
+            if (!artistGenre || !genreName) return false;
+            return (
+              artistGenre === genreName ||
+              artistGenre.includes(genreName) ||
+              genreName.includes(artistGenre)
+            );
+          }
         );
         setArtists(sameGenreArtists);
       } catch {
