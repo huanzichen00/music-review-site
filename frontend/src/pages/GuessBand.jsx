@@ -4,6 +4,38 @@ import { TrophyOutlined, ReloadOutlined, RocketOutlined } from '@ant-design/icon
 import { artistsApi } from '../api/artists';
 
 const { Title, Text } = Typography;
+<<<<<<< Updated upstream
+=======
+const ALLOWED_BAND_NAMES = new Set([
+  'Dream Theater',
+  'The Beatles',
+  'The Rolling Stones',
+  'Pink Floyd',
+  'Queen',
+  'Led Zeppelin',
+  'Nirvana',
+  'Radiohead',
+  'Oasis',
+  'U2',
+  'Metallica',
+  'Iron Maiden',
+  'Black Sabbath',
+  'AC/DC',
+  'Guns N\' Roses',
+  'Green Day',
+  'Blink-182',
+  'Red Hot Chili Peppers',
+  'My Chemical Romance',
+  'Bon Jovi',
+  'Eagles',
+  'The Police',
+  'Scorpions',
+  'Deep Purple',
+  'Journey',
+  'X Japan',
+]);
+const MAX_ATTEMPTS = 6;
+>>>>>>> Stashed changes
 
 const styles = {
   wrapper: {
@@ -180,6 +212,7 @@ const GuessBand = () => {
   const [guessInput, setGuessInput] = useState('');
   const [attempts, setAttempts] = useState([]);
   const [solved, setSolved] = useState(false);
+  const [roundOver, setRoundOver] = useState(false);
 
   useEffect(() => {
     const loadBands = async () => {
@@ -232,15 +265,21 @@ const GuessBand = () => {
     setGuessInput('');
     setAttempts([]);
     setSolved(false);
+    setRoundOver(false);
   };
 
-  const submitGuess = () => {
-    if (!guessInput.trim()) {
+  const submitGuess = (inputValue = guessInput) => {
+    const finalInput = typeof inputValue === 'string' ? inputValue : guessInput;
+    if (!finalInput.trim()) {
       message.warning('先输入一个乐队名');
       return;
     }
-    if (solved) {
-      message.info('这一轮已经猜中，点击“下一题”开始新一轮');
+    if (roundOver) {
+      message.info(
+        solved
+          ? '这一轮已经猜中，点击“下一题”开始新一轮'
+          : `本轮已用完 ${MAX_ATTEMPTS} 次机会，点击“下一题”开始新一轮`
+      );
       return;
     }
     if (!targetBand) {
@@ -248,7 +287,7 @@ const GuessBand = () => {
       return;
     }
 
-    const normalizedInput = normalizeBand(guessInput);
+    const normalizedInput = normalizeBand(finalInput);
     const matchedBand = bands.find((band) => normalizeBand(band.name) === normalizedInput);
 
     if (!matchedBand) {
@@ -270,7 +309,14 @@ const GuessBand = () => {
 
     if (isCorrect) {
       setSolved(true);
+      setRoundOver(true);
       message.success(`猜中了！答案是 ${targetBand.name}`);
+      return;
+    }
+
+    if (nextAttempts.length >= MAX_ATTEMPTS) {
+      setRoundOver(true);
+      message.error(`本轮最多尝试 ${MAX_ATTEMPTS} 次，答案是 ${targetBand.name}`);
     }
   };
 
@@ -286,16 +332,16 @@ const GuessBand = () => {
     <div style={styles.wrapper}>
       <Card style={styles.heroCard}>
         <Space size="middle" wrap>
-          <Tag color="success">无限模式</Tag>
+          <Tag color="success">最多 {MAX_ATTEMPTS} 次</Tag>
           <Tag color="gold">乐队库 {bands.length} 支</Tag>
-          <Text strong>本轮尝试 {attempts.length} 次</Text>
+          <Text strong>本轮尝试 {attempts.length}/{MAX_ATTEMPTS} 次</Text>
         </Space>
 
         <Title level={1} style={styles.title}>
           猜乐队
         </Title>
         <Text style={styles.subtitle}>
-          题库数据统一来自后端艺术家接口。输入你猜的乐队名并提交，猜中后可立即开始下一题（guess-band）。
+          题库数据统一来自后端艺术家接口。每轮最多猜 {MAX_ATTEMPTS} 次，猜中或用尽机会后可开始下一题。
         </Text>
 
         {bands.length === 0 ? (
@@ -324,22 +370,32 @@ const GuessBand = () => {
               if (event.key === 'Enter') {
                 submitGuess();
               }
+              if (
+                event.key === 'Tab' &&
+                guessInput.trim() &&
+                filteredBands.length > 0 &&
+                !roundOver
+              ) {
+                event.preventDefault();
+                submitGuess(filteredBands[0].name);
+              }
             }}
+            disabled={roundOver}
           />
-          <Button type="primary" size="large" icon={<RocketOutlined />} onClick={submitGuess}>
+          <Button type="primary" size="large" icon={<RocketOutlined />} onClick={() => submitGuess()} disabled={roundOver}>
             提交猜测
           </Button>
           <Button size="large" icon={<ReloadOutlined />} onClick={restartRound} disabled={!bands.length}>
-            {solved ? '下一题' : '换一题'}
+            {roundOver ? '下一题' : '换一题'}
           </Button>
         </div>
 
-        {solved ? (
+        {roundOver ? (
           <Card style={styles.answerCard}>
             <Space>
               <TrophyOutlined style={{ color: '#4CAF50' }} />
               <Text strong>
-                答案：{targetBand.name} | {targetBand.region} | {targetBand.genre} | {targetBand.yearFormed} |
+                {solved ? '猜中了！' : '本轮结束！'} 答案：{targetBand.name} | {targetBand.region} | {targetBand.genre} | {targetBand.yearFormed} |
                 {' '}{targetBand.members}人 | {targetBand.status}
               </Text>
             </Space>
