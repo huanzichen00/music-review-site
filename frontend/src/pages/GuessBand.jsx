@@ -418,7 +418,7 @@ const GuessBand = () => {
             <Text>上限</Text>
             <InputNumber
               min={1}
-              max={50}
+              max={100}
               value={maxAttempts}
               onChange={(value) => {
                 if (typeof value === 'number') {
@@ -576,6 +576,9 @@ const GuessBand = () => {
             <Tag color="success" style={{ width: 'fit-content' }}>快捷键</Tag>
             <Text style={styles.sideSubtitle}>
               按 Tab 键可快速选中并提交当前首个联想乐队。
+            </Text>
+            <Text style={styles.sideSubtitle}>
+              猜测次数上限支持自定义，范围为 1-100 次（默认 10 次）。
             </Text>
             <Text style={styles.sideSubtitle}>
               Enter：提交当前输入
