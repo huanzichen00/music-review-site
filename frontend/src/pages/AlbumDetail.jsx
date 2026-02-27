@@ -35,6 +35,8 @@ const styles = {
     fontWeight: 600,
     color: '#6D4C41',
     marginTop: '0',
+    cursor: 'pointer',
+    textDecoration: 'none',
   },
   coverContainer: {
     width: '100%',
@@ -386,14 +388,30 @@ const AlbumDetail = () => {
         {/* Album Info */}
         <Col xs={24} md={16}>
           <h1 style={styles.albumTitle}>{album.title}</h1>
-          <h2 style={styles.artistName}>{album.artistName}</h2>
+          <h2
+            style={styles.artistName}
+            onClick={() => {
+              if (album.artistId) {
+                navigate(`/music/artists/${album.artistId}`);
+              }
+            }}
+          >
+            {album.artistName}
+          </h2>
 
           <div style={{ marginBottom: '20px', marginTop: '16px' }}>
             {album.releaseYear && (
               <Tag color="orange" style={styles.tag}>{album.releaseYear}</Tag>
             )}
             {album.genres?.map((genre) => (
-              <Tag key={genre.id} color="gold" style={styles.tag}>{genre.name}</Tag>
+              <Tag
+                key={genre.id}
+                color="gold"
+                style={{ ...styles.tag, cursor: 'pointer' }}
+                onClick={() => navigate(`/music/genres/${genre.id}`)}
+              >
+                {genre.name}
+              </Tag>
             ))}
           </div>
 
