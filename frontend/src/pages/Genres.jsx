@@ -48,7 +48,7 @@ const styles = {
   name: {
     fontFamily: "'Cormorant Garamond', 'Noto Serif SC', Georgia, serif",
     fontSize: 'clamp(20px, 2.5vw, 26px)',
-    fontWeight: 800,
+    fontWeight: 700,
     color: '#4E342E',
     lineHeight: 1.25,
     marginBottom: 0,
@@ -59,7 +59,7 @@ const styles = {
     fontFamily: "'Cormorant Garamond', serif",
     color: '#6D4C41',
     fontSize: 'clamp(15px, 1.8vw, 18px)',
-    fontWeight: 700,
+    fontWeight: 600,
     marginTop: '4px',
     WebkitTextStroke: '0.35px rgba(58, 35, 28, 0.5)',
     textShadow: '0 1px 2px rgba(255, 248, 238, 0.45)',
