@@ -358,8 +358,10 @@ const Home = () => {
                   <Col key={genre.id} xs={12} sm={8} md={6} lg={4}>
                     <Card 
                       hoverable
+                      onClick={() => navigate(`/music/genres/${genre.id}`)}
                       style={{
                         ...styles.genreCard,
+                        cursor: 'pointer',
                         ...(genre.genreCoverUrl
                           ? {
                               ...styles.genreCardWithCover,
