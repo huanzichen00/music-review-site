@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-label="猜乐队新布局示意图">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F7E2C7"/>
+      <stop offset="100%" stop-color="#F1D6B3"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFF9F2"/>
+      <stop offset="100%" stop-color="#FFF4E8"/>
+    </linearGradient>
+    <linearGradient id="table" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2A1225"/>
+      <stop offset="100%" stop-color="#2F1530"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1440" height="900" fill="url(#bg)"/>
+
+  <rect x="70" y="90" width="300" height="730" rx="18" fill="url(#panel)" stroke="#E6D3BE"/>
+  <text x="96" y="140" font-size="32" fill="#4D3028" font-family="'Noto Serif SC', serif" font-weight="700">国家筛选</text>
+  <rect x="96" y="168" width="248" height="48" rx="11" fill="#FFFFFF" stroke="#E2CCB5"/>
+  <text x="112" y="199" font-size="22" fill="#9C8B7F" font-family="'Noto Sans SC', sans-serif">输入国家/地区，如 UK, US, 华语</text>
+  <text x="96" y="260" font-size="24" fill="#5A3A31" font-family="'Noto Sans SC', sans-serif" font-weight="600">匹配乐队</text>
+
+  <rect x="96" y="284" width="248" height="56" rx="10" fill="#F8EEE1" stroke="#E6D3BE"/>
+  <text x="112" y="318" font-size="24" fill="#4D3028" font-family="'Noto Sans SC', sans-serif">Queen</text>
+  <rect x="96" y="350" width="248" height="56" rx="10" fill="#F8EEE1" stroke="#E6D3BE"/>
+  <text x="112" y="384" font-size="24" fill="#4D3028" font-family="'Noto Sans SC', sans-serif">Radiohead</text>
+  <rect x="96" y="416" width="248" height="56" rx="10" fill="#F8EEE1" stroke="#E6D3BE"/>
+  <text x="112" y="450" font-size="24" fill="#4D3028" font-family="'Noto Sans SC', sans-serif">Iron Maiden</text>
+
+  <rect x="400" y="90" width="760" height="730" rx="18" fill="url(#panel)" stroke="#E6D3BE"/>
+  <text x="430" y="148" font-size="64" fill="#4D3028" font-family="'ZCOOL KuaiLe', 'Noto Sans SC', sans-serif">猜乐队</text>
+  <text x="430" y="196" font-size="30" fill="#7F6458" font-family="'Noto Sans SC', sans-serif">中间主玩法区保持当前结构，仅增加左右辅助栏</text>
+
+  <rect x="430" y="228" width="530" height="54" rx="12" fill="#FFFFFF" stroke="#E2CCB5"/>
+  <text x="450" y="263" font-size="28" fill="#B9A79A" font-family="'Noto Sans SC', sans-serif">输入乐队名，例：Radiohead / Queen / The Beatles</text>
+  <rect x="976" y="228" width="170" height="54" rx="12" fill="#C69A69"/>
+  <text x="1061" y="263" text-anchor="middle" font-size="30" fill="#FFF7ED" font-family="'Noto Sans SC', sans-serif" font-weight="700">提交猜测</text>
+
+  <text x="430" y="325" font-size="34" fill="#4D3028" font-family="'Noto Serif SC', serif" font-weight="700">最近猜测</text>
+
+  <rect x="430" y="350" width="716" height="430" rx="16" fill="url(#table)" stroke="#5A3150"/>
+  <rect x="448" y="372" width="190" height="54" rx="8" fill="#4C3345"/>
+  <rect x="646" y="372" width="110" height="54" rx="8" fill="#4C3345"/>
+  <rect x="764" y="372" width="140" height="54" rx="8" fill="#4C3345"/>
+  <rect x="912" y="372" width="96" height="54" rx="8" fill="#4C3345"/>
+  <rect x="1016" y="372" width="72" height="54" rx="8" fill="#4C3345"/>
+  <rect x="1096" y="372" width="132" height="54" rx="8" fill="#4C3345"/>
+  <text x="543" y="406" text-anchor="middle" font-size="30" fill="#F7ECF3" font-family="'Noto Sans SC', sans-serif" font-weight="700">BAND</text>
+  <text x="701" y="406" text-anchor="middle" font-size="30" fill="#F7ECF3" font-family="'Noto Sans SC', sans-serif" font-weight="700">REGION</text>
+  <text x="834" y="406" text-anchor="middle" font-size="30" fill="#F7ECF3" font-family="'Noto Sans SC', sans-serif" font-weight="700">GENRE</text>
+  <text x="960" y="406" text-anchor="middle" font-size="30" fill="#F7ECF3" font-family="'Noto Sans SC', sans-serif" font-weight="700">YEAR</text>
+  <text x="1052" y="406" text-anchor="middle" font-size="30" fill="#F7ECF3" font-family="'Noto Sans SC', sans-serif" font-weight="700">MEM</text>
+  <text x="1162" y="406" text-anchor="middle" font-size="30" fill="#F7ECF3" font-family="'Noto Sans SC', sans-serif" font-weight="700">STATUS</text>
+
+  <rect x="1178" y="90" width="192" height="730" rx="18" fill="url(#panel)" stroke="#E6D3BE"/>
+  <text x="1208" y="140" font-size="32" fill="#4D3028" font-family="'Noto Serif SC', serif" font-weight="700">Tips</text>
+
+  <rect x="1208" y="170" width="132" height="44" rx="10" fill="#EAF7DD" stroke="#CDE7B8"/>
+  <text x="1274" y="199" text-anchor="middle" font-size="22" fill="#4E7C33" font-family="'Noto Sans SC', sans-serif" font-weight="700">快捷键</text>
+
+  <rect x="1208" y="230" width="132" height="170" rx="12" fill="#FFFDF8" stroke="#E6D3BE"/>
+  <text x="1220" y="264" font-size="22" fill="#67463A" font-family="'Noto Sans SC', sans-serif">按 Tab 键可快速</text>
+  <text x="1220" y="296" font-size="22" fill="#67463A" font-family="'Noto Sans SC', sans-serif">选中并提交首个</text>
+  <text x="1220" y="328" font-size="22" fill="#67463A" font-family="'Noto Sans SC', sans-serif">联想乐队。</text>
+  <text x="1220" y="370" font-size="18" fill="#9B7D70" font-family="'Noto Sans SC', sans-serif">可在设置中关闭</text>
+
+  <rect x="1208" y="420" width="132" height="120" rx="12" fill="#FFFDF8" stroke="#E6D3BE"/>
+  <text x="1220" y="454" font-size="20" fill="#67463A" font-family="'Noto Sans SC', sans-serif">↑ / ↓ 浏览联想</text>
+  <text x="1220" y="486" font-size="20" fill="#67463A" font-family="'Noto Sans SC', sans-serif">Enter 提交输入</text>
+  <text x="1220" y="518" font-size="20" fill="#67463A" font-family="'Noto Sans SC', sans-serif">Esc 关闭联想</text>
+</svg>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, AutoComplete, Button, Card, InputNumber, Space, Spin, Tag, Typography, message } from 'antd';
+import { Alert, AutoComplete, Button, Card, Input, InputNumber, Space, Spin, Tag, Typography, message } from 'antd';
 import { TrophyOutlined, ReloadOutlined, RocketOutlined } from '@ant-design/icons';
 import { artistsApi } from '../api/artists';
 
@@ -8,8 +8,36 @@ const DEFAULT_MAX_ATTEMPTS = 10;
 
 const styles = {
   wrapper: {
-    maxWidth: 980,
+    maxWidth: 1320,
     margin: '0 auto',
+  },
+  layoutRow: {
+    display: 'flex',
+    gap: 16,
+    alignItems: 'stretch',
+    flexWrap: 'wrap',
+  },
+  sideCard: {
+    width: 220,
+    flex: '1 1 220px',
+    borderRadius: 16,
+    border: '1px solid #E8D5C4',
+    background: 'linear-gradient(180deg, #FFF8EF 0%, #FFF2E6 100%)',
+    boxShadow: '0 4px 14px rgba(139, 69, 19, 0.08)',
+  },
+  sideTitle: {
+    marginBottom: 10,
+    color: '#5D4037',
+    fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
+  },
+  sideSubtitle: {
+    color: '#8D6E63',
+    fontSize: 13,
+    lineHeight: 1.6,
+  },
+  centerWrap: {
+    flex: '3 1 720px',
+    minWidth: 0,
   },
   heroCard: {
     borderRadius: 16,
@@ -183,6 +211,7 @@ const GuessBand = () => {
   const [solved, setSolved] = useState(false);
   const [roundOver, setRoundOver] = useState(false);
   const [maxAttempts, setMaxAttempts] = useState(DEFAULT_MAX_ATTEMPTS);
+  const [countryInput, setCountryInput] = useState('');
 
   useEffect(() => {
     const loadBands = async () => {
@@ -238,6 +267,17 @@ const GuessBand = () => {
       .filter((band) => normalizeBand(band.name).includes(keyword))
       .slice(0, 10);
   }, [bands, guessInput]);
+
+  const countryMatchedBands = useMemo(() => {
+    const keyword = countryInput.trim().toLowerCase();
+    const sortedBands = [...bands].sort((a, b) => a.name.localeCompare(b.name));
+    if (!keyword) {
+      return sortedBands.slice(0, 24);
+    }
+    return sortedBands
+      .filter((band) => band.region.toLowerCase().includes(keyword))
+      .slice(0, 50);
+  }, [bands, countryInput]);
 
   const restartRound = () => {
     setTargetBand((prev) => pickRandomBand(bands, prev));
@@ -309,7 +349,42 @@ const GuessBand = () => {
 
   return (
     <div style={styles.wrapper}>
-      <Card style={styles.heroCard}>
+      <div style={styles.layoutRow}>
+        <Card style={styles.sideCard}>
+          <Title level={4} style={styles.sideTitle}>
+            国家筛选
+          </Title>
+          <Input
+            placeholder="输入国家/地区，如 UK、US、华语"
+            value={countryInput}
+            onChange={(event) => setCountryInput(event.target.value)}
+            allowClear
+          />
+          <div style={{ marginTop: 14 }}>
+            <Text strong style={{ color: '#5D4037' }}>匹配乐队</Text>
+          </div>
+          <div style={{ marginTop: 10, maxHeight: 560, overflowY: 'auto' }}>
+            <Space wrap>
+              {countryMatchedBands.length === 0 ? (
+                <Text style={styles.sideSubtitle}>没有匹配结果</Text>
+              ) : (
+                countryMatchedBands.map((band) => (
+                  <Tag
+                    key={`country-${band.name}`}
+                    color="processing"
+                    style={{ cursor: 'pointer', marginBottom: 8 }}
+                    onClick={() => setGuessInput(band.name)}
+                  >
+                    {band.name}
+                  </Tag>
+                ))
+              )}
+            </Space>
+          </div>
+        </Card>
+
+        <div style={styles.centerWrap}>
+          <Card style={styles.heroCard}>
         <Space size="middle" wrap>
           <Tag color="success">默认 {DEFAULT_MAX_ATTEMPTS} 次</Tag>
           <Tag color="gold">乐队库 {bands.length} 支</Tag>
@@ -363,7 +438,6 @@ const GuessBand = () => {
               }
               if (
                 event.key === 'Tab' &&
-                guessInput.trim() &&
                 filteredBands.length > 0 &&
                 !roundOver
               ) {
@@ -450,7 +524,30 @@ const GuessBand = () => {
             </tbody>
           </table>
         </div>
-      </Card>
+          </Card>
+        </div>
+
+        <Card style={styles.sideCard}>
+          <Title level={4} style={styles.sideTitle}>
+            Tips
+          </Title>
+          <div style={{ display: 'grid', gap: 10 }}>
+            <Tag color="success" style={{ width: 'fit-content' }}>快捷键</Tag>
+            <Text style={styles.sideSubtitle}>
+              按 Tab 键可快速选中并提交当前首个联想乐队。
+            </Text>
+            <Text style={styles.sideSubtitle}>
+              Enter：提交当前输入
+            </Text>
+            <Text style={styles.sideSubtitle}>
+              Esc：关闭联想下拉
+            </Text>
+            <Text style={styles.sideSubtitle}>
+              左侧可按国家/地区筛选，点击名称可直接填入输入框。
+            </Text>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 };
