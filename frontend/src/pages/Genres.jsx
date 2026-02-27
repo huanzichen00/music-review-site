@@ -128,7 +128,7 @@ const Genres = () => {
       ) : (
         <Row gutter={[20, 20]}>
           {genres.map((genre) => (
-            <Col key={genre.id} xs={24} sm={12} md={8} lg={6}>
+            <Col key={genre.id} xs={12} sm={6} md={4} lg={3}>
               <Card
                 hoverable
                 style={{
