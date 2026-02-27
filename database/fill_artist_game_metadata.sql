@@ -1,173 +1,81 @@
 USE music_review;
 
--- 仅保留并补齐以下乐队的猜乐队字段，不修改 description / photo_url
-UPDATE artists
-SET
-    country = CASE name
-        WHEN 'Dream Theater' THEN 'US'
-        WHEN 'The Beatles' THEN 'UK'
-        WHEN 'The Rolling Stones' THEN 'UK'
-        WHEN 'Pink Floyd' THEN 'UK'
-        WHEN 'Queen' THEN 'UK'
-        WHEN 'Led Zeppelin' THEN 'UK'
-        WHEN 'Nirvana' THEN 'US'
-        WHEN 'Radiohead' THEN 'UK'
-        WHEN 'Oasis' THEN 'UK'
-        WHEN 'U2' THEN 'Ireland'
-        WHEN 'Metallica' THEN 'US'
-        WHEN 'Iron Maiden' THEN 'UK'
-        WHEN 'Black Sabbath' THEN 'UK'
-        WHEN 'AC/DC' THEN 'Australia'
-        WHEN 'Guns N'' Roses' THEN 'US'
-        WHEN 'Green Day' THEN 'US'
-        WHEN 'Blink-182' THEN 'US'
-        WHEN 'Red Hot Chili Peppers' THEN 'US'
-        WHEN 'My Chemical Romance' THEN 'US'
-        WHEN 'Bon Jovi' THEN 'US'
-        WHEN 'Eagles' THEN 'US'
-        WHEN 'The Police' THEN 'UK'
-        WHEN 'Scorpions' THEN 'Germany'
-        WHEN 'Deep Purple' THEN 'UK'
-        WHEN 'Journey' THEN 'US'
-        WHEN 'X Japan' THEN 'Japan'
-        ELSE country
-    END,
-    formed_year = CASE name
-        WHEN 'Dream Theater' THEN 1985
-        WHEN 'The Beatles' THEN 1960
-        WHEN 'The Rolling Stones' THEN 1962
-        WHEN 'Pink Floyd' THEN 1965
-        WHEN 'Queen' THEN 1970
-        WHEN 'Led Zeppelin' THEN 1968
-        WHEN 'Nirvana' THEN 1987
-        WHEN 'Radiohead' THEN 1985
-        WHEN 'Oasis' THEN 1991
-        WHEN 'U2' THEN 1976
-        WHEN 'Metallica' THEN 1981
-        WHEN 'Iron Maiden' THEN 1975
-        WHEN 'Black Sabbath' THEN 1968
-        WHEN 'AC/DC' THEN 1973
-        WHEN 'Guns N'' Roses' THEN 1985
-        WHEN 'Green Day' THEN 1987
-        WHEN 'Blink-182' THEN 1992
-        WHEN 'Red Hot Chili Peppers' THEN 1982
-        WHEN 'My Chemical Romance' THEN 2001
-        WHEN 'Bon Jovi' THEN 1983
-        WHEN 'Eagles' THEN 1971
-        WHEN 'The Police' THEN 1977
-        WHEN 'Scorpions' THEN 1965
-        WHEN 'Deep Purple' THEN 1968
-        WHEN 'Journey' THEN 1973
-        WHEN 'X Japan' THEN 1982
-        ELSE formed_year
-    END,
-    genre = CASE name
-        WHEN 'Dream Theater' THEN 'Progressive Metal'
-        WHEN 'The Beatles' THEN 'Rock'
-        WHEN 'The Rolling Stones' THEN 'Rock'
-        WHEN 'Pink Floyd' THEN 'Progressive Rock'
-        WHEN 'Queen' THEN 'Rock'
-        WHEN 'Led Zeppelin' THEN 'Hard Rock'
-        WHEN 'Nirvana' THEN 'Grunge'
-        WHEN 'Radiohead' THEN 'Alternative Rock'
-        WHEN 'Oasis' THEN 'Britpop'
-        WHEN 'U2' THEN 'Rock'
-        WHEN 'Metallica' THEN 'Metal'
-        WHEN 'Iron Maiden' THEN 'Metal'
-        WHEN 'Black Sabbath' THEN 'Metal'
-        WHEN 'AC/DC' THEN 'Hard Rock'
-        WHEN 'Guns N'' Roses' THEN 'Hard Rock'
-        WHEN 'Green Day' THEN 'Punk Rock'
-        WHEN 'Blink-182' THEN 'Pop Punk'
-        WHEN 'Red Hot Chili Peppers' THEN 'Funk Rock'
-        WHEN 'My Chemical Romance' THEN 'Alternative Rock'
-        WHEN 'Bon Jovi' THEN 'Hard Rock'
-        WHEN 'Eagles' THEN 'Rock'
-        WHEN 'The Police' THEN 'Rock'
-        WHEN 'Scorpions' THEN 'Hard Rock'
-        WHEN 'Deep Purple' THEN 'Hard Rock'
-        WHEN 'Journey' THEN 'Rock'
-        WHEN 'X Japan' THEN 'Metal'
-        ELSE genre
-    END,
-    member_count = CASE name
-        WHEN 'Dream Theater' THEN 5
-        WHEN 'The Beatles' THEN 4
-        WHEN 'The Rolling Stones' THEN 4
-        WHEN 'Pink Floyd' THEN 4
-        WHEN 'Queen' THEN 4
-        WHEN 'Led Zeppelin' THEN 4
-        WHEN 'Nirvana' THEN 3
-        WHEN 'Radiohead' THEN 5
-        WHEN 'Oasis' THEN 5
-        WHEN 'U2' THEN 4
-        WHEN 'Metallica' THEN 4
-        WHEN 'Iron Maiden' THEN 6
-        WHEN 'Black Sabbath' THEN 4
-        WHEN 'AC/DC' THEN 5
-        WHEN 'Guns N'' Roses' THEN 6
-        WHEN 'Green Day' THEN 3
-        WHEN 'Blink-182' THEN 3
-        WHEN 'Red Hot Chili Peppers' THEN 4
-        WHEN 'My Chemical Romance' THEN 4
-        WHEN 'Bon Jovi' THEN 5
-        WHEN 'Eagles' THEN 5
-        WHEN 'The Police' THEN 3
-        WHEN 'Scorpions' THEN 5
-        WHEN 'Deep Purple' THEN 5
-        WHEN 'Journey' THEN 5
-        WHEN 'X Japan' THEN 5
-        ELSE member_count
-    END,
-    status = CASE name
-        WHEN 'Dream Theater' THEN '活跃'
-        WHEN 'The Beatles' THEN '解散'
-        WHEN 'The Rolling Stones' THEN '活跃'
-        WHEN 'Pink Floyd' THEN '解散'
-        WHEN 'Queen' THEN '活跃'
-        WHEN 'Led Zeppelin' THEN '解散'
-        WHEN 'Nirvana' THEN '解散'
-        WHEN 'Radiohead' THEN '活跃'
-        WHEN 'Oasis' THEN '解散'
-        WHEN 'U2' THEN '活跃'
-        WHEN 'Metallica' THEN '活跃'
-        WHEN 'Iron Maiden' THEN '活跃'
-        WHEN 'Black Sabbath' THEN '解散'
-        WHEN 'AC/DC' THEN '活跃'
-        WHEN 'Guns N'' Roses' THEN '活跃'
-        WHEN 'Green Day' THEN '活跃'
-        WHEN 'Blink-182' THEN '活跃'
-        WHEN 'Red Hot Chili Peppers' THEN '活跃'
-        WHEN 'My Chemical Romance' THEN '活跃'
-        WHEN 'Bon Jovi' THEN '活跃'
-        WHEN 'Eagles' THEN '活跃'
-        WHEN 'The Police' THEN '解散'
-        WHEN 'Scorpions' THEN '活跃'
-        WHEN 'Deep Purple' THEN '活跃'
-        WHEN 'Journey' THEN '活跃'
-        WHEN 'X Japan' THEN '活跃'
-        ELSE status
-    END
-WHERE name IN (
-    'Dream Theater',
-    'The Beatles', 'The Rolling Stones', 'Pink Floyd', 'Queen', 'Led Zeppelin',
-    'Nirvana', 'Radiohead', 'Oasis', 'U2',
-    'Metallica', 'Iron Maiden', 'Black Sabbath', 'AC/DC', 'Guns N'' Roses',
-    'Green Day', 'Blink-182', 'Red Hot Chili Peppers',
-    'My Chemical Romance', 'Bon Jovi', 'Eagles', 'The Police', 'Scorpions',
-    'Deep Purple', 'Journey', 'X Japan'
+-- 目标：补齐猜乐队需要的 26 支乐队元数据
+-- 规则：
+-- 1) 若 artists 里缺少某乐队，则自动创建
+-- 2) 已存在乐队则更新字段
+-- 3) 不修改 description / photo_url
+
+DROP TEMPORARY TABLE IF EXISTS tmp_artist_game_metadata;
+
+CREATE TEMPORARY TABLE tmp_artist_game_metadata (
+    name VARCHAR(100) NOT NULL,
+    country VARCHAR(50) NULL,
+    formed_year INT NULL,
+    genre VARCHAR(80) NULL,
+    member_count INT NULL,
+    status VARCHAR(20) NULL
 );
 
--- 可选：查看这 26 支乐队是否补齐
+INSERT INTO tmp_artist_game_metadata (name, country, formed_year, genre, member_count, status) VALUES
+('Dream Theater', 'US', 1985, 'Progressive Metal', 5, '活跃'),
+('The Beatles', 'UK', 1960, 'Rock', 4, '解散'),
+('The Rolling Stones', 'UK', 1962, 'Rock', 4, '活跃'),
+('Pink Floyd', 'UK', 1965, 'Progressive Rock', 4, '解散'),
+('Queen', 'UK', 1970, 'Rock', 4, '活跃'),
+('Led Zeppelin', 'UK', 1968, 'Hard Rock', 4, '解散'),
+('Nirvana', 'US', 1987, 'Grunge', 3, '解散'),
+('Radiohead', 'UK', 1985, 'Alternative Rock', 5, '活跃'),
+('Oasis', 'UK', 1991, 'Britpop', 5, '解散'),
+('U2', 'Ireland', 1976, 'Rock', 4, '活跃'),
+('Metallica', 'US', 1981, 'Metal', 4, '活跃'),
+('Iron Maiden', 'UK', 1975, 'Metal', 6, '活跃'),
+('Black Sabbath', 'UK', 1968, 'Metal', 4, '解散'),
+('AC/DC', 'Australia', 1973, 'Hard Rock', 5, '活跃'),
+('Guns N'' Roses', 'US', 1985, 'Hard Rock', 6, '活跃'),
+('Green Day', 'US', 1987, 'Punk Rock', 3, '活跃'),
+('Blink-182', 'US', 1992, 'Pop Punk', 3, '活跃'),
+('Red Hot Chili Peppers', 'US', 1982, 'Funk Rock', 4, '活跃'),
+('My Chemical Romance', 'US', 2001, 'Alternative Rock', 4, '活跃'),
+('Bon Jovi', 'US', 1983, 'Hard Rock', 5, '活跃'),
+('Eagles', 'US', 1971, 'Rock', 5, '活跃'),
+('The Police', 'UK', 1977, 'Rock', 3, '解散'),
+('Scorpions', 'Germany', 1965, 'Hard Rock', 5, '活跃'),
+('Deep Purple', 'UK', 1968, 'Hard Rock', 5, '活跃'),
+('Journey', 'US', 1973, 'Rock', 5, '活跃'),
+('X Japan', 'Japan', 1982, 'Metal', 5, '活跃');
+
+-- 插入缺失乐队（避免仅更新已存在数据）
+INSERT INTO artists (name, name_initial, country, formed_year, genre, member_count, status)
+SELECT
+    t.name,
+    CASE
+        WHEN UPPER(LEFT(t.name, 1)) REGEXP '^[A-Z]$' THEN UPPER(LEFT(t.name, 1))
+        ELSE '#'
+    END AS name_initial,
+    t.country,
+    t.formed_year,
+    t.genre,
+    t.member_count,
+    t.status
+FROM tmp_artist_game_metadata t
+LEFT JOIN artists a ON a.name = t.name
+WHERE a.id IS NULL;
+
+-- 统一更新目标乐队字段（不修改 description / photo_url）
+UPDATE artists a
+JOIN tmp_artist_game_metadata t ON a.name = t.name
+SET
+    a.country = t.country,
+    a.formed_year = t.formed_year,
+    a.genre = t.genre,
+    a.member_count = t.member_count,
+    a.status = t.status;
+
+-- 校验：应返回 26 条
 SELECT name, country, formed_year, genre, member_count, status
 FROM artists
-WHERE name IN (
-    'Dream Theater',
-    'The Beatles', 'The Rolling Stones', 'Pink Floyd', 'Queen', 'Led Zeppelin',
-    'Nirvana', 'Radiohead', 'Oasis', 'U2',
-    'Metallica', 'Iron Maiden', 'Black Sabbath', 'AC/DC', 'Guns N'' Roses',
-    'Green Day', 'Blink-182', 'Red Hot Chili Peppers',
-    'My Chemical Romance', 'Bon Jovi', 'Eagles', 'The Police', 'Scorpions',
-    'Deep Purple', 'Journey', 'X Japan'
-)
+WHERE name IN (SELECT name FROM tmp_artist_game_metadata)
 ORDER BY name;
+
+DROP TEMPORARY TABLE IF EXISTS tmp_artist_game_metadata;

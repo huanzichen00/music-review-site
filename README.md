@@ -61,21 +61,23 @@ npm run dev
 在项目根目录执行：
 
 ```bash
-./scripts/deploy_feature.sh
+./scripts/deploy_nginx.sh
 ```
 
 常用命令：
 
 ```bash
-./scripts/deploy_feature.sh deploy   # 构建 + 重启 + 健康检查
-./scripts/deploy_feature.sh stop     # 停止脚本启动的前后端
-./scripts/deploy_feature.sh status   # 查看运行状态
-./scripts/deploy_feature.sh logs     # 查看最近日志
+./scripts/deploy_nginx.sh deploy            # 构建 + 发布 + 重启后端 + 重载Nginx + 健康检查
+./scripts/deploy_nginx.sh build             # 仅构建前后端
+./scripts/deploy_nginx.sh publish_frontend  # 仅发布前端静态文件到Nginx目录
+./scripts/deploy_nginx.sh publish_backend   # 仅发布后端jar
+./scripts/deploy_nginx.sh check             # 仅做健康检查
+./scripts/deploy_nginx.sh status            # 查看nginx与后端服务状态
 ```
 
 说明：
-- 前端默认端口 `3000`，后端默认端口 `8080`
-- 运行日志和 PID 文件在 `/tmp/music-review-site`
+- Nginx 对外提供前端页面（默认 `80` 端口）
+- 后端服务默认监听 `8080`，由 Nginx 反向代理到 `/api/*`
 
 ## 📊 数据库表
 

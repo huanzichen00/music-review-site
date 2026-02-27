@@ -1,41 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, AutoComplete, Button, Card, Space, Spin, Tag, Typography, message } from 'antd';
+import { Alert, AutoComplete, Button, Card, InputNumber, Space, Spin, Tag, Typography, message } from 'antd';
 import { TrophyOutlined, ReloadOutlined, RocketOutlined } from '@ant-design/icons';
 import { artistsApi } from '../api/artists';
 
 const { Title, Text } = Typography;
-<<<<<<< Updated upstream
-=======
-const ALLOWED_BAND_NAMES = new Set([
-  'Dream Theater',
-  'The Beatles',
-  'The Rolling Stones',
-  'Pink Floyd',
-  'Queen',
-  'Led Zeppelin',
-  'Nirvana',
-  'Radiohead',
-  'Oasis',
-  'U2',
-  'Metallica',
-  'Iron Maiden',
-  'Black Sabbath',
-  'AC/DC',
-  'Guns N\' Roses',
-  'Green Day',
-  'Blink-182',
-  'Red Hot Chili Peppers',
-  'My Chemical Romance',
-  'Bon Jovi',
-  'Eagles',
-  'The Police',
-  'Scorpions',
-  'Deep Purple',
-  'Journey',
-  'X Japan',
-]);
-const MAX_ATTEMPTS = 6;
->>>>>>> Stashed changes
+const DEFAULT_MAX_ATTEMPTS = 10;
 
 const styles = {
   wrapper: {
@@ -213,6 +182,7 @@ const GuessBand = () => {
   const [attempts, setAttempts] = useState([]);
   const [solved, setSolved] = useState(false);
   const [roundOver, setRoundOver] = useState(false);
+  const [maxAttempts, setMaxAttempts] = useState(DEFAULT_MAX_ATTEMPTS);
 
   useEffect(() => {
     const loadBands = async () => {
@@ -250,6 +220,15 @@ const GuessBand = () => {
     loadBands();
   }, []);
 
+  useEffect(() => {
+    if (!roundOver && !solved && attempts.length >= maxAttempts && attempts.length > 0) {
+      setRoundOver(true);
+      if (targetBand) {
+        message.error(`本轮最多尝试 ${maxAttempts} 次，答案是 ${targetBand.name}`);
+      }
+    }
+  }, [attempts.length, maxAttempts, roundOver, solved, targetBand]);
+
   const filteredBands = useMemo(() => {
     const keyword = normalizeBand(guessInput);
     if (!keyword) {
@@ -278,7 +257,7 @@ const GuessBand = () => {
       message.info(
         solved
           ? '这一轮已经猜中，点击“下一题”开始新一轮'
-          : `本轮已用完 ${MAX_ATTEMPTS} 次机会，点击“下一题”开始新一轮`
+          : `本轮已用完 ${maxAttempts} 次机会，点击“下一题”开始新一轮`
       );
       return;
     }
@@ -314,9 +293,9 @@ const GuessBand = () => {
       return;
     }
 
-    if (nextAttempts.length >= MAX_ATTEMPTS) {
+    if (nextAttempts.length >= maxAttempts) {
       setRoundOver(true);
-      message.error(`本轮最多尝试 ${MAX_ATTEMPTS} 次，答案是 ${targetBand.name}`);
+      message.error(`本轮最多尝试 ${maxAttempts} 次，答案是 ${targetBand.name}`);
     }
   };
 
@@ -332,16 +311,28 @@ const GuessBand = () => {
     <div style={styles.wrapper}>
       <Card style={styles.heroCard}>
         <Space size="middle" wrap>
-          <Tag color="success">最多 {MAX_ATTEMPTS} 次</Tag>
+          <Tag color="success">默认 {DEFAULT_MAX_ATTEMPTS} 次</Tag>
           <Tag color="gold">乐队库 {bands.length} 支</Tag>
-          <Text strong>本轮尝试 {attempts.length}/{MAX_ATTEMPTS} 次</Text>
+          <Text strong>本轮尝试 {attempts.length}/{maxAttempts} 次</Text>
+          <Space size={6} align="center">
+            <Text>上限</Text>
+            <InputNumber
+              min={1}
+              max={50}
+              value={maxAttempts}
+              onChange={(value) => setMaxAttempts(typeof value === 'number' ? value : DEFAULT_MAX_ATTEMPTS)}
+              disabled={roundOver}
+              size="small"
+            />
+            <Text>次</Text>
+          </Space>
         </Space>
 
         <Title level={1} style={styles.title}>
           猜乐队
         </Title>
         <Text style={styles.subtitle}>
-          题库数据统一来自后端艺术家接口。每轮最多猜 {MAX_ATTEMPTS} 次，猜中或用尽机会后可开始下一题。
+          题库数据统一来自后端艺术家接口。每轮最多猜 {maxAttempts} 次，猜中或用尽机会后可开始下一题。
         </Text>
 
         {bands.length === 0 ? (
