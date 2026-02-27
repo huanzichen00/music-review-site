@@ -55,6 +55,11 @@ const COUNTRIES = [
   'India',
 ];
 
+const ARTIST_STATUS_OPTIONS = [
+  { label: '活跃', value: '活跃' },
+  { label: '解散', value: '解散' },
+];
+
 const EditAlbum = () => {
   const [form] = Form.useForm();
   const [artistForm] = Form.useForm();
@@ -196,23 +201,29 @@ const EditAlbum = () => {
 
   const handleCreateImportedArtist = async () => {
     if (!importedArtist) return;
-
-    setArtistLoading(true);
-    try {
-      const response = await artistsApi.create({
-        name: importedArtist.name,
-        photoUrl: importedArtist.photoUrl,
-      });
-      message.success('艺术家创建成功！');
-      setArtists([...artists, response.data]);
-      form.setFieldValue('artistId', response.data.id);
-      setImportedArtist(null);
-    } catch (error) {
-      message.error(error.response?.data?.error || '创建艺术家失败');
-    } finally {
-      setArtistLoading(false);
-    }
+    artistForm.setFieldsValue({
+      name: importedArtist.name || undefined,
+      photoUrl: importedArtist.photoUrl || undefined,
+      country: importedArtist.country || undefined,
+      formedYear: importedArtist.formedYear || undefined,
+      genre: undefined,
+      memberCount: undefined,
+      status: undefined,
+      description: undefined,
+    });
+    setArtistModalVisible(true);
   };
+
+  const normalizeArtistPayload = (values) => ({
+    name: values.name?.trim(),
+    country: values.country?.trim() || null,
+    formedYear: values.formedYear ?? null,
+    genre: values.genre?.trim() || null,
+    memberCount: values.memberCount ?? null,
+    status: values.status || null,
+    description: values.description?.trim() || null,
+    photoUrl: values.photoUrl?.trim() || null,
+  });
 
   const resolveCoverUrl = (url) => {
     if (!url) return '';
@@ -292,11 +303,12 @@ const EditAlbum = () => {
   const handleAddArtist = async (values) => {
     setArtistLoading(true);
     try {
-      const response = await artistsApi.create(values);
+      const response = await artistsApi.create(normalizeArtistPayload(values));
       message.success('艺术家创建成功！');
       setArtists([...artists, response.data]);
       form.setFieldValue('artistId', response.data.id);
       setArtistModalVisible(false);
+      setImportedArtist(null);
       artistForm.resetFields();
     } catch (error) {
       message.error(error.response?.data?.error || '创建艺术家失败');
@@ -471,10 +483,9 @@ const EditAlbum = () => {
               <Button 
                 type="link" 
                 onClick={handleCreateImportedArtist}
-                loading={artistLoading}
                 style={{ padding: 0, marginTop: 8 }}
               >
-                点击创建此艺术家
+                使用该名称新增艺术家（可补充风格/人数/状态）
               </Button>
               <Text type="secondary"> 或在下方选择已有艺术家</Text>
             </div>
@@ -686,6 +697,18 @@ const EditAlbum = () => {
 
           <Form.Item name="formedYear" label="成立年份">
             <InputNumber min={1900} max={new Date().getFullYear()} style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item name="genre" label="风格">
+            <Input maxLength={80} placeholder="例如 Art Rock / 华语摇滚" />
+          </Form.Item>
+
+          <Form.Item name="memberCount" label="成员人数">
+            <InputNumber min={1} max={50} placeholder="例如 4" style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item name="status" label="状态">
+            <Select allowClear placeholder="选择状态" options={ARTIST_STATUS_OPTIONS} />
           </Form.Item>
 
           <Form.Item name="photoUrl" label="照片 URL">

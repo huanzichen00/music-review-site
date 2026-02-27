@@ -170,6 +170,38 @@ CREATE INDEX idx_blog_posts_user ON blog_posts(user_id);
 CREATE INDEX idx_blog_posts_album ON blog_posts(album_id);
 
 -- =====================================================
+-- 11. 猜乐队自选题库
+-- =====================================================
+CREATE TABLE question_banks (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL COMMENT '题库名称',
+    visibility VARCHAR(20) NOT NULL DEFAULT 'PUBLIC' COMMENT '可见性: PUBLIC/PRIVATE',
+    share_token VARCHAR(64) NOT NULL UNIQUE COMMENT '分享令牌',
+    owner_user_id BIGINT NOT NULL COMMENT '题库创建者',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
+    FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE CASCADE
+) COMMENT '猜乐队题库表';
+
+CREATE INDEX idx_question_banks_owner ON question_banks(owner_user_id);
+CREATE INDEX idx_question_banks_visibility ON question_banks(visibility);
+
+CREATE TABLE question_bank_items (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    question_bank_id BIGINT NOT NULL COMMENT '题库ID',
+    artist_id BIGINT NOT NULL COMMENT '乐队ID',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '加入题库时间',
+
+    UNIQUE KEY uk_question_bank_artist (question_bank_id, artist_id),
+    FOREIGN KEY (question_bank_id) REFERENCES question_banks(id) ON DELETE CASCADE,
+    FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE
+) COMMENT '猜乐队题库-乐队关联表';
+
+CREATE INDEX idx_question_bank_items_bank ON question_bank_items(question_bank_id);
+CREATE INDEX idx_question_bank_items_artist ON question_bank_items(artist_id);
+
+-- =====================================================
 -- 初始数据: 流派
 -- =====================================================
 INSERT INTO genres (name, description) VALUES

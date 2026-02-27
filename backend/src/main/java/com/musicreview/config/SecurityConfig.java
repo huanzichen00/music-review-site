@@ -61,7 +61,10 @@ public class SecurityConfig {
                                 new AntPathRequestMatcher("/api/replies/review/**", HttpMethod.GET.name()),
                                 new AntPathRequestMatcher("/api/users/*", HttpMethod.GET.name()),
                                 new AntPathRequestMatcher("/api/files/**", HttpMethod.GET.name()),
-                                new AntPathRequestMatcher("/api/files/album-cover", HttpMethod.POST.name())
+                                new AntPathRequestMatcher("/api/files/album-cover", HttpMethod.POST.name()),
+                                new AntPathRequestMatcher("/api/question-banks/public", HttpMethod.GET.name()),
+                                new AntPathRequestMatcher("/api/question-banks/public/**", HttpMethod.GET.name()),
+                                new AntPathRequestMatcher("/api/question-banks/share/**", HttpMethod.GET.name())
                         ).permitAll()
                         // All other endpoints require authentication
                         .anyRequest().authenticated()

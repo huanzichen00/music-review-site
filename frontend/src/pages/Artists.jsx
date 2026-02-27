@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
+  Avatar,
   Button,
   Card,
   Form,
@@ -16,6 +17,7 @@ import {
 import { DeleteOutlined, EditOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { artistsApi } from '../api/artists';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -27,6 +29,17 @@ const Artists = () => {
   const [editingArtist, setEditingArtist] = useState(null);
   const [saving, setSaving] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const resolveMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    if (url.startsWith('/api') || url.startsWith('/')) {
+      return new URL(url, window.location.origin).toString();
+    }
+    return url;
+  };
 
   useEffect(() => {
     loadArtists();
@@ -165,6 +178,15 @@ const Artists = () => {
               }
             >
               <List.Item.Meta
+                avatar={
+                  <Avatar
+                    size={52}
+                    src={artist.photoUrl ? resolveMediaUrl(artist.photoUrl) : undefined}
+                    style={{ border: '1px solid #E5B992', backgroundColor: '#E8D5C4' }}
+                  >
+                    🎸
+                  </Avatar>
+                }
                 title={
                   <div>
                     <span style={{ 
@@ -172,8 +194,12 @@ const Artists = () => {
                       fontSize: '18px',
                       fontWeight: 600,
                       color: '#4E342E',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
                     }}>
-                      {artist.name}
+                      <span onClick={() => navigate(`/music/artists/${artist.id}`)}>
+                        {artist.name}
+                      </span>
                     </span>
                     {artist.country && (
                       <Tag style={{ marginLeft: '8px' }}>{artist.country}</Tag>

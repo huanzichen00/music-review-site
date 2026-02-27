@@ -12,11 +12,15 @@ import AddAlbum from './pages/AddAlbum';
 import EditAlbum from './pages/EditAlbum';
 import Profile from './pages/Profile';
 import Artists from './pages/Artists';
+import ArtistDetail from './pages/ArtistDetail';
 import Genres from './pages/Genres';
 import GenreDetail from './pages/GenreDetail';
+import Years from './pages/Years';
+import YearDetail from './pages/YearDetail';
 import Blog from './pages/Blog';
 import UserHome from './pages/UserHome';
 import GuessBand from './pages/GuessBand';
+import GuessBandBanks from './pages/GuessBandBanks';
 
 // 暖色系主题配置
 const warmTheme = {
@@ -65,13 +69,18 @@ function App() {
               <Route path="/music/home" element={<Home />} />
               <Route path="/music/albums" element={<Albums />} />
               <Route path="/music/artists" element={<Artists />} />
+              <Route path="/music/artists/:id" element={<ArtistDetail />} />
               <Route path="/music/genres" element={<Genres />} />
               <Route path="/music/genres/:id" element={<GenreDetail />} />
+              <Route path="/music/years" element={<Years />} />
+              <Route path="/music/years/:year" element={<YearDetail />} />
               <Route path="/music/guess-band" element={<GuessBand />} />
+              <Route path="/music/guess-band/banks" element={<GuessBandBanks />} />
               <Route path="/music/albums/:id" element={<AlbumDetail />} />
               <Route path="/music/albums/:id/edit" element={<EditAlbum />} />
               <Route path="/music/add-album" element={<AddAlbum />} />
               <Route path="/guess-band" element={<GuessBand />} />
+              <Route path="/guess-band/banks" element={<GuessBandBanks />} />
               <Route path="/albums" element={<Albums />} />
               <Route path="/albums/:id" element={<AlbumDetail />} />
               <Route path="/albums/:id/edit" element={<EditAlbum />} />
@@ -82,8 +91,11 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/users/:id" element={<UserHome />} />
               <Route path="/artists" element={<Artists />} />
+              <Route path="/artists/:id" element={<ArtistDetail />} />
               <Route path="/genres" element={<Genres />} />
               <Route path="/genres/:id" element={<GenreDetail />} />
+              <Route path="/years" element={<Years />} />
+              <Route path="/years/:year" element={<YearDetail />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="*" element={<Navigate to="/music/home" replace />} />
             </Routes>

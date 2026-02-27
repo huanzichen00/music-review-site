@@ -43,7 +43,7 @@ test('guess band page supports autocomplete and renders compare row', async ({ p
   await expect(page.getByRole('heading', { name: '猜乐队' })).toBeVisible();
   await expect(page.getByText('乐队库 3 支')).toBeVisible();
 
-  const input = page.getByPlaceholder('输入乐队名，例如：Radiohead / 五月天 / 告五人');
+  const input = page.getByPlaceholder('输入乐队名，例如：Radiohead / Queen / The Beatles');
   await input.fill('Queen');
   await page.getByRole('button', { name: '提交猜测' }).click();
 

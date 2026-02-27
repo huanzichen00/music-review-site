@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, Col, Empty, Row, Spin, Tag, Typography, message } from 'antd';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { genresApi } from '../api/genres';
 import { albumsApi } from '../api/albums';
 import { artistsApi } from '../api/artists';
@@ -42,6 +42,7 @@ const splitGenres = (value) =>
 
 const GenreDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [genre, setGenre] = useState(null);
   const [albums, setAlbums] = useState([]);
   const [artists, setArtists] = useState([]);
@@ -143,7 +144,18 @@ const GenreDetail = () => {
         <Row gutter={[16, 16]}>
           {bands.map((band) => (
             <Col key={`${band.artistId}-${band.artistName}`} xs={24} sm={12} md={8} lg={6}>
-              <Card style={styles.bandCard}>
+              <Card
+                hoverable={Boolean(band.artistId)}
+                onClick={() => {
+                  if (band.artistId) {
+                    navigate(`/music/artists/${band.artistId}`);
+                  }
+                }}
+                style={{
+                  ...styles.bandCard,
+                  cursor: band.artistId ? 'pointer' : 'default',
+                }}
+              >
                 <Title level={5} style={{ marginBottom: 6 }}>{band.artistName}</Title>
                 <Text type="secondary">{band.albumCount} 张专辑</Text>
               </Card>

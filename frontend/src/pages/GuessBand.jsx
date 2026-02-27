@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, AutoComplete, Button, Card, Input, InputNumber, Space, Spin, Tag, Typography, message } from 'antd';
+import { Alert, AutoComplete, Button, Card, Input, InputNumber, Select, Space, Spin, Tag, Typography, message } from 'antd';
 import { TrophyOutlined, ReloadOutlined, RocketOutlined, AppstoreOutlined, TagsOutlined } from '@ant-design/icons';
+import { useLocation } from 'react-router-dom';
 import { artistsApi } from '../api/artists';
+import { questionBanksApi } from '../api/questionBanks';
+import { useAuth } from '../context/AuthContext';
 
 const { Title, Text } = Typography;
 const DEFAULT_MAX_ATTEMPTS = 10;
@@ -227,9 +230,36 @@ const buildGuessResult = (guessBand, targetBand) => {
   };
 };
 
+const isPlayableArtist = (artist) =>
+  Boolean(
+    artist?.name &&
+      artist?.country &&
+      artist?.formedYear &&
+      artist?.genre &&
+      artist?.memberCount &&
+      artist?.status
+  );
+
+const toGameBand = (artist) => ({
+  name: artist.name.trim(),
+  region: artist.country.trim(),
+  genre: artist.genre.trim(),
+  yearFormed: artist.formedYear,
+  members: artist.memberCount,
+  status: artist.status.trim(),
+});
+
 const GuessBand = () => {
+  const location = useLocation();
+  const { isAuthenticated } = useAuth();
   const [bands, setBands] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [bankSwitching, setBankSwitching] = useState(false);
+  const [allBands, setAllBands] = useState([]);
+  const [bankOptions, setBankOptions] = useState([]);
+  const [currentBankKey, setCurrentBankKey] = useState('default');
+  const [currentBankLabel, setCurrentBankLabel] = useState('默认题库');
+  const [shareBank, setShareBank] = useState(null);
   const [targetBand, setTargetBand] = useState(null);
   const [guessInput, setGuessInput] = useState('');
   const [attempts, setAttempts] = useState([]);
@@ -242,28 +272,52 @@ const GuessBand = () => {
     const loadBands = async () => {
       setLoading(true);
       try {
-        const response = await artistsApi.getAll();
-        const allArtists = response.data || [];
-        const gameBands = allArtists
-          .filter((artist) =>
-            artist?.name &&
-            artist?.country &&
-            artist?.formedYear &&
-            artist?.genre &&
-            artist?.memberCount &&
-            artist?.status
-          )
-          .map((artist) => ({
-            name: artist.name.trim(),
-            region: artist.country.trim(),
-            genre: artist.genre.trim(),
-            yearFormed: artist.formedYear,
-            members: artist.memberCount,
-            status: artist.status.trim(),
-          }));
+        const params = new URLSearchParams(location.search);
+        const shareToken = params.get('share');
 
-        setBands(gameBands);
-        setTargetBand(pickRandomBand(gameBands));
+        const [artistsRes, mineBanksRes] = await Promise.all([
+          artistsApi.getAll(),
+          isAuthenticated ? questionBanksApi.getMine() : Promise.resolve({ data: [] }),
+        ]);
+
+        const gameBands = (artistsRes.data || []).filter(isPlayableArtist).map(toGameBand);
+        setAllBands(gameBands);
+
+        const mineBanks = mineBanksRes.data || [];
+        const mineOptions = mineBanks.map((bank) => ({
+          value: `mine:${bank.id}`,
+          label: `${bank.name} (${bank.itemCount || 0})`,
+        }));
+
+        let nextOptions = [{ value: 'default', label: `默认题库 (${gameBands.length})` }, ...mineOptions];
+        let nextBands = gameBands;
+        let nextBankKey = 'default';
+        let nextBankLabel = '默认题库';
+
+        if (shareToken) {
+          try {
+            const shareRes = await questionBanksApi.getByShareToken(shareToken);
+            const sharedDetail = shareRes.data;
+            const sharedBands = (sharedDetail?.artists || []).filter(isPlayableArtist).map(toGameBand);
+            if (sharedBands.length > 0) {
+              setShareBank(sharedDetail);
+              nextBands = sharedBands;
+              nextBankKey = `share:${sharedDetail.shareToken}`;
+              nextBankLabel = `${sharedDetail.name}（分享）`;
+              nextOptions = [...nextOptions, { value: nextBankKey, label: `${nextBankLabel} (${sharedBands.length})` }];
+            } else {
+              message.warning('分享题库暂无可用题目，已回退默认题库');
+            }
+          } catch {
+            message.warning('分享题库加载失败，已回退默认题库');
+          }
+        }
+
+        setBankOptions(nextOptions);
+        setBands(nextBands);
+        setCurrentBankKey(nextBankKey);
+        setCurrentBankLabel(nextBankLabel);
+        setTargetBand(pickRandomBand(nextBands));
       } catch {
         message.error('加载乐队数据失败');
       } finally {
@@ -272,7 +326,7 @@ const GuessBand = () => {
     };
 
     loadBands();
-  }, []);
+  }, [isAuthenticated, location.search]);
 
   useEffect(() => {
     if (!roundOver && !solved && attempts.length >= maxAttempts && attempts.length > 0) {
@@ -304,12 +358,72 @@ const GuessBand = () => {
       .slice(0, 50);
   }, [bands, countryInput]);
 
-  const restartRound = () => {
-    setTargetBand((prev) => pickRandomBand(bands, prev));
+  const resetRoundWithBands = (nextBands, excludeCurrent = false) => {
     setGuessInput('');
     setAttempts([]);
     setSolved(false);
     setRoundOver(false);
+    setCountryInput('');
+    setTargetBand((prevTarget) => pickRandomBand(nextBands, excludeCurrent ? prevTarget : null));
+  };
+
+  const handleBankChange = async (value) => {
+    if (value === currentBankKey) {
+      return;
+    }
+
+    if (value === 'default') {
+      setCurrentBankKey('default');
+      setCurrentBankLabel('默认题库');
+      setBands(allBands);
+      resetRoundWithBands(allBands);
+      return;
+    }
+
+    if (value.startsWith('share:') && shareBank) {
+      const sharedBands = (shareBank.artists || []).filter(isPlayableArtist).map(toGameBand);
+      if (!sharedBands.length) {
+        message.warning('分享题库暂无可用题目');
+        return;
+      }
+      setCurrentBankKey(value);
+      setCurrentBankLabel(`${shareBank.name}（分享）`);
+      setBands(sharedBands);
+      resetRoundWithBands(sharedBands);
+      return;
+    }
+
+    if (!value.startsWith('mine:')) {
+      return;
+    }
+
+    const id = Number(value.replace('mine:', ''));
+    if (!id) {
+      return;
+    }
+
+    try {
+      setBankSwitching(true);
+      const detailRes = await questionBanksApi.getMineById(id);
+      const detail = detailRes.data;
+      const nextBands = (detail.artists || []).filter(isPlayableArtist).map(toGameBand);
+      if (!nextBands.length) {
+        message.warning('该题库暂无可用题目');
+        return;
+      }
+      setCurrentBankKey(value);
+      setCurrentBankLabel(detail.name);
+      setBands(nextBands);
+      resetRoundWithBands(nextBands);
+    } catch {
+      message.error('加载题库失败');
+    } finally {
+      setBankSwitching(false);
+    }
+  };
+
+  const restartRound = () => {
+    resetRoundWithBands(bands, true);
   };
 
   const submitGuess = (inputValue = guessInput) => {
@@ -413,12 +527,13 @@ const GuessBand = () => {
         <Space size="middle" wrap>
           <Tag color="success">默认 {DEFAULT_MAX_ATTEMPTS} 次</Tag>
           <Tag color="gold">乐队库 {bands.length} 支</Tag>
+          <Tag color="processing">当前题库：{currentBankLabel}</Tag>
           <Text strong>本轮尝试 {attempts.length}/{maxAttempts} 次</Text>
           <Space size={6} align="center">
             <Text>上限</Text>
             <InputNumber
               min={1}
-              max={50}
+              max={100}
               value={maxAttempts}
               onChange={(value) => {
                 if (typeof value === 'number') {
@@ -430,6 +545,16 @@ const GuessBand = () => {
             />
             <Text>次</Text>
           </Space>
+          <Space size={6} align="center">
+            <Text>切换题库</Text>
+            <Select
+              value={currentBankKey}
+              options={bankOptions}
+              onChange={handleBankChange}
+              loading={bankSwitching}
+              style={{ minWidth: 240 }}
+            />
+          </Space>
         </Space>
 
         <div style={styles.titleRow}>
@@ -438,7 +563,7 @@ const GuessBand = () => {
               猜乐队
             </Title>
             <Text style={styles.subtitle}>
-              题库数据统一来自后端艺术家接口。每轮最多猜 {maxAttempts} 次，猜中或用尽机会后可开始下一题。
+              支持默认题库、你的自选题库和分享题库。每轮最多猜 {maxAttempts} 次，猜中或用尽机会后可开始下一题。
             </Text>
           </div>
           <Space size={10} wrap>
@@ -464,6 +589,11 @@ const GuessBand = () => {
             >
               查看所有风格
             </Button>
+            {isAuthenticated ? (
+              <Button size="large" href="/music/guess-band/banks" target="_blank" rel="noopener noreferrer">
+                管理自选题库
+              </Button>
+            ) : null}
           </Space>
         </div>
 
@@ -502,12 +632,12 @@ const GuessBand = () => {
                 submitGuess(filteredBands[0].name);
               }
             }}
-            disabled={roundOver}
+            disabled={roundOver || bankSwitching}
           />
-          <Button type="primary" size="large" icon={<RocketOutlined />} onClick={() => submitGuess()} disabled={roundOver}>
+          <Button type="primary" size="large" icon={<RocketOutlined />} onClick={() => submitGuess()} disabled={roundOver || bankSwitching}>
             提交猜测
           </Button>
-          <Button size="large" icon={<ReloadOutlined />} onClick={restartRound} disabled={!bands.length}>
+          <Button size="large" icon={<ReloadOutlined />} onClick={restartRound} disabled={!bands.length || bankSwitching}>
             {roundOver ? '下一题' : '换一题'}
           </Button>
         </div>
@@ -576,6 +706,12 @@ const GuessBand = () => {
             <Tag color="success" style={{ width: 'fit-content' }}>快捷键</Tag>
             <Text style={styles.sideSubtitle}>
               按 Tab 键可快速选中并提交当前首个联想乐队。
+            </Text>
+            <Text style={styles.sideSubtitle}>
+              猜测次数上限支持自定义，范围为 1-100 次（默认 10 次）。
+            </Text>
+            <Text style={styles.sideSubtitle}>
+              登录后可在“管理自选题库”里创建 10-300 题的专属题库并分享链接。
             </Text>
             <Text style={styles.sideSubtitle}>
               Enter：提交当前输入
