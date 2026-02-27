@@ -395,7 +395,11 @@ const GuessBand = () => {
               min={1}
               max={50}
               value={maxAttempts}
-              onChange={(value) => setMaxAttempts(typeof value === 'number' ? value : DEFAULT_MAX_ATTEMPTS)}
+              onChange={(value) => {
+                if (typeof value === 'number') {
+                  setMaxAttempts(value);
+                }
+              }}
               disabled={roundOver}
               size="small"
             />
@@ -468,22 +472,6 @@ const GuessBand = () => {
         ) : null}
 
         <Title level={4} style={styles.attemptsTitle}>
-          联想乐队
-        </Title>
-        <Space wrap>
-          {filteredBands.map((band) => (
-            <Tag
-              key={band.name}
-              color="processing"
-              style={{ cursor: 'pointer', marginBottom: 8 }}
-              onClick={() => setGuessInput(band.name)}
-            >
-              {band.name}
-            </Tag>
-          ))}
-        </Space>
-
-        <Title level={4} style={styles.attemptsTitle}>
           最近猜测
         </Title>
         <div style={styles.board}>
@@ -544,6 +532,9 @@ const GuessBand = () => {
             </Text>
             <Text style={styles.sideSubtitle}>
               左侧可按国家/地区筛选，点击名称可直接填入输入框。
+            </Text>
+            <Text style={styles.sideSubtitle}>
+              中国地区请统一使用“华语”作为地区标识（例如筛选时输入“华语”）。
             </Text>
           </div>
         </Card>
