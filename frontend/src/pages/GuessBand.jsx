@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, AutoComplete, Button, Card, Input, InputNumber, Space, Spin, Tag, Typography, message } from 'antd';
-import { TrophyOutlined, ReloadOutlined, RocketOutlined } from '@ant-design/icons';
+import { TrophyOutlined, ReloadOutlined, RocketOutlined, AppstoreOutlined } from '@ant-design/icons';
 import { artistsApi } from '../api/artists';
 
 const { Title, Text } = Typography;
@@ -52,9 +52,25 @@ const styles = {
     color: '#4E342E',
     fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
   },
+  titleRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    gap: 12,
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+  },
   subtitle: {
     color: '#7C5A4E',
     fontSize: 16,
+  },
+  artistsLinkButton: {
+    marginTop: 12,
+    height: 44,
+    borderRadius: 10,
+    fontWeight: 700,
+    boxShadow: '0 4px 12px rgba(47, 140, 82, 0.24)',
+    background: 'linear-gradient(135deg, #2D9A56 0%, #217A44 100%)',
+    border: 'none',
   },
   actionRow: {
     marginTop: 18,
@@ -407,12 +423,27 @@ const GuessBand = () => {
           </Space>
         </Space>
 
-        <Title level={1} style={styles.title}>
-          猜乐队
-        </Title>
-        <Text style={styles.subtitle}>
-          题库数据统一来自后端艺术家接口。每轮最多猜 {maxAttempts} 次，猜中或用尽机会后可开始下一题。
-        </Text>
+        <div style={styles.titleRow}>
+          <div>
+            <Title level={1} style={styles.title}>
+              猜乐队
+            </Title>
+            <Text style={styles.subtitle}>
+              题库数据统一来自后端艺术家接口。每轮最多猜 {maxAttempts} 次，猜中或用尽机会后可开始下一题。
+            </Text>
+          </div>
+          <Button
+            type="primary"
+            size="large"
+            icon={<AppstoreOutlined />}
+            href="/music/artists"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={styles.artistsLinkButton}
+          >
+            查看所有乐队
+          </Button>
+        </div>
 
         {bands.length === 0 ? (
           <Alert
