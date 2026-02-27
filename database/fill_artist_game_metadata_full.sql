@@ -1,4 +1,5 @@
 USE music_review;
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 1) 确保列存在（兼容 MySQL 5.7/8）
 SET @db_name := DATABASE();
@@ -54,13 +55,13 @@ DEALLOCATE PREPARE stmt;
 -- 2) 临时数据表
 DROP TEMPORARY TABLE IF EXISTS tmp_artist_seed;
 CREATE TEMPORARY TABLE tmp_artist_seed (
-  name VARCHAR(100) PRIMARY KEY,
+  name VARCHAR(100) COLLATE utf8mb4_unicode_ci PRIMARY KEY,
   country VARCHAR(50),
   formed_year INT,
   genre VARCHAR(80),
   member_count INT,
   status VARCHAR(20)
-) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4;
+) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO tmp_artist_seed (name, country, formed_year, genre, member_count, status) VALUES
 ('Dream Theater','US',1985,'Progressive Metal',5,'活跃'),
@@ -177,7 +178,7 @@ INSERT INTO tmp_artist_seed (name, country, formed_year, genre, member_count, st
 
 -- 3) 先更新已存在 artist
 UPDATE artists a
-JOIN tmp_artist_seed t ON t.name = a.name
+JOIN tmp_artist_seed t ON t.name = a.name COLLATE utf8mb4_unicode_ci
 SET
   a.country = t.country,
   a.formed_year = t.formed_year,
@@ -195,7 +196,7 @@ SELECT
   END AS name_initial,
   t.country, t.formed_year, t.genre, t.member_count, t.status
 FROM tmp_artist_seed t
-LEFT JOIN artists a ON a.name = t.name
+LEFT JOIN artists a ON a.name = t.name COLLATE utf8mb4_unicode_ci
 WHERE a.id IS NULL;
 
 -- 5) 校验
