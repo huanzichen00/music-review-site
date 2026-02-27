@@ -74,6 +74,9 @@ const Layout = ({ children }) => {
     if (location.pathname.startsWith('/music/albums') || location.pathname.startsWith('/albums')) {
       return '/music/albums';
     }
+    if (location.pathname.startsWith('/music/artists') || location.pathname.startsWith('/artists')) {
+      return '/music/artists';
+    }
     return '/music/home';
   })();
 
@@ -248,6 +251,13 @@ const Layout = ({ children }) => {
             onClick={() => navigate('/music/albums')}
           >
             专辑
+          </Button>
+          <Button
+            type={selectedMusicSubKey === '/music/artists' ? 'primary' : 'default'}
+            icon={<UserOutlined />}
+            onClick={() => navigate('/music/artists')}
+          >
+            乐队
           </Button>
           <Button
             type={selectedMusicSubKey === '/music/guess-band' ? 'primary' : 'default'}

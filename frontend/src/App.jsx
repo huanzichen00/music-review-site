@@ -62,6 +62,7 @@ function App() {
               <Route path="/music" element={<Navigate to="/music/home" replace />} />
               <Route path="/music/home" element={<Home />} />
               <Route path="/music/albums" element={<Albums />} />
+              <Route path="/music/artists" element={<Artists />} />
               <Route path="/music/guess-band" element={<GuessBand />} />
               <Route path="/music/albums/:id" element={<AlbumDetail />} />
               <Route path="/music/albums/:id/edit" element={<EditAlbum />} />
