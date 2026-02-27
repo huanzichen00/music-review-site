@@ -165,7 +165,12 @@ def get_artists(limit=None, only_missing=True):
     for line in out.splitlines():
         if not line.strip():
             continue
-        artist_id, name, photo_url = line.split("\t")
+        parts = line.split("\t")
+        if len(parts) < 2:
+            continue
+        artist_id = parts[0]
+        name = parts[1]
+        photo_url = parts[2] if len(parts) > 2 else ""
         rows.append({"id": int(artist_id), "name": name, "photo_url": photo_url})
     return rows
 
