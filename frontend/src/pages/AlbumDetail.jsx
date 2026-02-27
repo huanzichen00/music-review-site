@@ -401,7 +401,13 @@ const AlbumDetail = () => {
 
           <div style={{ marginBottom: '20px', marginTop: '16px' }}>
             {album.releaseYear && (
-              <Tag color="orange" style={styles.tag}>{album.releaseYear}</Tag>
+              <Tag
+                color="orange"
+                style={{ ...styles.tag, cursor: 'pointer' }}
+                onClick={() => navigate(`/music/years/${album.releaseYear}`)}
+              >
+                {album.releaseYear}
+              </Tag>
             )}
             {album.genres?.map((genre) => (
               <Tag
