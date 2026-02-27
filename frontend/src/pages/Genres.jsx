@@ -47,22 +47,18 @@ const styles = {
   },
   name: {
     fontFamily: "'Cormorant Garamond', 'Noto Serif SC', Georgia, serif",
-    fontSize: 'clamp(20px, 2.5vw, 26px)',
+    fontSize: 'clamp(17px, 2.2vw, 22px)',
     fontWeight: 700,
     color: '#4E342E',
     lineHeight: 1.25,
     marginBottom: 0,
-    WebkitTextStroke: '0.5px rgba(58, 35, 28, 0.65)',
-    textShadow: '0 1px 2px rgba(255, 248, 238, 0.45)',
   },
   count: {
     fontFamily: "'Cormorant Garamond', serif",
     color: '#6D4C41',
-    fontSize: 'clamp(15px, 1.8vw, 18px)',
+    fontSize: 'clamp(13px, 1.5vw, 16px)',
     fontWeight: 600,
     marginTop: '4px',
-    WebkitTextStroke: '0.35px rgba(58, 35, 28, 0.5)',
-    textShadow: '0 1px 2px rgba(255, 248, 238, 0.45)',
   },
 };
 
@@ -128,7 +124,7 @@ const Genres = () => {
       ) : (
         <Row gutter={[20, 20]}>
           {genres.map((genre) => (
-            <Col key={genre.id} xs={12} sm={6} md={4} lg={3}>
+            <Col key={genre.id} xs={12} sm={8} md={6} lg={4}>
               <Card
                 hoverable
                 style={{
@@ -151,8 +147,7 @@ const Genres = () => {
                       ...(genre.genreCoverUrl
                         ? {
                             color: '#FFF7EE',
-                            WebkitTextStroke: '0.7px rgba(52, 33, 26, 0.85)',
-                            textShadow: '0 2px 4px rgba(0,0,0,0.65)',
+                            textShadow: '0 1px 3px rgba(0,0,0,0.55)',
                           }
                         : {}),
                     }}
@@ -165,8 +160,7 @@ const Genres = () => {
                       ...(genre.genreCoverUrl
                         ? {
                             color: '#FFEBD9',
-                            WebkitTextStroke: '0.55px rgba(52, 33, 26, 0.8)',
-                            textShadow: '0 2px 4px rgba(0,0,0,0.65)',
+                            textShadow: '0 1px 3px rgba(0,0,0,0.55)',
                           }
                         : {}),
                     }}
