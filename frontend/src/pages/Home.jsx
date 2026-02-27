@@ -8,6 +8,14 @@ import AlbumCard from '../components/AlbumCard';
 import { resolveAvatarUrl } from '../utils/avatar';
 
 const HOME_ALBUM_LIMIT = 12;
+const shuffleArray = (arr) => {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+};
 
 // 自定义样式
 const styles = {
@@ -203,7 +211,8 @@ const Home = () => {
           }
         })
       );
-      setAlbums(albumsRes.data);
+      const allAlbums = albumsRes.data || [];
+      setAlbums(shuffleArray(allAlbums));
       setGenres(genresWithCover);
       setRecentReviews(reviewsRes.data);
     } catch {
