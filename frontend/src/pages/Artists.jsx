@@ -16,6 +16,7 @@ import {
 import { DeleteOutlined, EditOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { artistsApi } from '../api/artists';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -27,6 +28,7 @@ const Artists = () => {
   const [editingArtist, setEditingArtist] = useState(null);
   const [saving, setSaving] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadArtists();
@@ -172,8 +174,12 @@ const Artists = () => {
                       fontSize: '18px',
                       fontWeight: 600,
                       color: '#4E342E',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
                     }}>
-                      {artist.name}
+                      <span onClick={() => navigate(`/music/artists/${artist.id}`)}>
+                        {artist.name}
+                      </span>
                     </span>
                     {artist.country && (
                       <Tag style={{ marginLeft: '8px' }}>{artist.country}</Tag>

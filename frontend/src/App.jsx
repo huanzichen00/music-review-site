@@ -12,6 +12,7 @@ import AddAlbum from './pages/AddAlbum';
 import EditAlbum from './pages/EditAlbum';
 import Profile from './pages/Profile';
 import Artists from './pages/Artists';
+import ArtistDetail from './pages/ArtistDetail';
 import Genres from './pages/Genres';
 import GenreDetail from './pages/GenreDetail';
 import Blog from './pages/Blog';
@@ -65,6 +66,7 @@ function App() {
               <Route path="/music/home" element={<Home />} />
               <Route path="/music/albums" element={<Albums />} />
               <Route path="/music/artists" element={<Artists />} />
+              <Route path="/music/artists/:id" element={<ArtistDetail />} />
               <Route path="/music/genres" element={<Genres />} />
               <Route path="/music/genres/:id" element={<GenreDetail />} />
               <Route path="/music/guess-band" element={<GuessBand />} />
@@ -82,6 +84,7 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/users/:id" element={<UserHome />} />
               <Route path="/artists" element={<Artists />} />
+              <Route path="/artists/:id" element={<ArtistDetail />} />
               <Route path="/genres" element={<Genres />} />
               <Route path="/genres/:id" element={<GenreDetail />} />
               <Route path="/blog" element={<Blog />} />
