@@ -23,7 +23,7 @@ CREATE TEMPORARY TABLE tmp_real_albums (
   release_year INT,
   primary_genre VARCHAR(50) COLLATE utf8mb4_unicode_ci,
   secondary_genre VARCHAR(50) COLLATE utf8mb4_unicode_ci,
-  description TEXT,
+  description VARCHAR(1000),
   cover_url VARCHAR(255),
   PRIMARY KEY (artist_name, album_title)
 ) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
