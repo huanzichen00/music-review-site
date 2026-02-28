@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { artistsApi } from '../api/artists';
 import { albumsApi } from '../api/albums';
 import AlbumCard from '../components/AlbumCard';
+import { useTheme } from '../context/ThemeContext';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -60,6 +61,8 @@ const styles = {
 };
 
 const ArtistDetail = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const { id } = useParams();
   const [artist, setArtist] = useState(null);
   const [albums, setAlbums] = useState([]);
@@ -125,11 +128,13 @@ const ArtistDetail = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 80,
-                  opacity: 0.45,
+                  fontSize: 18,
+                  letterSpacing: '1px',
+                  color: isDark ? '#9CA3AF' : '#8D6E63',
+                  background: isDark ? '#1A1A1D' : undefined,
                 }}
               >
-                🎸
+                NO PHOTO
               </div>
             )}
           </div>

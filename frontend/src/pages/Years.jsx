@@ -3,6 +3,7 @@ import { Card, Col, Empty, Row, Spin, Tag, Typography, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { albumsApi } from '../api/albums';
 import { artistsApi } from '../api/artists';
+import { useTheme } from '../context/ThemeContext';
 
 const { Title } = Typography;
 
@@ -43,6 +44,8 @@ const styles = {
 };
 
 const Years = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [loading, setLoading] = useState(true);
   const [years, setYears] = useState([]);
   const [albumCountByYear, setAlbumCountByYear] = useState(new Map());
@@ -108,9 +111,29 @@ const Years = () => {
     [years, albumCountByYear, formedBandCountByYear, yearCoverByYear]
   );
 
+  const themedStyles = useMemo(() => {
+    if (!isDark) {
+      return styles;
+    }
+    return {
+      ...styles,
+      pageTitle: { ...styles.pageTitle, color: '#E5E7EB' },
+      card: {
+        ...styles.card,
+        border: '1px solid #2F2F33',
+        background: 'linear-gradient(145deg, #171719 0%, #131316 100%)',
+      },
+      yearName: { ...styles.yearName, color: '#E5E7EB' },
+      coverWrap: {
+        ...styles.coverWrap,
+        background: 'linear-gradient(145deg, #1D1D21 0%, #18181B 100%)',
+      },
+    };
+  }, [isDark]);
+
   return (
     <div>
-      <h1 style={styles.pageTitle}>🗓 浏览年份</h1>
+      <h1 style={themedStyles.pageTitle}>{isDark ? '浏览年份' : '🗓 浏览年份'}</h1>
       {loading ? (
         <div style={{ textAlign: 'center', padding: 60 }}>
           <Spin size="large" />
@@ -125,17 +148,17 @@ const Years = () => {
             <Col key={item.year} xs={12} sm={8} md={6} lg={4}>
               <Card
                 hoverable
-                style={styles.card}
+                style={themedStyles.card}
                 onClick={() => navigate(`/music/years/${item.year}`)}
               >
-                <Title level={4} style={styles.yearName}>{item.year}</Title>
-                <div style={styles.coverWrap}>
+                <Title level={4} style={themedStyles.yearName}>{item.year}</Title>
+                <div style={themedStyles.coverWrap}>
                   {item.coverUrl ? (
                     <img src={resolveCoverUrl(item.coverUrl)} alt={`${item.year} 年专辑封面`} style={styles.coverImage} />
                   ) : null}
                 </div>
-                <Tag color="blue">{item.albumCount} 张专辑</Tag>
-                <Tag color="geekblue">{item.formedBandCount} 支当年成立乐队</Tag>
+                <Tag color={isDark ? 'default' : 'blue'}>{item.albumCount} 张专辑</Tag>
+                <Tag color={isDark ? 'default' : 'geekblue'}>{item.formedBandCount} 支当年成立乐队</Tag>
               </Card>
             </Col>
           ))}

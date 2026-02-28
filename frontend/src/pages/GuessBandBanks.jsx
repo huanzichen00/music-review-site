@@ -20,6 +20,7 @@ import { useNavigate } from 'react-router-dom';
 import { artistsApi } from '../api/artists';
 import { questionBanksApi } from '../api/questionBanks';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const { Title, Text } = Typography;
 const MIN_ITEMS = 10;
@@ -37,6 +38,8 @@ const isPlayableArtist = (artist) =>
 
 const GuessBandBanks = () => {
   const { isAuthenticated } = useAuth();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [savingMeta, setSavingMeta] = useState(false);
@@ -254,7 +257,16 @@ const GuessBandBanks = () => {
       </div>
 
       <div style={{ display: 'flex', gap: 16, marginTop: 16, alignItems: 'stretch', flexWrap: 'wrap' }}>
-        <Card style={{ width: 320, flex: '1 1 320px' }} title="我的题库">
+        <Card
+          style={{
+            width: 320,
+            flex: '1 1 320px',
+            ...(isDark
+              ? { background: 'linear-gradient(145deg, #171719 0%, #131316 100%)', border: '1px solid #2F2F33' }
+              : {}),
+          }}
+          title="我的题库"
+        >
           {banks.length === 0 ? (
             <Text type="secondary">还没有题库，先新建一个。</Text>
           ) : (
@@ -262,14 +274,19 @@ const GuessBandBanks = () => {
               dataSource={banks}
               renderItem={(bank) => (
                 <List.Item
-                  style={{ cursor: 'pointer', paddingInline: 8, borderRadius: 8, background: selectedBankId === bank.id ? '#f6ffed' : undefined }}
+                  style={{
+                    cursor: 'pointer',
+                    paddingInline: 8,
+                    borderRadius: 8,
+                    background: selectedBankId === bank.id ? (isDark ? '#232327' : '#f6ffed') : undefined,
+                  }}
                   onClick={() => openBank(bank.id)}
                 >
                   <List.Item.Meta
                     title={bank.name}
                     description={
                       <Space size={8} wrap>
-                        <Tag color={bank.visibility === 'PRIVATE' ? 'default' : 'success'}>{bank.visibility}</Tag>
+                        <Tag color={isDark ? 'default' : bank.visibility === 'PRIVATE' ? 'default' : 'success'}>{bank.visibility}</Tag>
                         <Text type="secondary">{bank.itemCount || 0} 题</Text>
                       </Space>
                     }
@@ -281,7 +298,12 @@ const GuessBandBanks = () => {
         </Card>
 
         <Card
-          style={{ flex: '3 1 860px' }}
+          style={{
+            flex: '3 1 860px',
+            ...(isDark
+              ? { background: 'linear-gradient(145deg, #171719 0%, #131316 100%)', border: '1px solid #2F2F33' }
+              : {}),
+          }}
           title="题库详情"
           extra={
             <Button
@@ -289,10 +311,12 @@ const GuessBandBanks = () => {
               onClick={() => navigate('/music/guess-band')}
               style={{
                 border: 'none',
-                color: '#FDF5ED',
+                color: isDark ? '#E5E7EB' : '#FDF5ED',
                 fontWeight: 700,
-                background: 'linear-gradient(135deg, #FFB300 0%, #2E7BE6 100%)',
-                boxShadow: '0 4px 12px rgba(229, 57, 53, 0.32)',
+                background: isDark
+                  ? 'linear-gradient(135deg, #4B5563 0%, #374151 100%)'
+                  : 'linear-gradient(135deg, #FFB300 0%, #2E7BE6 100%)',
+                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.35)' : '0 4px 12px rgba(229, 57, 53, 0.32)',
               }}
             >
               返回猜乐队
@@ -336,7 +360,7 @@ const GuessBandBanks = () => {
 
               <div style={{ marginTop: 14 }}>
                 <Space wrap>
-                  <Tag color={countValid ? 'success' : 'error'}>
+                  <Tag color={isDark ? 'default' : countValid ? 'success' : 'error'}>
                     已选 {selectedCount} / 需 {MIN_ITEMS}-{MAX_ITEMS}
                   </Tag>
                   <Text type="secondary">只展示字段完整、可用于猜乐队的乐队。</Text>
@@ -355,7 +379,11 @@ const GuessBandBanks = () => {
                     item.title.toLowerCase().includes(inputValue.toLowerCase()) ||
                     item.description.toLowerCase().includes(inputValue.toLowerCase())
                   }
-                  listStyle={{ width: 360, height: 520 }}
+                  listStyle={{
+                    width: 360,
+                    height: 520,
+                    ...(isDark ? { background: '#171719', color: '#E5E7EB', borderColor: '#2F2F33' } : {}),
+                  }}
                   oneWay
                 />
               </div>

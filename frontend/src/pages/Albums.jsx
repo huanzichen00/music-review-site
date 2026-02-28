@@ -3,6 +3,7 @@ import { Row, Col, Card, Spin, message } from 'antd';
 import { albumsApi } from '../api/albums';
 import AlbumCard from '../components/AlbumCard';
 import AlphabetFilter from '../components/AlphabetFilter';
+import { useTheme } from '../context/ThemeContext';
 
 const styles = {
   pageTitle: {
@@ -25,6 +26,8 @@ const styles = {
 };
 
 const Albums = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -48,7 +51,7 @@ const Albums = () => {
 
   return (
     <div>
-      <h1 style={styles.pageTitle}>🎵 浏览专辑</h1>
+      <h1 style={styles.pageTitle}>{isDark ? '浏览专辑' : '🎵 浏览专辑'}</h1>
 
       <AlphabetFilter
         selected={selectedLetter}

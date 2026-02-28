@@ -1,5 +1,6 @@
 import { Card, Rate, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 
 const { Meta } = Card;
 const { Text } = Typography;
@@ -61,6 +62,8 @@ const styles = {
 };
 
 const AlbumCard = ({ album }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const navigate = useNavigate();
   const resolveCoverUrl = (url) => {
     if (!url) return '';
@@ -82,7 +85,9 @@ const AlbumCard = ({ album }) => {
               onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
             />
           ) : (
-            <span style={styles.placeholder}>🎵</span>
+            <span style={{ ...styles.placeholder, fontSize: 14, letterSpacing: 1, color: isDark ? '#9CA3AF' : '#8D6E63' }}>
+              NO COVER
+            </span>
           )}
         </div>
       }

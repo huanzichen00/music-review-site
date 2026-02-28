@@ -91,11 +91,45 @@ const blueTheme = {
   },
 };
 
+const darkTheme = {
+  token: {
+    colorPrimary: '#6B7280',
+    colorBgContainer: '#141414',
+    colorBgLayout: '#0E0E0F',
+    colorBgElevated: '#1B1B1D',
+    colorBorder: '#2F2F33',
+    colorText: '#E5E7EB',
+    colorTextSecondary: '#9CA3AF',
+    borderRadius: 8,
+    colorLink: '#D1D5DB',
+    colorSuccess: '#9CA3AF',
+    colorWarning: '#9CA3AF',
+    colorError: '#9CA3AF',
+  },
+  components: {
+    Button: {
+      colorPrimary: '#4B5563',
+      algorithm: true,
+    },
+    Card: {
+      colorBgContainer: '#141414',
+    },
+    Menu: {
+      itemBg: 'transparent',
+      itemColor: '#D1D5DB',
+      itemSelectedColor: '#F3F4F6',
+      itemSelectedBg: 'rgba(255, 255, 255, 0.12)',
+      itemHoverColor: '#E5E7EB',
+      itemHoverBg: 'rgba(255, 255, 255, 0.08)',
+    },
+  },
+};
+
 function AppContent() {
   const { theme } = useTheme();
 
   return (
-    <ConfigProvider theme={theme === 'blue' ? blueTheme : warmTheme}>
+    <ConfigProvider theme={theme === 'blue' ? blueTheme : theme === 'dark' ? darkTheme : warmTheme}>
       <AuthProvider>
         <Router>
           <Layout>

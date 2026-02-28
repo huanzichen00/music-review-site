@@ -14,6 +14,7 @@ import { reviewsApi } from '../api/reviews';
 import { favoritesApi } from '../api/favorites';
 import { repliesApi } from '../api/replies';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { resolveAvatarUrl } from '../utils/avatar';
 
 const { Title, Text, Paragraph } = Typography;
@@ -146,6 +147,8 @@ const styles = {
 };
 
 const AlbumDetail = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const { id } = useParams();
   const navigate = useNavigate();
   const resolveCoverUrl = (url) => {
@@ -376,10 +379,12 @@ const AlbumDetail = () => {
                 top: '50%',
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
-                fontSize: '100px',
-                opacity: 0.5,
+                fontSize: isDark ? '18px' : '100px',
+                letterSpacing: isDark ? '1px' : undefined,
+                color: isDark ? '#9CA3AF' : undefined,
+                opacity: isDark ? 0.9 : 0.5,
               }}>
-                🎵
+                {isDark ? 'NO COVER' : '🎵'}
               </div>
             )}
           </div>
@@ -547,7 +552,7 @@ const AlbumDetail = () => {
 
       {/* Reviews */}
       <Card 
-        title={<span style={styles.cardTitle}>💬 评论（{reviews.length}）</span>}
+        title={<span style={styles.cardTitle}>{isDark ? `评论（${reviews.length}）` : `💬 评论（${reviews.length}）`}</span>}
         style={{ marginTop: '32px', borderRadius: '16px' }}
       >
         {reviews.length === 0 ? (

@@ -36,6 +36,7 @@ const Layout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isBlue = theme === 'blue';
+  const isDark = theme === 'dark';
 
   const handleLogout = () => {
     logout();
@@ -145,15 +146,21 @@ const Layout = ({ children }) => {
         height: '88px',
         lineHeight: '88px',
         padding: '0 50px',
-        background: isBlue
+        background: isDark
+          ? 'linear-gradient(135deg, #0F0F10 0%, #151517 50%, #1B1B1F 100%)'
+          : isBlue
           ? 'linear-gradient(135deg, #1E4F9E 0%, #2E6FC4 50%, #5A97EF 100%)'
           : 'linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #CD853F 100%)',
-        boxShadow: isBlue ? '0 2px 8px rgba(30, 79, 158, 0.3)' : '0 2px 8px rgba(139, 69, 19, 0.3)',
-        borderBottom: isBlue ? '1.5px solid #C9DDFB' : '1.5px solid #E8D5C4',
+        boxShadow: isDark
+          ? '0 2px 10px rgba(0, 0, 0, 0.45)'
+          : isBlue
+            ? '0 2px 8px rgba(30, 79, 158, 0.3)'
+            : '0 2px 8px rgba(139, 69, 19, 0.3)',
+        borderBottom: isDark ? '1.5px solid #2F2F33' : isBlue ? '1.5px solid #C9DDFB' : '1.5px solid #E8D5C4',
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Link to="/music/home" style={{ 
-            color: isBlue ? '#EEF4FF' : '#FFF8E7',
+            color: isDark ? '#E5E7EB' : isBlue ? '#EEF4FF' : '#FFF8E7',
             fontSize: '34px', 
             fontWeight: 700,
             marginRight: '40px',
@@ -188,7 +195,7 @@ const Layout = ({ children }) => {
           <Space align="center">
             <span
               style={{
-                color: isBlue ? '#EEF4FF' : '#FFF8E7',
+                color: isDark ? '#D1D5DB' : isBlue ? '#EEF4FF' : '#FFF8E7',
                 fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
                 fontSize: 16,
               }}
@@ -203,6 +210,7 @@ const Layout = ({ children }) => {
               options={[
                 { value: 'warm', label: '暖色' },
                 { value: 'blue', label: '蓝色' },
+                { value: 'dark', label: '黑夜' },
               ]}
             />
           </Space>
@@ -214,11 +222,11 @@ const Layout = ({ children }) => {
                   size={44}
                   style={{ 
                     marginRight: 8,
-                    border: isBlue ? '2px solid #CFE2FF' : '2px solid #FFE4B5',
+                    border: isDark ? '2px solid #4B5563' : isBlue ? '2px solid #CFE2FF' : '2px solid #FFE4B5',
                   }} 
                 />
                 <span style={{ 
-                  color: isBlue ? '#EEF4FF' : '#FFF8E7',
+                  color: isDark ? '#E5E7EB' : isBlue ? '#EEF4FF' : '#FFF8E7',
                   fontWeight: 500,
                   fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
                   fontSize: '20px',
@@ -234,7 +242,7 @@ const Layout = ({ children }) => {
                 icon={<LoginOutlined />}
                 onClick={() => navigate('/login')}
                 style={{ 
-                  color: isBlue ? '#EEF4FF' : '#FFF8E7',
+                  color: isDark ? '#D1D5DB' : isBlue ? '#EEF4FF' : '#FFF8E7',
                   fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
                   fontSize: '20px',
                 }}
@@ -244,11 +252,13 @@ const Layout = ({ children }) => {
               <Button 
                 onClick={() => navigate('/register')}
                 style={{ 
-                  background: isBlue
+                  background: isDark
+                    ? 'linear-gradient(135deg, #2B2B2F 0%, #232327 100%)'
+                    : isBlue
                     ? 'linear-gradient(135deg, #CFE2FF 0%, #BCD7FF 100%)'
                     : 'linear-gradient(135deg, #FFE4B5 0%, #F5DEB3 100%)',
                   border: 'none',
-                  color: isBlue ? '#1E4F9E' : '#8B4513',
+                  color: isDark ? '#E5E7EB' : isBlue ? '#1E4F9E' : '#8B4513',
                   fontWeight: 500,
                   fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
                   fontSize: '20px',
@@ -269,11 +279,17 @@ const Layout = ({ children }) => {
             gap: 8,
             padding: '8px 10px',
             borderRadius: 10,
-            border: isBlue ? '1px solid #C9DDFB' : '1px solid #E8D5C4',
-            background: isBlue
+            border: isDark ? '1px solid #2F2F33' : isBlue ? '1px solid #C9DDFB' : '1px solid #E8D5C4',
+            background: isDark
+              ? 'linear-gradient(180deg, #171719 0%, #131316 100%)'
+              : isBlue
               ? 'linear-gradient(180deg, #F8FBFF 0%, #EEF5FF 100%)'
               : 'linear-gradient(180deg, #FFF8EF 0%, #FFF2E6 100%)',
-            boxShadow: isBlue ? '0 1px 4px rgba(30, 79, 158, 0.08)' : '0 1px 4px rgba(139, 69, 19, 0.08)',
+            boxShadow: isDark
+              ? '0 1px 6px rgba(0, 0, 0, 0.32)'
+              : isBlue
+                ? '0 1px 4px rgba(30, 79, 158, 0.08)'
+                : '0 1px 4px rgba(139, 69, 19, 0.08)',
           }}
         >
           <Button
@@ -338,11 +354,13 @@ const Layout = ({ children }) => {
       
       <Footer style={{ 
         textAlign: 'center', 
-        background: isBlue
+        background: isDark
+          ? 'linear-gradient(180deg, #111113 0%, #0D0D0F 100%)'
+          : isBlue
           ? 'linear-gradient(180deg, #DFECFF 0%, #D5E6FF 100%)'
           : 'linear-gradient(180deg, #F5E6D3 0%, #EDE0D4 100%)',
-        color: isBlue ? '#6788AE' : '#8D6E63',
-        borderTop: isBlue ? '1px solid #C9DDFB' : '1px solid #E8D5C4',
+        color: isDark ? '#9CA3AF' : isBlue ? '#6788AE' : '#8D6E63',
+        borderTop: isDark ? '1px solid #2F2F33' : isBlue ? '1px solid #C9DDFB' : '1px solid #E8D5C4',
         padding: '16px 50px',
       }}>
         <span style={{ 

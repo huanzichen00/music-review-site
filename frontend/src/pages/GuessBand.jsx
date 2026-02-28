@@ -259,6 +259,7 @@ const GuessBand = () => {
   const { isAuthenticated } = useAuth();
   const { theme } = useTheme();
   const isBlue = theme === 'blue';
+  const isDark = theme === 'dark';
   const [bands, setBands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [bankSwitching, setBankSwitching] = useState(false);
@@ -276,6 +277,63 @@ const GuessBand = () => {
   const [countryInput, setCountryInput] = useState('');
 
   const themedStyles = useMemo(() => {
+    if (isDark) {
+      return {
+        ...styles,
+        sideCard: {
+          ...styles.sideCard,
+          border: '1px solid #2F2F33',
+          background: 'linear-gradient(180deg, #161618 0%, #121214 100%)',
+          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.35)',
+        },
+        sideTitle: { ...styles.sideTitle, color: '#E5E7EB' },
+        sideSubtitle: { ...styles.sideSubtitle, color: '#9CA3AF' },
+        heroCard: {
+          ...styles.heroCard,
+          border: '1px solid #2F2F33',
+          background: 'linear-gradient(180deg, #161618 0%, #121214 100%)',
+          boxShadow: '0 6px 18px rgba(0, 0, 0, 0.45)',
+        },
+        title: { ...styles.title, color: '#E5E7EB' },
+        subtitle: { ...styles.subtitle, color: '#A3A3A3' },
+        artistsLinkButton: {
+          ...styles.artistsLinkButton,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.32)',
+          background: 'linear-gradient(135deg, #4B5563 0%, #374151 100%)',
+          color: '#E5E7EB',
+        },
+        genresLinkButton: {
+          ...styles.genresLinkButton,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.32)',
+          background: 'linear-gradient(135deg, #52525B 0%, #3F3F46 100%)',
+          color: '#E5E7EB',
+        },
+        banksLinkButton: {
+          ...styles.banksLinkButton,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.32)',
+          background: 'linear-gradient(135deg, #6B7280 0%, #4B5563 100%)',
+          color: '#E5E7EB',
+        },
+        board: {
+          ...styles.board,
+          background: 'linear-gradient(180deg, #0F0F10 0%, #141416 100%)',
+          border: '1px solid #2F2F33',
+        },
+        th: { ...styles.th, background: '#2A2A2D', color: '#E5E7EB' },
+        tdBase: { ...styles.tdBase, background: '#18181B', color: '#E5E7EB' },
+        answerCard: {
+          ...styles.answerCard,
+          border: '1px solid #3F3F46',
+          background: 'linear-gradient(180deg, #17171A 0%, #131316 100%)',
+        },
+        highlightTip: {
+          ...styles.highlightTip,
+          border: '1px solid #3F3F46',
+          background: 'linear-gradient(90deg, #1A1A1D 0%, #16161A 100%)',
+          color: '#D1D5DB',
+        },
+      };
+    }
     if (!isBlue) {
       return styles;
     }
@@ -334,16 +392,16 @@ const GuessBand = () => {
         color: '#1E4A8A',
       },
     };
-  }, [isBlue]);
+  }, [isBlue, isDark]);
 
   const getCellStyleByTheme = (state) => {
     if (state === 'exact') {
-      return { background: isBlue ? '#245DAD' : '#2F5B42' };
+      return { background: isDark ? '#3F3F46' : isBlue ? '#245DAD' : '#2F5B42' };
     }
     if (state === 'close') {
-      return { background: isBlue ? '#3D79BF' : '#7A5A35' };
+      return { background: isDark ? '#52525B' : isBlue ? '#3D79BF' : '#7A5A35' };
     }
-    return { background: isBlue ? '#122742' : '#2B1627' };
+    return { background: isDark ? '#18181B' : isBlue ? '#122742' : '#2B1627' };
   };
 
   useEffect(() => {
@@ -578,7 +636,7 @@ const GuessBand = () => {
             allowClear
           />
           <div style={{ marginTop: 14 }}>
-            <Text strong style={{ color: isBlue ? '#274B7A' : '#5D4037' }}>匹配乐队</Text>
+            <Text strong style={{ color: isDark ? '#E5E7EB' : isBlue ? '#274B7A' : '#5D4037' }}>匹配乐队</Text>
           </div>
           <div style={{ marginTop: 10, maxHeight: 560, overflowY: 'auto' }}>
             <Space wrap>
@@ -603,9 +661,9 @@ const GuessBand = () => {
         <div style={themedStyles.centerWrap}>
           <Card style={themedStyles.heroCard}>
         <Space size="middle" wrap>
-          <Tag color="success">默认 {DEFAULT_MAX_ATTEMPTS} 次</Tag>
-          <Tag color="gold">乐队库 {bands.length} 支</Tag>
-          <Tag color="processing">当前题库：{currentBankLabel}</Tag>
+          <Tag color={isDark ? 'default' : 'success'}>默认 {DEFAULT_MAX_ATTEMPTS} 次</Tag>
+          <Tag color={isDark ? 'default' : 'gold'}>乐队库 {bands.length} 支</Tag>
+          <Tag color={isDark ? 'default' : 'processing'}>当前题库：{currentBankLabel}</Tag>
           <Text strong>本轮尝试 {attempts.length}/{maxAttempts} 次</Text>
           <Space size={6} align="center">
             <Text>上限</Text>
@@ -762,7 +820,7 @@ const GuessBand = () => {
             <tbody>
               {attempts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ ...themedStyles.tdBase, padding: '20px 10px', color: isBlue ? '#AFC4E1' : '#D2BCC8' }}>
+                  <td colSpan={6} style={{ ...themedStyles.tdBase, padding: '20px 10px', color: isDark ? '#9CA3AF' : isBlue ? '#AFC4E1' : '#D2BCC8' }}>
                     还没有猜测，开始输入第一个乐队吧
                   </td>
                 </tr>
@@ -793,7 +851,7 @@ const GuessBand = () => {
             Tips
           </Title>
           <div style={{ display: 'grid', gap: 10 }}>
-            <Tag color="success" style={{ width: 'fit-content' }}>快捷键</Tag>
+            <Tag color={isDark ? 'default' : 'success'} style={{ width: 'fit-content' }}>快捷键</Tag>
             <Text style={themedStyles.sideSubtitle}>
               按 Tab 键可快速选中并提交当前首个联想乐队。
             </Text>

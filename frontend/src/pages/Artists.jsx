@@ -18,6 +18,7 @@ import { DeleteOutlined, EditOutlined, ExclamationCircleOutlined } from '@ant-de
 import { artistsApi } from '../api/artists';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -29,6 +30,8 @@ const Artists = () => {
   const [editingArtist, setEditingArtist] = useState(null);
   const [saving, setSaving] = useState(false);
   const { user } = useAuth();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const navigate = useNavigate();
   const resolveMediaUrl = (url) => {
     if (!url) return '';
@@ -182,9 +185,13 @@ const Artists = () => {
                   <Avatar
                     size={52}
                     src={artist.photoUrl ? resolveMediaUrl(artist.photoUrl) : undefined}
-                    style={{ border: '1px solid #E5B992', backgroundColor: '#E8D5C4' }}
+                    style={{
+                      border: isDark ? '1px solid #2F2F33' : '1px solid #E5B992',
+                      backgroundColor: isDark ? '#1F1F22' : '#E8D5C4',
+                      color: isDark ? '#D1D5DB' : '#5D4037',
+                    }}
                   >
-                    🎸
+                    {artist.name?.slice(0, 1)?.toUpperCase() || 'A'}
                   </Avatar>
                 }
                 title={

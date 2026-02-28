@@ -6,7 +6,10 @@ const ThemeContext = createContext(null);
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved === 'blue' ? 'blue' : 'warm';
+    if (saved === 'blue' || saved === 'dark') {
+      return saved;
+    }
+    return 'warm';
   });
 
   useEffect(() => {

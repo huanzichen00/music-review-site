@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Row, Col, Card, Spin, message, List, Avatar, Rate, Button, Space } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { albumsApi } from '../api/albums';
@@ -6,6 +6,7 @@ import { genresApi } from '../api/genres';
 import { reviewsApi } from '../api/reviews';
 import AlbumCard from '../components/AlbumCard';
 import { resolveAvatarUrl } from '../utils/avatar';
+import { useTheme } from '../context/ThemeContext';
 
 const HOME_ALBUM_LIMIT = 12;
 const shuffleArray = (arr) => {
@@ -164,6 +165,8 @@ const styles = {
 };
 
 const Home = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [albums, setAlbums] = useState([]);
   const [genres, setGenres] = useState([]);
   const [recentReviews, setRecentReviews] = useState([]);
@@ -180,6 +183,50 @@ const Home = () => {
     return url;
   };
   const visibleGenres = genres.filter((genre) => (genre.albumCount ?? 0) > 0);
+  const themedStyles = useMemo(() => {
+    if (!isDark) {
+      return styles;
+    }
+    return {
+      ...styles,
+      pageTitle: {
+        ...styles.pageTitle,
+        color: '#E5E7EB',
+        textShadow: 'none',
+      },
+      featureCard: {
+        ...styles.featureCard,
+        border: '1px solid #2F2F33',
+        background: 'linear-gradient(135deg, #171719 0%, #131316 100%)',
+        boxShadow: '0 6px 18px rgba(0,0,0,0.35)',
+      },
+      featureTitle: { ...styles.featureTitle, color: '#E5E7EB' },
+      featureDesc: { ...styles.featureDesc, color: '#A3A3A3' },
+      sectionTitle: { ...styles.sectionTitle, color: '#D1D5DB' },
+      genreCard: {
+        ...styles.genreCard,
+        background: 'linear-gradient(145deg, #171719 0%, #131316 100%)',
+        border: '1px solid #2F2F33',
+      },
+      genreName: { ...styles.genreName, color: '#E5E7EB' },
+      genreCount: { ...styles.genreCount, color: '#9CA3AF' },
+      emptyText: { ...styles.emptyText, color: '#9CA3AF' },
+      reviewCard: {
+        ...styles.reviewCard,
+        background: 'linear-gradient(145deg, #171719 0%, #131316 100%)',
+        border: '1px solid #2F2F33',
+      },
+      reviewUsername: { ...styles.reviewUsername, color: '#E5E7EB' },
+      reviewAlbum: { ...styles.reviewAlbum, color: '#D1D5DB' },
+      reviewAlbumCover: { ...styles.reviewAlbumCover, border: '1px solid #2F2F33' },
+      reviewContent: {
+        ...styles.reviewContent,
+        color: '#D1D5DB',
+        textDecorationColor: '#6B7280',
+      },
+      reviewDate: { ...styles.reviewDate, color: '#9CA3AF' },
+    };
+  }, [isDark]);
 
   useEffect(() => {
     loadData();
@@ -245,15 +292,15 @@ const Home = () => {
 
   return (
     <div>
-      <h1 style={styles.pageTitle}>精选专辑</h1>
-      <Card style={styles.featureCard}>
+      <h1 style={themedStyles.pageTitle}>精选专辑</h1>
+      <Card style={themedStyles.featureCard}>
         <Space
           size="middle"
           style={{ width: '100%', justifyContent: 'space-between', flexWrap: 'wrap' }}
         >
           <div>
-            <div style={styles.featureTitle}>新功能：Guess-Band 猜乐队</div>
-            <div style={styles.featureDesc}>根据地区、风格、年份和人数提示，挑战你对乐队的熟悉度。</div>
+            <div style={themedStyles.featureTitle}>新功能：Guess-Band 猜乐队</div>
+            <div style={themedStyles.featureDesc}>根据地区、风格、年份和人数提示，挑战你对乐队的熟悉度。</div>
           </div>
           <Button type="primary" size="large" onClick={() => navigate('/music/guess-band')}>
             进入 guess-band
@@ -269,7 +316,7 @@ const Home = () => {
         <>
           {albums.length === 0 ? (
             <Card style={{ borderRadius: '12px' }}>
-              <p style={styles.emptyText}>
+              <p style={themedStyles.emptyText}>
                 暂无专辑。
               </p>
             </Card>
@@ -286,8 +333,8 @@ const Home = () => {
           {/* Recent Reviews Section */}
           {recentReviews.length > 0 && (
             <div style={{ marginTop: '60px' }}>
-              <h2 style={styles.sectionTitle}>💬 最新评论</h2>
-              <Card style={styles.reviewCard}>
+              <h2 style={themedStyles.sectionTitle}>{isDark ? '最新评论' : '💬 最新评论'}</h2>
+              <Card style={themedStyles.reviewCard}>
                 <List
                   itemLayout="horizontal"
                   dataSource={recentReviews}
@@ -298,13 +345,13 @@ const Home = () => {
                           <Avatar 
                             src={resolveAvatarUrl(review.userAvatar)} 
                             size={48}
-                            style={{ border: '2px solid #E8D5C4' }}
+                            style={{ border: isDark ? '2px solid #2F2F33' : '2px solid #E8D5C4' }}
                           />
                         }
                         title={
                           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                             <span
-                              style={{ ...styles.reviewUsername, cursor: 'pointer' }}
+                              style={{ ...themedStyles.reviewUsername, cursor: 'pointer' }}
                               onClick={() => navigate(`/users/${review.userId}`)}
                             >
                               {review.username}
@@ -313,16 +360,16 @@ const Home = () => {
                               disabled 
                               value={review.rating} 
                               allowHalf 
-                              style={{ fontSize: '14px', color: '#D4A574' }} 
+                              style={{ fontSize: '14px', color: isDark ? '#9CA3AF' : '#D4A574' }} 
                             />
-                            <span style={styles.reviewDate}>{formatDate(review.createdAt)}</span>
+                            <span style={themedStyles.reviewDate}>{formatDate(review.createdAt)}</span>
                           </div>
                         }
                         description={
                           <div>
                             <div style={styles.reviewAlbumRow}>
                               <div 
-                                style={styles.reviewAlbum}
+                                style={themedStyles.reviewAlbum}
                                 onClick={() => navigate(`/music/albums/${review.albumId}`)}
                                 title={`${review.albumTitle} - ${review.artistName}`}
                               >
@@ -332,12 +379,12 @@ const Home = () => {
                                 <Avatar
                                   src={resolveMediaUrl(review.albumCoverUrl)}
                                   size={26}
-                                  style={styles.reviewAlbumCover}
+                                  style={themedStyles.reviewAlbumCover}
                                 />
                               )}
                             </div>
                             {review.content && (
-                              <p style={styles.reviewContent}>{review.content}</p>
+                              <p style={themedStyles.reviewContent}>{review.content}</p>
                             )}
                           </div>
                         }
@@ -352,7 +399,7 @@ const Home = () => {
           {/* Genres Section */}
           {visibleGenres.length > 0 && (
             <div style={{ marginTop: '60px' }}>
-              <h2 style={styles.sectionTitle}>🎸 风格</h2>
+              <h2 style={themedStyles.sectionTitle}>{isDark ? '风格' : '🎸 风格'}</h2>
               <Row gutter={[20, 20]}>
                 {visibleGenres.map((genre) => (
                   <Col key={genre.id} xs={12} sm={8} md={6} lg={4}>
@@ -360,7 +407,7 @@ const Home = () => {
                       hoverable
                       onClick={() => navigate(`/music/genres/${genre.id}`)}
                       style={{
-                        ...styles.genreCard,
+                        ...themedStyles.genreCard,
                         cursor: 'pointer',
                         ...(genre.genreCoverUrl
                           ? {
@@ -374,7 +421,7 @@ const Home = () => {
                       <div style={styles.genreCardContent}>
                         <div
                           style={{
-                            ...styles.genreName,
+                            ...themedStyles.genreName,
                             ...(genre.genreCoverUrl
                               ? { color: '#FFF7EE', textShadow: '0 1px 3px rgba(0,0,0,0.55)' }
                               : {}),
@@ -385,7 +432,7 @@ const Home = () => {
                         {genre.albumCount > 0 && (
                           <div
                             style={{
-                              ...styles.genreCount,
+                              ...themedStyles.genreCount,
                               ...(genre.genreCoverUrl
                                 ? { color: '#FFEBD9', textShadow: '0 1px 3px rgba(0,0,0,0.55)' }
                                 : {}),

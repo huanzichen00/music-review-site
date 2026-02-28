@@ -3,6 +3,7 @@ import { Card, Col, Empty, Row, Spin, Typography, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { genresApi } from '../api/genres';
 import { albumsApi } from '../api/albums';
+import { useTheme } from '../context/ThemeContext';
 
 const { Title } = Typography;
 
@@ -63,6 +64,8 @@ const styles = {
 };
 
 const Genres = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -112,7 +115,7 @@ const Genres = () => {
 
   return (
     <div>
-      <h1 style={styles.pageTitle}>🎸 浏览风格</h1>
+      <h1 style={styles.pageTitle}>{isDark ? '浏览风格' : '🎸 浏览风格'}</h1>
       {loading ? (
         <div style={{ textAlign: 'center', padding: 60 }}>
           <Spin size="large" />
