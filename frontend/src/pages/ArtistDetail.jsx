@@ -140,7 +140,7 @@ const ArtistDetail = () => {
           </div>
 
           <div style={styles.heroContent}>
-            <h1 style={styles.pageTitle}>{artist.name}</h1>
+            <h1 style={{ ...styles.pageTitle, color: isDark ? '#E5E7EB' : styles.pageTitle.color }}>{artist.name}</h1>
             <div style={styles.metaRow}>
               {artist.country ? <Tag color="processing">地区：{artist.country}</Tag> : null}
               {artist.formedYear ? <Tag color="gold">成立：{artist.formedYear}</Tag> : null}

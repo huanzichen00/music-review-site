@@ -200,7 +200,7 @@ const Artists = () => {
                       fontFamily: "'Playfair Display', serif",
                       fontSize: '18px',
                       fontWeight: 600,
-                      color: '#4E342E',
+                      color: isDark ? '#E5E7EB' : '#4E342E',
                       cursor: 'pointer',
                     }}>
                       <span onClick={() => navigate(`/music/artists/${artist.id}`)}>
