@@ -126,6 +126,14 @@ const styles = {
     border: '1px solid #C8E6C9',
     background: 'linear-gradient(180deg, #F6FFF4 0%, #EEFAEA 100%)',
   },
+  highlightTip: {
+    marginTop: 14,
+    borderRadius: 12,
+    border: '1px solid #E1BD6A',
+    background: 'linear-gradient(90deg, #FFF6D8 0%, #FFE8B4 100%)',
+    color: '#6B4A1E',
+    fontWeight: 700,
+  },
 };
 
 const CATEGORY_GROUPS = {
@@ -595,6 +603,12 @@ const GuessBand = () => {
             ) : null}
           </Space>
         </div>
+        <Alert
+          style={styles.highlightTip}
+          type="warning"
+          showIcon
+          message="登录后可在“管理自选题库”里创建 10-300 题的专属题库并分享链接。"
+        />
 
         {bands.length === 0 ? (
           <Alert
@@ -708,9 +722,6 @@ const GuessBand = () => {
             </Text>
             <Text style={styles.sideSubtitle}>
               猜测次数上限支持自定义，范围为 1-100 次（默认 10 次）。
-            </Text>
-            <Text style={styles.sideSubtitle}>
-              登录后可在“管理自选题库”里创建 10-300 题的专属题库并分享链接。
             </Text>
             <Text style={styles.sideSubtitle}>
               Enter：提交当前输入

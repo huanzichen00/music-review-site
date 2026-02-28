@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760" role="img" aria-label="猜乐队主块高亮提示条效果图">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFF8EF"/>
+      <stop offset="100%" stop-color="#FFF2E6"/>
+    </linearGradient>
+    <linearGradient id="banner" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FFF6D8"/>
+      <stop offset="100%" stop-color="#FFE8B4"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1400" height="760" fill="#F4EFE7"/>
+
+  <rect x="180" y="80" width="1040" height="600" rx="18" fill="url(#bg)" stroke="#E8D5C4" stroke-width="2"/>
+
+  <text x="230" y="160" font-size="56" fill="#4E342E" font-family="'ZCOOL KuaiLe','Noto Sans SC',sans-serif">猜乐队</text>
+  <text x="230" y="198" font-size="24" fill="#7C5A4E" font-family="'Noto Sans SC',sans-serif">支持默认题库、你的自选题库和分享题库。</text>
+
+  <rect x="230" y="230" width="940" height="76" rx="12" fill="url(#banner)" stroke="#E1BD6A" stroke-width="2"/>
+  <circle cx="268" cy="268" r="14" fill="#A4781A"/>
+  <text x="262" y="274" font-size="16" fill="#FFF8E7" font-family="'Noto Sans SC',sans-serif">i</text>
+  <text x="295" y="276" font-size="26" fill="#6B4A1E" font-weight="700" font-family="'Noto Sans SC',sans-serif">登录后可在“管理自选题库”里创建 10-300 题的专属题库并分享链接。</text>
+
+  <rect x="230" y="328" width="300" height="52" rx="10" fill="#C4956A"/>
+  <text x="258" y="362" font-size="26" fill="#FFF8E7" font-family="'Noto Sans SC',sans-serif">查看所有乐队</text>
+
+  <rect x="550" y="328" width="300" height="52" rx="10" fill="#C4956A"/>
+  <text x="578" y="362" font-size="26" fill="#FFF8E7" font-family="'Noto Sans SC',sans-serif">查看所有风格</text>
+
+  <rect x="870" y="328" width="300" height="52" rx="10" fill="#C4956A"/>
+  <text x="898" y="362" font-size="26" fill="#FFF8E7" font-family="'Noto Sans SC',sans-serif">管理自选题库</text>
+
+  <rect x="230" y="408" width="940" height="238" rx="12" fill="#2A1425" stroke="#57314D"/>
+  <text x="260" y="452" font-size="26" fill="#F5ECF1" font-family="'Noto Sans SC',sans-serif">最近猜测（示意）</text>
+</svg>
