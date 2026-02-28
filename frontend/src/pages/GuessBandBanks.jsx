@@ -37,7 +37,7 @@ const isPlayableArtist = (artist) =>
   );
 
 const GuessBandBanks = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const navigate = useNavigate();
@@ -52,6 +52,11 @@ const GuessBandBanks = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm] = Form.useForm();
   const [metaForm] = Form.useForm();
+  const [publicBanks, setPublicBanks] = useState([]);
+  const [selectedPublicBankId, setSelectedPublicBankId] = useState(null);
+  const [selectedPublicBank, setSelectedPublicBank] = useState(null);
+  const [publicDetailLoading, setPublicDetailLoading] = useState(false);
+  const [publicSearch, setPublicSearch] = useState('');
 
   const loadInitial = async () => {
     if (!isAuthenticated) {
@@ -61,11 +66,26 @@ const GuessBandBanks = () => {
 
     setLoading(true);
     try {
-      const [banksRes, artistsRes] = await Promise.all([questionBanksApi.getMine(), artistsApi.getAll()]);
+      const [banksRes, artistsRes, publicBanksRes] = await Promise.all([
+        questionBanksApi.getMine(),
+        artistsApi.getAll(),
+        questionBanksApi.getPublic(),
+      ]);
       const mineBanks = banksRes.data || [];
       const playableArtists = (artistsRes.data || []).filter(isPlayableArtist);
+      const allPublicBanks = publicBanksRes.data || [];
+      const hallBanks = allPublicBanks.filter((bank) => {
+        if (user?.id != null && bank.ownerUserId != null) {
+          return bank.ownerUserId !== user.id;
+        }
+        if (user?.username && bank.ownerUsername) {
+          return bank.ownerUsername !== user.username;
+        }
+        return true;
+      });
       setBanks(mineBanks);
       setArtists(playableArtists);
+      setPublicBanks(hallBanks);
 
       if (mineBanks.length > 0) {
         await openBank(mineBanks[0].id, mineBanks);
@@ -73,6 +93,13 @@ const GuessBandBanks = () => {
         setSelectedBankId(null);
         setSelectedBank(null);
         setTargetKeys([]);
+      }
+
+      if (hallBanks.length > 0) {
+        await openPublicBank(hallBanks[0].id, hallBanks);
+      } else {
+        setSelectedPublicBankId(null);
+        setSelectedPublicBank(null);
       }
     } catch {
       message.error('加载题库管理数据失败');
@@ -84,7 +111,7 @@ const GuessBandBanks = () => {
   useEffect(() => {
     loadInitial();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.id, user?.username]);
 
   const openBank = async (bankId, bankList = banks) => {
     try {
@@ -105,6 +132,22 @@ const GuessBandBanks = () => {
     }
   };
 
+  const openPublicBank = async (bankId, bankList = publicBanks) => {
+    try {
+      setPublicDetailLoading(true);
+      const detailRes = await questionBanksApi.getPublicById(bankId);
+      const detail = detailRes.data;
+      setSelectedPublicBankId(bankId);
+      setSelectedPublicBank(detail);
+      const maybeUpdated = bankList.map((bank) => (bank.id === bankId ? { ...bank, ...detail } : bank));
+      setPublicBanks(maybeUpdated);
+    } catch {
+      message.error('加载公开题库详情失败');
+    } finally {
+      setPublicDetailLoading(false);
+    }
+  };
+
   const transferDataSource = useMemo(
     () =>
       artists.map((artist) => ({
@@ -114,6 +157,17 @@ const GuessBandBanks = () => {
       })),
     [artists]
   );
+  const filteredPublicBanks = useMemo(() => {
+    const keyword = publicSearch.trim().toLowerCase();
+    if (!keyword) {
+      return publicBanks;
+    }
+    return publicBanks.filter((bank) => {
+      const name = (bank.name || '').toLowerCase();
+      const owner = (bank.ownerUsername || '').toLowerCase();
+      return name.includes(keyword) || owner.includes(keyword);
+    });
+  }, [publicBanks, publicSearch]);
 
   const selectedCount = targetKeys.length;
   const countValid = selectedCount >= MIN_ITEMS && selectedCount <= MAX_ITEMS;
@@ -133,6 +187,28 @@ const GuessBandBanks = () => {
     await openBank(targetId, mineBanks);
   };
 
+  const refreshPublicBanks = async (preferId = selectedPublicBankId) => {
+    const publicBanksRes = await questionBanksApi.getPublic();
+    const allPublicBanks = publicBanksRes.data || [];
+    const hallBanks = allPublicBanks.filter((bank) => {
+      if (user?.id != null && bank.ownerUserId != null) {
+        return bank.ownerUserId !== user.id;
+      }
+      if (user?.username && bank.ownerUsername) {
+        return bank.ownerUsername !== user.username;
+      }
+      return true;
+    });
+    setPublicBanks(hallBanks);
+    if (!hallBanks.length) {
+      setSelectedPublicBankId(null);
+      setSelectedPublicBank(null);
+      return;
+    }
+    const targetId = hallBanks.some((bank) => bank.id === preferId) ? preferId : hallBanks[0].id;
+    await openPublicBank(targetId, hallBanks);
+  };
+
   const handleCreate = async () => {
     try {
       const values = await createForm.validateFields();
@@ -144,6 +220,7 @@ const GuessBandBanks = () => {
       setCreateOpen(false);
       createForm.resetFields();
       await refreshBanks(createdBankId);
+      await refreshPublicBanks();
       message.success('题库创建成功');
     } catch (error) {
       if (error?.errorFields) return;
@@ -161,6 +238,7 @@ const GuessBandBanks = () => {
         visibility: values.visibility,
       });
       await refreshBanks(selectedBankId);
+      await refreshPublicBanks();
       message.success('题库信息已更新');
     } catch (error) {
       if (error?.errorFields) return;
@@ -204,6 +282,7 @@ const GuessBandBanks = () => {
         try {
           await questionBanksApi.remove(selectedBankId);
           await refreshBanks();
+          await refreshPublicBanks();
           message.success('题库已删除');
         } catch (error) {
           message.error(error?.response?.data?.error || '删除题库失败');
@@ -218,6 +297,20 @@ const GuessBandBanks = () => {
       return;
     }
     const shareUrl = `${window.location.origin}/music/guess-band?share=${selectedBank.shareToken}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      message.success('分享链接已复制');
+    } catch {
+      message.info(`分享链接：${shareUrl}`);
+    }
+  };
+
+  const handleCopyPublicShareLink = async (bank) => {
+    if (!bank?.shareToken) {
+      message.warning('该公开题库暂无分享链接');
+      return;
+    }
+    const shareUrl = `${window.location.origin}/music/guess-band?share=${bank.shareToken}`;
     try {
       await navigator.clipboard.writeText(shareUrl);
       message.success('分享链接已复制');
@@ -397,6 +490,108 @@ const GuessBandBanks = () => {
           )}
         </Card>
       </div>
+
+      <Card
+        style={{
+          marginTop: 16,
+          ...(isDark
+            ? { background: 'linear-gradient(145deg, #171719 0%, #131316 100%)', border: '1px solid #2F2F33' }
+            : {}),
+        }}
+        title="公开题库大厅"
+      >
+        {publicBanks.length === 0 ? (
+          <Text type="secondary">暂无其他人公开的题库。</Text>
+        ) : (
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ width: 360, flex: '1 1 360px' }}>
+              <Input
+                allowClear
+                value={publicSearch}
+                onChange={(event) => setPublicSearch(event.target.value)}
+                placeholder="搜索题库名或作者"
+                style={{ marginBottom: 10 }}
+              />
+              <List
+                dataSource={filteredPublicBanks}
+                locale={{ emptyText: '没有匹配的公开题库' }}
+                renderItem={(bank) => (
+                  <List.Item
+                    style={{
+                      cursor: 'pointer',
+                      paddingInline: 8,
+                      borderRadius: 8,
+                      background: selectedPublicBankId === bank.id ? (isDark ? '#232327' : '#eef6ff') : undefined,
+                    }}
+                    onClick={() => openPublicBank(bank.id)}
+                    actions={[
+                      <Button
+                        key={`use-public-${bank.id}`}
+                        type="link"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          navigate(`/music/guess-band?share=${bank.shareToken}`);
+                        }}
+                      >
+                        去使用
+                      </Button>,
+                      <Button
+                        key={`copy-public-${bank.id}`}
+                        type="link"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleCopyPublicShareLink(bank);
+                        }}
+                      >
+                        复制链接
+                      </Button>,
+                    ]}
+                  >
+                    <List.Item.Meta
+                      title={bank.name}
+                      description={
+                        <Space size={8} wrap>
+                          <Tag color={isDark ? 'default' : 'success'}>PUBLIC</Tag>
+                          <Text type="secondary">作者：{bank.ownerUsername || '匿名'}</Text>
+                          <Text type="secondary">{bank.itemCount || 0} 题</Text>
+                        </Space>
+                      }
+                    />
+                  </List.Item>
+                )}
+              />
+            </div>
+
+            <div style={{ flex: '2 1 520px', minWidth: 0 }}>
+              {!selectedPublicBank ? (
+                <Alert type="info" showIcon message="请选择一个公开题库查看详情" />
+              ) : publicDetailLoading ? (
+                <div style={{ textAlign: 'center', padding: 24 }}>
+                  <Spin />
+                </div>
+              ) : (
+                <>
+                  <Space size={8} wrap>
+                    <Tag color={isDark ? 'default' : 'success'}>PUBLIC</Tag>
+                    <Text strong>{selectedPublicBank.name}</Text>
+                    <Text type="secondary">作者：{selectedPublicBank.ownerUsername || '匿名'}</Text>
+                    <Text type="secondary">题数：{selectedPublicBank.itemCount || 0}</Text>
+                  </Space>
+                  <div style={{ marginTop: 12, maxHeight: 360, overflowY: 'auto' }}>
+                    <Space wrap>
+                      {(selectedPublicBank.artists || []).map((artist) => (
+                        <Tag key={`public-artist-${artist.id}`} style={{ marginBottom: 8 }}>
+                          {artist.name}
+                        </Tag>
+                      ))}
+                    </Space>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </Card>
 
       <Modal
         title="新建题库"

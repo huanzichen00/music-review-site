@@ -256,7 +256,7 @@ const toGameBand = (artist) => ({
 
 const GuessBand = () => {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { theme } = useTheme();
   const isBlue = theme === 'blue';
   const isDark = theme === 'dark';
@@ -411,21 +411,39 @@ const GuessBand = () => {
         const params = new URLSearchParams(location.search);
         const shareToken = params.get('share');
 
-        const [artistsRes, mineBanksRes] = await Promise.all([
+        const [artistsRes, publicBanksRes, mineBanksRes] = await Promise.all([
           artistsApi.getAll(),
+          questionBanksApi.getPublic(),
           isAuthenticated ? questionBanksApi.getMine() : Promise.resolve({ data: [] }),
         ]);
 
         const gameBands = (artistsRes.data || []).filter(isPlayableArtist).map(toGameBand);
         setAllBands(gameBands);
 
+        const allPublicBanks = publicBanksRes.data || [];
         const mineBanks = mineBanksRes.data || [];
+        const visiblePublicBanks = allPublicBanks.filter((bank) => {
+          if (!isAuthenticated) {
+            return true;
+          }
+          if (user?.id != null && bank.ownerUserId != null) {
+            return bank.ownerUserId !== user.id;
+          }
+          if (user?.username && bank.ownerUsername) {
+            return bank.ownerUsername !== user.username;
+          }
+          return true;
+        });
         const mineOptions = mineBanks.map((bank) => ({
           value: `mine:${bank.id}`,
           label: `${bank.name} (${bank.itemCount || 0})`,
         }));
+        const publicOptions = visiblePublicBanks.map((bank) => ({
+          value: `public:${bank.id}`,
+          label: `公开 · ${bank.name}（${bank.ownerUsername || '匿名'}） (${bank.itemCount || 0})`,
+        }));
 
-        let nextOptions = [{ value: 'default', label: `默认题库 (${gameBands.length})` }, ...mineOptions];
+        let nextOptions = [{ value: 'default', label: `默认题库 (${gameBands.length})` }, ...mineOptions, ...publicOptions];
         let nextBands = gameBands;
         let nextBankKey = 'default';
         let nextBankLabel = '默认题库';
@@ -462,7 +480,7 @@ const GuessBand = () => {
     };
 
     loadBands();
-  }, [isAuthenticated, location.search]);
+  }, [isAuthenticated, location.search, user?.id, user?.username]);
 
   useEffect(() => {
     if (!roundOver && !solved && attempts.length >= maxAttempts && attempts.length > 0) {
@@ -526,6 +544,32 @@ const GuessBand = () => {
       setCurrentBankLabel(`${shareBank.name}（分享）`);
       setBands(sharedBands);
       resetRoundWithBands(sharedBands);
+      return;
+    }
+
+    if (value.startsWith('public:')) {
+      const id = Number(value.replace('public:', ''));
+      if (!id) {
+        return;
+      }
+      try {
+        setBankSwitching(true);
+        const detailRes = await questionBanksApi.getPublicById(id);
+        const detail = detailRes.data;
+        const nextBands = (detail.artists || []).filter(isPlayableArtist).map(toGameBand);
+        if (!nextBands.length) {
+          message.warning('该公开题库暂无可用题目');
+          return;
+        }
+        setCurrentBankKey(value);
+        setCurrentBankLabel(`${detail.name}（${detail.ownerUsername || '匿名'}）`);
+        setBands(nextBands);
+        resetRoundWithBands(nextBands);
+      } catch {
+        message.error('加载公开题库失败');
+      } finally {
+        setBankSwitching(false);
+      }
       return;
     }
 
