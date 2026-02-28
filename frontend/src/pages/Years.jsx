@@ -11,19 +11,19 @@ const styles = {
     fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
     fontSize: '42px',
     fontWeight: 700,
-    color: '#4E342E',
+    color: '#1F3D77',
     marginBottom: '24px',
     letterSpacing: '1px',
   },
   card: {
     borderRadius: 12,
-    border: '1px solid #E5B992',
-    background: 'linear-gradient(145deg, #FFF8EE 0%, #FFE9D6 100%)',
+    border: '1px solid #9FBCE6',
+    background: 'linear-gradient(145deg, #F1F7FF 0%, #DDEBFF 100%)',
     cursor: 'pointer',
     height: '100%',
   },
   yearName: {
-    color: '#5D4037',
+    color: '#224A86',
     marginBottom: 8,
   },
   coverWrap: {
@@ -31,7 +31,7 @@ const styles = {
     aspectRatio: '4 / 3',
     borderRadius: 10,
     overflow: 'hidden',
-    background: 'linear-gradient(145deg, #F5E6D3 0%, #E8D5C4 100%)',
+    background: 'linear-gradient(145deg, #D1E4FF 0%, #ABC8F5 100%)',
     marginBottom: 10,
   },
   coverImage: {
@@ -134,8 +134,8 @@ const Years = () => {
                     <img src={resolveCoverUrl(item.coverUrl)} alt={`${item.year} 年专辑封面`} style={styles.coverImage} />
                   ) : null}
                 </div>
-                <Tag color="gold">{item.albumCount} 张专辑</Tag>
-                <Tag color="processing">{item.formedBandCount} 支当年成立乐队</Tag>
+                <Tag color="blue">{item.albumCount} 张专辑</Tag>
+                <Tag color="geekblue">{item.formedBandCount} 支当年成立乐队</Tag>
               </Card>
             </Col>
           ))}
