@@ -16,6 +16,7 @@ import {
   message,
 } from 'antd';
 import { DeleteOutlined, LinkOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { artistsApi } from '../api/artists';
 import { questionBanksApi } from '../api/questionBanks';
 import { useAuth } from '../context/AuthContext';
@@ -36,6 +37,7 @@ const isPlayableArtist = (artist) =>
 
 const GuessBandBanks = () => {
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [savingMeta, setSavingMeta] = useState(false);
   const [savingItems, setSavingItems] = useState(false);
@@ -131,13 +133,14 @@ const GuessBandBanks = () => {
   const handleCreate = async () => {
     try {
       const values = await createForm.validateFields();
-      await questionBanksApi.create({
+      const createRes = await questionBanksApi.create({
         name: values.name.trim(),
         visibility: values.visibility,
       });
+      const createdBankId = createRes?.data?.id;
       setCreateOpen(false);
       createForm.resetFields();
-      await refreshBanks();
+      await refreshBanks(createdBankId);
       message.success('题库创建成功');
     } catch (error) {
       if (error?.errorFields) return;
@@ -245,9 +248,12 @@ const GuessBandBanks = () => {
     <div style={{ maxWidth: 1320, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
         <Title level={2} style={{ marginBottom: 0 }}>猜乐队题库管理</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
-          新建题库
-        </Button>
+        <Space>
+          <Button onClick={() => navigate('/music/guess-band')}>返回猜乐队</Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
+            新建题库
+          </Button>
+        </Space>
       </div>
 
       <div style={{ display: 'flex', gap: 16, marginTop: 16, alignItems: 'stretch', flexWrap: 'wrap' }}>
