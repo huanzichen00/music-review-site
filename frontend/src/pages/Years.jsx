@@ -28,7 +28,7 @@ const styles = {
   },
   coverWrap: {
     width: '100%',
-    aspectRatio: '1 / 1',
+    aspectRatio: '4 / 3',
     borderRadius: 10,
     overflow: 'hidden',
     background: 'linear-gradient(145deg, #F5E6D3 0%, #E8D5C4 100%)',
@@ -122,7 +122,7 @@ const Years = () => {
       ) : (
         <Row gutter={[20, 20]}>
           {yearCards.map((item) => (
-            <Col key={item.year} xs={24} sm={12} md={8} lg={6}>
+            <Col key={item.year} xs={12} sm={8} md={6} lg={4}>
               <Card
                 hoverable
                 style={styles.card}
