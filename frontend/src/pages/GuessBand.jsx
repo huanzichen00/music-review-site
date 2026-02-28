@@ -603,12 +603,14 @@ const GuessBand = () => {
             ) : null}
           </Space>
         </div>
-        <Alert
-          style={styles.highlightTip}
-          type="warning"
-          showIcon
-          message="登录后可在“管理自选题库”里创建 10-300 题的专属题库并分享链接。"
-        />
+        {!isAuthenticated ? (
+          <Alert
+            style={styles.highlightTip}
+            type="warning"
+            showIcon
+            message="登录后可在“管理自选题库”里创建 10-300 题的专属题库并分享链接。"
+          />
+        ) : null}
 
         {bands.length === 0 ? (
           <Alert
