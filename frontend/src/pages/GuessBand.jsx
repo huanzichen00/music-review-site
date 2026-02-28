@@ -82,12 +82,6 @@ const styles = {
     gap: 12,
     flexWrap: 'wrap',
   },
-  attemptsTitle: {
-    marginTop: 28,
-    marginBottom: 14,
-    color: '#5D4037',
-    fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
-  },
   board: {
     marginTop: 16,
     background: 'linear-gradient(180deg, #2A1425 0%, #31192D 100%)',
@@ -669,9 +663,6 @@ const GuessBand = () => {
           </Card>
         ) : null}
 
-        <Title level={4} style={styles.attemptsTitle}>
-          最近猜测
-        </Title>
         <div style={styles.board}>
           <table style={styles.table}>
             <thead>
