@@ -20,6 +20,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { albumsApi } from '../api/albums';
 import { blogPostsApi } from '../api/blogPosts';
+import { useTheme } from '../context/ThemeContext';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -33,6 +34,8 @@ const Blog = () => {
   const [editingPostId, setEditingPostId] = useState(null);
   const navigate = useNavigate();
   const { isAuthenticated, loading: authLoading, user } = useAuth();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -280,7 +283,7 @@ const Blog = () => {
                           marginTop: 12,
                           whiteSpace: 'pre-wrap',
                           lineHeight: 1.7,
-                          color: '#4E342E',
+                          color: isDark ? '#E5E7EB' : '#4E342E',
                         }}
                       >
                         {post.content}
