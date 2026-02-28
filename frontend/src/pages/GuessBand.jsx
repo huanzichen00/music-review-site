@@ -66,13 +66,33 @@ const styles = {
     color: '#7C5A4E',
     fontSize: 16,
   },
-  quickLinkButton: {
+  artistsLinkButton: {
     marginTop: 12,
     height: 44,
     borderRadius: 10,
     fontWeight: 700,
-    boxShadow: '0 4px 12px rgba(139, 69, 19, 0.2)',
-    background: 'linear-gradient(135deg, #C4956A 0%, #A86F40 100%)',
+    boxShadow: '0 4px 12px rgba(0, 170, 102, 0.3)',
+    background: 'linear-gradient(135deg, #00C853 0%, #00A65A 100%)',
+    border: 'none',
+    color: '#FFF8E7',
+  },
+  genresLinkButton: {
+    marginTop: 12,
+    height: 44,
+    borderRadius: 10,
+    fontWeight: 700,
+    boxShadow: '0 4px 12px rgba(255, 145, 0, 0.32)',
+    background: 'linear-gradient(135deg, #FFB300 0%, #FB8C00 100%)',
+    border: 'none',
+    color: '#FFF8E7',
+  },
+  banksLinkButton: {
+    marginTop: 12,
+    height: 44,
+    borderRadius: 10,
+    fontWeight: 700,
+    boxShadow: '0 4px 12px rgba(0, 122, 255, 0.3)',
+    background: 'linear-gradient(135deg, #2196F3 0%, #1565C0 100%)',
     border: 'none',
     color: '#FFF8E7',
   },
@@ -568,7 +588,7 @@ const GuessBand = () => {
               href="/music/artists"
               target="_blank"
               rel="noopener noreferrer"
-              style={styles.quickLinkButton}
+              style={styles.artistsLinkButton}
             >
               查看所有乐队
             </Button>
@@ -579,7 +599,7 @@ const GuessBand = () => {
               href="/music/genres"
               target="_blank"
               rel="noopener noreferrer"
-              style={styles.quickLinkButton}
+              style={styles.genresLinkButton}
             >
               查看所有风格
             </Button>
@@ -590,7 +610,7 @@ const GuessBand = () => {
                 href="/music/guess-band/banks"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={styles.quickLinkButton}
+                style={styles.banksLinkButton}
               >
                 管理自选题库
               </Button>

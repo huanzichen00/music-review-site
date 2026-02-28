@@ -283,7 +283,21 @@ const GuessBandBanks = () => {
         <Card
           style={{ flex: '3 1 860px' }}
           title="题库详情"
-          extra={<Button onClick={() => navigate('/music/guess-band')}>返回猜乐队</Button>}
+          extra={
+            <Button
+              type="primary"
+              onClick={() => navigate('/music/guess-band')}
+              style={{
+                border: 'none',
+                color: '#FFF8E7',
+                fontWeight: 700,
+                background: 'linear-gradient(135deg, #FF6A00 0%, #E53935 100%)',
+                boxShadow: '0 4px 12px rgba(229, 57, 53, 0.32)',
+              }}
+            >
+              返回猜乐队
+            </Button>
+          }
         >
           {!selectedBank ? (
             <Alert type="warning" showIcon message="请选择一个题库" />
