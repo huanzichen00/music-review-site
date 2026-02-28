@@ -248,12 +248,9 @@ const GuessBandBanks = () => {
     <div style={{ maxWidth: 1320, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
         <Title level={2} style={{ marginBottom: 0 }}>猜乐队题库管理</Title>
-        <Space>
-          <Button onClick={() => navigate('/music/guess-band')}>返回猜乐队</Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
-            新建题库
-          </Button>
-        </Space>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
+          新建题库
+        </Button>
       </div>
 
       <div style={{ display: 'flex', gap: 16, marginTop: 16, alignItems: 'stretch', flexWrap: 'wrap' }}>
@@ -283,7 +280,11 @@ const GuessBandBanks = () => {
           )}
         </Card>
 
-        <Card style={{ flex: '3 1 860px' }} title="题库详情">
+        <Card
+          style={{ flex: '3 1 860px' }}
+          title="题库详情"
+          extra={<Button onClick={() => navigate('/music/guess-band')}>返回猜乐队</Button>}
+        >
           {!selectedBank ? (
             <Alert type="warning" showIcon message="请选择一个题库" />
           ) : (
