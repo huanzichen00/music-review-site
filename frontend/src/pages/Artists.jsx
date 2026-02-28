@@ -202,7 +202,6 @@ const Artists = () => {
                       fontWeight: 600,
                       color: '#4E342E',
                       cursor: 'pointer',
-                      textDecoration: 'underline',
                     }}>
                       <span onClick={() => navigate(`/music/artists/${artist.id}`)}>
                         {artist.name}

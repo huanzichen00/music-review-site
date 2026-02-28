@@ -25,17 +25,17 @@ const styles = {
     width: 220,
     flex: '1 1 220px',
     borderRadius: 16,
-    border: '1px solid #E8D5C4',
-    background: 'linear-gradient(180deg, #FFF8EF 0%, #FFF2E6 100%)',
-    boxShadow: '0 4px 14px rgba(139, 69, 19, 0.08)',
+    border: '1px solid #CBD5E1',
+    background: 'linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)',
+    boxShadow: '0 4px 14px rgba(51, 65, 85, 0.1)',
   },
   sideTitle: {
     marginBottom: 10,
-    color: '#5D4037',
+    color: '#334155',
     fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
   },
   sideSubtitle: {
-    color: '#8D6E63',
+    color: '#64748B',
     fontSize: 13,
     lineHeight: 1.6,
   },
@@ -45,15 +45,15 @@ const styles = {
   },
   heroCard: {
     borderRadius: 16,
-    border: '1px solid #E8D5C4',
-    background: 'linear-gradient(180deg, #FFF8EF 0%, #FFF2E6 100%)',
-    boxShadow: '0 6px 18px rgba(139, 69, 19, 0.1)',
+    border: '1px solid #CBD5E1',
+    background: 'linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)',
+    boxShadow: '0 6px 18px rgba(51, 65, 85, 0.12)',
     overflow: 'hidden',
   },
   title: {
     marginTop: 12,
     marginBottom: 10,
-    color: '#4E342E',
+    color: '#1E293B',
     fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
   },
   titleRow: {
@@ -64,7 +64,7 @@ const styles = {
     alignItems: 'flex-start',
   },
   subtitle: {
-    color: '#7C5A4E',
+    color: '#475569',
     fontSize: 16,
   },
   artistsLinkButton: {
@@ -93,7 +93,7 @@ const styles = {
     borderRadius: 10,
     fontWeight: 700,
     boxShadow: '0 4px 12px rgba(0, 122, 255, 0.3)',
-    background: 'linear-gradient(135deg, #D4A574 0%, #B8860B 100%)',
+    background: 'linear-gradient(135deg, #64748B 0%, #475569 100%)',
     border: 'none',
     color: '#FDF5ED',
   },
@@ -138,15 +138,15 @@ const styles = {
   answerCard: {
     marginTop: 16,
     borderRadius: 12,
-    border: '1px solid #9EC2F7',
-    background: 'linear-gradient(180deg, #FFF2E6 0%, #E3EEFF 100%)',
+    border: '1px solid #CBD5E1',
+    background: 'linear-gradient(180deg, #F8FAFC 0%, #EFF6FF 100%)',
   },
   highlightTip: {
     marginTop: 14,
     borderRadius: 12,
-    border: '1px solid #E1BD6A',
-    background: 'linear-gradient(90deg, #FFF2E6 0%, #FFE8B4 100%)',
-    color: '#6B4A1E',
+    border: '1px solid #CBD5E1',
+    background: 'linear-gradient(90deg, #F8FAFC 0%, #F1F5F9 100%)',
+    color: '#334155',
     fontWeight: 700,
   },
 };
@@ -396,10 +396,10 @@ const GuessBand = () => {
 
   const getCellStyleByTheme = (state) => {
     if (state === 'exact') {
-      return { background: isDark ? '#3F3F46' : isBlue ? '#245DAD' : '#2F5B42' };
+      return { background: isDark ? '#3F3F46' : isBlue ? '#245DAD' : '#516E93' };
     }
     if (state === 'close') {
-      return { background: isDark ? '#52525B' : isBlue ? '#3D79BF' : '#7A5A35' };
+      return { background: isDark ? '#52525B' : isBlue ? '#3D79BF' : '#64748B' };
     }
     return { background: isDark ? '#18181B' : isBlue ? '#122742' : '#2B1627' };
   };
@@ -636,7 +636,7 @@ const GuessBand = () => {
             allowClear
           />
           <div style={{ marginTop: 14 }}>
-            <Text strong style={{ color: isDark ? '#E5E7EB' : isBlue ? '#274B7A' : '#5D4037' }}>匹配乐队</Text>
+            <Text strong style={{ color: isDark ? '#E5E7EB' : isBlue ? '#274B7A' : '#334155' }}>匹配乐队</Text>
           </div>
           <div style={{ marginTop: 10, maxHeight: 560, overflowY: 'auto' }}>
             <Space wrap>
@@ -662,7 +662,7 @@ const GuessBand = () => {
           <Card style={themedStyles.heroCard}>
         <Space size="middle" wrap>
           <Tag color={isDark ? 'default' : 'success'}>默认 {DEFAULT_MAX_ATTEMPTS} 次</Tag>
-          <Tag color={isDark ? 'default' : 'gold'}>乐队库 {bands.length} 支</Tag>
+          <Tag color={isDark ? 'default' : 'geekblue'}>乐队库 {bands.length} 支</Tag>
           <Tag color={isDark ? 'default' : 'processing'}>当前题库：{currentBankLabel}</Tag>
           <Text strong>本轮尝试 {attempts.length}/{maxAttempts} 次</Text>
           <Space size={6} align="center">

@@ -151,9 +151,6 @@ const styles = {
     overflowX: 'hidden',
     whiteSpace: 'pre-wrap',
     wordBreak: 'break-word',
-    textDecoration: 'underline',
-    textDecorationColor: '#D4A574',
-    textUnderlineOffset: '4px',
     padding: '12px 8px 12px 0',
   },
   reviewDate: {
@@ -222,7 +219,6 @@ const Home = () => {
       reviewContent: {
         ...styles.reviewContent,
         color: '#D1D5DB',
-        textDecorationColor: '#6B7280',
       },
       reviewDate: { ...styles.reviewDate, color: '#9CA3AF' },
     };

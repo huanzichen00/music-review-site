@@ -5,6 +5,7 @@ import { genresApi } from '../api/genres';
 import { albumsApi } from '../api/albums';
 import { artistsApi } from '../api/artists';
 import AlbumCard from '../components/AlbumCard';
+import { useTheme } from '../context/ThemeContext';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -41,12 +42,35 @@ const splitGenres = (value) =>
     .filter(Boolean);
 
 const GenreDetail = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const { id } = useParams();
   const navigate = useNavigate();
   const [genre, setGenre] = useState(null);
   const [albums, setAlbums] = useState([]);
   const [artists, setArtists] = useState([]);
   const [loading, setLoading] = useState(true);
+  const themedStyles = useMemo(() => {
+    if (!isDark) {
+      return styles;
+    }
+    return {
+      ...styles,
+      title: {
+        ...styles.title,
+        color: '#E5E7EB',
+      },
+      sectionTitle: {
+        ...styles.sectionTitle,
+        color: '#D1D5DB',
+      },
+      bandCard: {
+        ...styles.bandCard,
+        border: '1px solid #2F2F33',
+        background: 'linear-gradient(145deg, #171719 0%, #121214 100%)',
+      },
+    };
+  }, [isDark]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -130,12 +154,12 @@ const GenreDetail = () => {
 
   return (
     <div>
-      <h1 style={styles.title}>🎼 {genre.name}</h1>
-      <Paragraph>{genre.description || '暂无风格描述'}</Paragraph>
-      <Tag color="gold">{albums.length} 张专辑</Tag>
-      <Tag color="processing">{bands.length} 支乐队</Tag>
+      <h1 style={themedStyles.title}>{isDark ? genre.name : `🎼 ${genre.name}`}</h1>
+      <Paragraph style={{ color: isDark ? '#9CA3AF' : '#5D4037' }}>{genre.description || '暂无风格描述'}</Paragraph>
+      <Tag color={isDark ? 'default' : 'gold'}>{albums.length} 张专辑</Tag>
+      <Tag color={isDark ? 'default' : 'processing'}>{bands.length} 支乐队</Tag>
 
-      <Title level={3} style={styles.sectionTitle}>对应乐队</Title>
+      <Title level={3} style={themedStyles.sectionTitle}>对应乐队</Title>
       {bands.length === 0 ? (
         <Card style={{ borderRadius: 12 }}>
           <Empty description="该风格下暂无乐队数据" />
@@ -152,19 +176,19 @@ const GenreDetail = () => {
                   }
                 }}
                 style={{
-                  ...styles.bandCard,
+                  ...themedStyles.bandCard,
                   cursor: band.artistId ? 'pointer' : 'default',
                 }}
               >
-                <Title level={5} style={{ marginBottom: 6 }}>{band.artistName}</Title>
-                <Text type="secondary">{band.albumCount} 张专辑</Text>
+                <Title level={5} style={{ marginBottom: 6, color: isDark ? '#E5E7EB' : '#4E342E' }}>{band.artistName}</Title>
+                <Text style={{ color: isDark ? '#9CA3AF' : '#8D6E63' }}>{band.albumCount} 张专辑</Text>
               </Card>
             </Col>
           ))}
         </Row>
       )}
 
-      <Title level={3} style={styles.sectionTitle}>对应专辑</Title>
+      <Title level={3} style={themedStyles.sectionTitle}>对应专辑</Title>
       {albums.length === 0 ? (
         <Card style={{ borderRadius: 12 }}>
           <Empty description="该风格下暂无专辑" />

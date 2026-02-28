@@ -4,6 +4,14 @@
   box-sizing: border-box;
 }
 
+a,
+a:hover,
+a:focus,
+.ant-typography a,
+.ant-typography a:hover {
+  text-decoration: none !important;
+}
+
 :root {
   /* 暖色系配色变量（默认） */
   --warm-bg-primary: #FDF5ED;
