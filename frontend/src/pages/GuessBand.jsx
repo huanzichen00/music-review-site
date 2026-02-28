@@ -66,23 +66,15 @@ const styles = {
     color: '#7C5A4E',
     fontSize: 16,
   },
-  artistsLinkButton: {
+  quickLinkButton: {
     marginTop: 12,
     height: 44,
     borderRadius: 10,
     fontWeight: 700,
-    boxShadow: '0 4px 12px rgba(47, 140, 82, 0.24)',
-    background: 'linear-gradient(135deg, #2D9A56 0%, #217A44 100%)',
+    boxShadow: '0 4px 12px rgba(139, 69, 19, 0.2)',
+    background: 'linear-gradient(135deg, #C4956A 0%, #A86F40 100%)',
     border: 'none',
-  },
-  genresLinkButton: {
-    marginTop: 12,
-    height: 44,
-    borderRadius: 10,
-    fontWeight: 700,
-    boxShadow: '0 4px 12px rgba(184, 134, 11, 0.22)',
-    background: 'linear-gradient(135deg, #C99B39 0%, #A4781A 100%)',
-    border: 'none',
+    color: '#FFF8E7',
   },
   actionRow: {
     marginTop: 18,
@@ -574,7 +566,7 @@ const GuessBand = () => {
               href="/music/artists"
               target="_blank"
               rel="noopener noreferrer"
-              style={styles.artistsLinkButton}
+              style={styles.quickLinkButton}
             >
               查看所有乐队
             </Button>
@@ -585,12 +577,19 @@ const GuessBand = () => {
               href="/music/genres"
               target="_blank"
               rel="noopener noreferrer"
-              style={styles.genresLinkButton}
+              style={styles.quickLinkButton}
             >
               查看所有风格
             </Button>
             {isAuthenticated ? (
-              <Button size="large" href="/music/guess-band/banks" target="_blank" rel="noopener noreferrer">
+              <Button
+                type="primary"
+                size="large"
+                href="/music/guess-band/banks"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={styles.quickLinkButton}
+              >
                 管理自选题库
               </Button>
             ) : null}
