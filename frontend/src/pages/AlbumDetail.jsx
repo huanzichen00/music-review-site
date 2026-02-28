@@ -121,7 +121,7 @@ const styles = {
     marginLeft: '56px',
     marginTop: '12px',
     padding: '12px 16px',
-    background: 'linear-gradient(145deg, #FFF8F0 0%, #F5E6D3 100%)',
+    background: 'linear-gradient(145deg, #FFF2E6 0%, #F5E6D3 100%)',
     borderRadius: '8px',
     borderLeft: '3px solid #D4A574',
   },

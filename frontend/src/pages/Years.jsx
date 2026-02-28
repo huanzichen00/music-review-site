@@ -17,13 +17,13 @@ const styles = {
   },
   card: {
     borderRadius: 12,
-    border: '1px solid #9FBCE6',
+    border: '1px solid #E5B992',
     background: 'linear-gradient(145deg, #F1F7FF 0%, #DDEBFF 100%)',
     cursor: 'pointer',
     height: '100%',
   },
   yearName: {
-    color: '#224A86',
+    color: '#5D4037',
     marginBottom: 8,
   },
   coverWrap: {
@@ -31,7 +31,7 @@ const styles = {
     aspectRatio: '4 / 3',
     borderRadius: 10,
     overflow: 'hidden',
-    background: 'linear-gradient(145deg, #D1E4FF 0%, #ABC8F5 100%)',
+    background: 'linear-gradient(145deg, #F5E6D3 0%, #E8D5C4 100%)',
     marginBottom: 10,
   },
   coverImage: {

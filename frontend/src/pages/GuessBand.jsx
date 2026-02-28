@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { artistsApi } from '../api/artists';
 import { questionBanksApi } from '../api/questionBanks';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const { Title, Text } = Typography;
 const DEFAULT_MAX_ATTEMPTS = 10;
@@ -74,7 +75,7 @@ const styles = {
     boxShadow: '0 4px 12px rgba(0, 170, 102, 0.3)',
     background: 'linear-gradient(135deg, #00C853 0%, #00A65A 100%)',
     border: 'none',
-    color: '#FFF8E7',
+    color: '#FDF5ED',
   },
   genresLinkButton: {
     marginTop: 12,
@@ -84,7 +85,7 @@ const styles = {
     boxShadow: '0 4px 12px rgba(255, 145, 0, 0.32)',
     background: 'linear-gradient(135deg, #FFB300 0%, #FB8C00 100%)',
     border: 'none',
-    color: '#FFF8E7',
+    color: '#FDF5ED',
   },
   banksLinkButton: {
     marginTop: 12,
@@ -92,9 +93,9 @@ const styles = {
     borderRadius: 10,
     fontWeight: 700,
     boxShadow: '0 4px 12px rgba(0, 122, 255, 0.3)',
-    background: 'linear-gradient(135deg, #2196F3 0%, #1565C0 100%)',
+    background: 'linear-gradient(135deg, #D4A574 0%, #B8860B 100%)',
     border: 'none',
-    color: '#FFF8E7',
+    color: '#FDF5ED',
   },
   actionRow: {
     marginTop: 18,
@@ -137,14 +138,14 @@ const styles = {
   answerCard: {
     marginTop: 16,
     borderRadius: 12,
-    border: '1px solid #C8E6C9',
-    background: 'linear-gradient(180deg, #F6FFF4 0%, #EEFAEA 100%)',
+    border: '1px solid #9EC2F7',
+    background: 'linear-gradient(180deg, #FFF2E6 0%, #E3EEFF 100%)',
   },
   highlightTip: {
     marginTop: 14,
     borderRadius: 12,
     border: '1px solid #E1BD6A',
-    background: 'linear-gradient(90deg, #FFF6D8 0%, #FFE8B4 100%)',
+    background: 'linear-gradient(90deg, #FFF2E6 0%, #FFE8B4 100%)',
     color: '#6B4A1E',
     fontWeight: 700,
   },
@@ -216,16 +217,6 @@ const compareNumber = (guessValue, targetValue, closeDistance) => {
   return { state, arrow };
 };
 
-const getCellStyle = (state) => {
-  if (state === 'exact') {
-    return { background: '#2F5B42' };
-  }
-  if (state === 'close') {
-    return { background: '#7A5A35' };
-  }
-  return { background: '#2B1627' };
-};
-
 const buildGuessResult = (guessBand, targetBand) => {
   const regionState = compareCategory(guessBand.region, targetBand.region, CATEGORY_GROUPS);
   const genreState = compareCategory(guessBand.genre, targetBand.genre, GENRE_GROUPS);
@@ -266,6 +257,8 @@ const toGameBand = (artist) => ({
 const GuessBand = () => {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
+  const { theme } = useTheme();
+  const isBlue = theme === 'blue';
   const [bands, setBands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [bankSwitching, setBankSwitching] = useState(false);
@@ -281,6 +274,77 @@ const GuessBand = () => {
   const [roundOver, setRoundOver] = useState(false);
   const [maxAttempts, setMaxAttempts] = useState(DEFAULT_MAX_ATTEMPTS);
   const [countryInput, setCountryInput] = useState('');
+
+  const themedStyles = useMemo(() => {
+    if (!isBlue) {
+      return styles;
+    }
+    return {
+      ...styles,
+      sideCard: {
+        ...styles.sideCard,
+        border: '1px solid #C9DDFB',
+        background: 'linear-gradient(180deg, #F8FBFF 0%, #EEF5FF 100%)',
+        boxShadow: '0 4px 14px rgba(30, 79, 158, 0.08)',
+      },
+      sideTitle: { ...styles.sideTitle, color: '#274B7A' },
+      sideSubtitle: { ...styles.sideSubtitle, color: '#6788AE' },
+      heroCard: {
+        ...styles.heroCard,
+        border: '1px solid #C9DDFB',
+        background: 'linear-gradient(180deg, #F8FBFF 0%, #EEF5FF 100%)',
+        boxShadow: '0 6px 18px rgba(30, 79, 158, 0.1)',
+      },
+      title: { ...styles.title, color: '#1F3F6B' },
+      subtitle: { ...styles.subtitle, color: '#4D6F99' },
+      artistsLinkButton: {
+        ...styles.artistsLinkButton,
+        boxShadow: '0 4px 12px rgba(60, 120, 210, 0.24)',
+        background: 'linear-gradient(135deg, #4B93FF 0%, #2E74DD 100%)',
+        color: '#EEF4FF',
+      },
+      genresLinkButton: {
+        ...styles.genresLinkButton,
+        boxShadow: '0 4px 12px rgba(70, 110, 190, 0.24)',
+        background: 'linear-gradient(135deg, #5D8EEB 0%, #406DC6 100%)',
+        color: '#EEF4FF',
+      },
+      banksLinkButton: {
+        ...styles.banksLinkButton,
+        boxShadow: '0 4px 12px rgba(70, 105, 170, 0.24)',
+        background: 'linear-gradient(135deg, #6A96E8 0%, #4F73BE 100%)',
+        color: '#EEF4FF',
+      },
+      board: {
+        ...styles.board,
+        background: 'linear-gradient(180deg, #10243F 0%, #142B4A 100%)',
+        border: '1px solid #2A4F82',
+      },
+      th: { ...styles.th, background: '#2B4C78', color: '#EAF1FF' },
+      tdBase: { ...styles.tdBase, background: '#122742', color: '#EDF3FF' },
+      answerCard: {
+        ...styles.answerCard,
+        border: '1px solid #9EC2F7',
+        background: 'linear-gradient(180deg, #EEF5FF 0%, #E3EEFF 100%)',
+      },
+      highlightTip: {
+        ...styles.highlightTip,
+        border: '1px solid #8CB6F3',
+        background: 'linear-gradient(90deg, #EEF5FF 0%, #DCEBFF 100%)',
+        color: '#1E4A8A',
+      },
+    };
+  }, [isBlue]);
+
+  const getCellStyleByTheme = (state) => {
+    if (state === 'exact') {
+      return { background: isBlue ? '#245DAD' : '#2F5B42' };
+    }
+    if (state === 'close') {
+      return { background: isBlue ? '#3D79BF' : '#7A5A35' };
+    }
+    return { background: isBlue ? '#122742' : '#2B1627' };
+  };
 
   useEffect(() => {
     const loadBands = async () => {
@@ -501,10 +565,10 @@ const GuessBand = () => {
   }
 
   return (
-    <div style={styles.wrapper}>
-      <div style={styles.layoutRow}>
-        <Card style={styles.sideCard}>
-          <Title level={4} style={styles.sideTitle}>
+    <div style={themedStyles.wrapper}>
+      <div style={themedStyles.layoutRow}>
+        <Card style={themedStyles.sideCard}>
+          <Title level={4} style={themedStyles.sideTitle}>
             国家筛选
           </Title>
           <Input
@@ -514,12 +578,12 @@ const GuessBand = () => {
             allowClear
           />
           <div style={{ marginTop: 14 }}>
-            <Text strong style={{ color: '#5D4037' }}>匹配乐队</Text>
+            <Text strong style={{ color: isBlue ? '#274B7A' : '#5D4037' }}>匹配乐队</Text>
           </div>
           <div style={{ marginTop: 10, maxHeight: 560, overflowY: 'auto' }}>
             <Space wrap>
               {countryMatchedBands.length === 0 ? (
-                <Text style={styles.sideSubtitle}>没有匹配结果</Text>
+                <Text style={themedStyles.sideSubtitle}>没有匹配结果</Text>
               ) : (
                 countryMatchedBands.map((band) => (
                   <Tag
@@ -536,8 +600,8 @@ const GuessBand = () => {
           </div>
         </Card>
 
-        <div style={styles.centerWrap}>
-          <Card style={styles.heroCard}>
+        <div style={themedStyles.centerWrap}>
+          <Card style={themedStyles.heroCard}>
         <Space size="middle" wrap>
           <Tag color="success">默认 {DEFAULT_MAX_ATTEMPTS} 次</Tag>
           <Tag color="gold">乐队库 {bands.length} 支</Tag>
@@ -573,10 +637,10 @@ const GuessBand = () => {
 
         <div style={styles.titleRow}>
           <div>
-            <Title level={1} style={styles.title}>
+            <Title level={1} style={themedStyles.title}>
               猜乐队
             </Title>
-            <Text style={styles.subtitle}>
+            <Text style={themedStyles.subtitle}>
               支持默认题库、你的自选题库和分享题库。每轮最多猜 {maxAttempts} 次，猜中或用尽机会后可开始下一题。
             </Text>
           </div>
@@ -588,7 +652,7 @@ const GuessBand = () => {
               href="/music/artists"
               target="_blank"
               rel="noopener noreferrer"
-              style={styles.artistsLinkButton}
+              style={themedStyles.artistsLinkButton}
             >
               查看所有乐队
             </Button>
@@ -599,7 +663,7 @@ const GuessBand = () => {
               href="/music/genres"
               target="_blank"
               rel="noopener noreferrer"
-              style={styles.genresLinkButton}
+              style={themedStyles.genresLinkButton}
             >
               查看所有风格
             </Button>
@@ -610,7 +674,7 @@ const GuessBand = () => {
                 href="/music/guess-band/banks"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={styles.banksLinkButton}
+                style={themedStyles.banksLinkButton}
               >
                 管理自选题库
               </Button>
@@ -619,7 +683,7 @@ const GuessBand = () => {
         </div>
         {!isAuthenticated ? (
           <Alert
-            style={styles.highlightTip}
+            style={themedStyles.highlightTip}
             type="warning"
             showIcon
             message="登录后可在“管理自选题库”里创建 10-300 题的专属题库并分享链接。"
@@ -636,7 +700,7 @@ const GuessBand = () => {
           />
         ) : null}
 
-        <div style={styles.actionRow}>
+        <div style={themedStyles.actionRow}>
           <AutoComplete
             size="large"
             value={guessInput}
@@ -672,7 +736,7 @@ const GuessBand = () => {
         </div>
 
         {roundOver ? (
-          <Card style={styles.answerCard}>
+          <Card style={themedStyles.answerCard}>
             <Space>
               <TrophyOutlined style={{ color: '#4CAF50' }} />
               <Text strong>
@@ -683,38 +747,38 @@ const GuessBand = () => {
           </Card>
         ) : null}
 
-        <div style={styles.board}>
-          <table style={styles.table}>
+        <div style={themedStyles.board}>
+          <table style={themedStyles.table}>
             <thead>
               <tr>
-                <th style={{ ...styles.th, width: '26%' }}>BAND</th>
-                <th style={{ ...styles.th, width: '14%' }}>REGION</th>
-                <th style={{ ...styles.th, width: '20%' }}>GENRE</th>
-                <th style={{ ...styles.th, width: '12%' }}>YEAR</th>
-                <th style={{ ...styles.th, width: '12%' }}>MEM</th>
-                <th style={{ ...styles.th, width: '16%' }}>STATUS</th>
+                <th style={{ ...themedStyles.th, width: '26%' }}>BAND</th>
+                <th style={{ ...themedStyles.th, width: '14%' }}>REGION</th>
+                <th style={{ ...themedStyles.th, width: '20%' }}>GENRE</th>
+                <th style={{ ...themedStyles.th, width: '12%' }}>YEAR</th>
+                <th style={{ ...themedStyles.th, width: '12%' }}>MEM</th>
+                <th style={{ ...themedStyles.th, width: '16%' }}>STATUS</th>
               </tr>
             </thead>
             <tbody>
               {attempts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ ...styles.tdBase, padding: '20px 10px', color: '#D2BCC8' }}>
+                  <td colSpan={6} style={{ ...themedStyles.tdBase, padding: '20px 10px', color: isBlue ? '#AFC4E1' : '#D2BCC8' }}>
                     还没有猜测，开始输入第一个乐队吧
                   </td>
                 </tr>
               ) : (
                 attempts.map((attempt) => (
                   <tr key={attempt.bandName}>
-                    <td style={styles.tdBase}>{attempt.bandName}</td>
-                    <td style={{ ...styles.tdBase, ...getCellStyle(attempt.region.state) }}>{attempt.region.value}</td>
-                    <td style={{ ...styles.tdBase, ...getCellStyle(attempt.genre.state) }}>{attempt.genre.value}</td>
-                    <td style={{ ...styles.tdBase, ...getCellStyle(attempt.year.state) }}>
+                    <td style={themedStyles.tdBase}>{attempt.bandName}</td>
+                    <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.region.state) }}>{attempt.region.value}</td>
+                    <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.genre.state) }}>{attempt.genre.value}</td>
+                    <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.year.state) }}>
                       {attempt.year.value} {attempt.year.arrow}
                     </td>
-                    <td style={{ ...styles.tdBase, ...getCellStyle(attempt.members.state) }}>
+                    <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.members.state) }}>
                       {attempt.members.value} {attempt.members.arrow}
                     </td>
-                    <td style={{ ...styles.tdBase, ...getCellStyle(attempt.status.state) }}>{attempt.status.value}</td>
+                    <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.status.state) }}>{attempt.status.value}</td>
                   </tr>
                 ))
               )}
@@ -724,28 +788,28 @@ const GuessBand = () => {
           </Card>
         </div>
 
-        <Card style={styles.sideCard}>
-          <Title level={4} style={styles.sideTitle}>
+        <Card style={themedStyles.sideCard}>
+          <Title level={4} style={themedStyles.sideTitle}>
             Tips
           </Title>
           <div style={{ display: 'grid', gap: 10 }}>
             <Tag color="success" style={{ width: 'fit-content' }}>快捷键</Tag>
-            <Text style={styles.sideSubtitle}>
+            <Text style={themedStyles.sideSubtitle}>
               按 Tab 键可快速选中并提交当前首个联想乐队。
             </Text>
-            <Text style={styles.sideSubtitle}>
+            <Text style={themedStyles.sideSubtitle}>
               猜测次数上限支持自定义，范围为 1-100 次（默认 10 次）。
             </Text>
-            <Text style={styles.sideSubtitle}>
+            <Text style={themedStyles.sideSubtitle}>
               Enter：提交当前输入
             </Text>
-            <Text style={styles.sideSubtitle}>
+            <Text style={themedStyles.sideSubtitle}>
               Esc：关闭联想下拉
             </Text>
-            <Text style={styles.sideSubtitle}>
+            <Text style={themedStyles.sideSubtitle}>
               左侧可按国家/地区筛选，点击名称可直接填入输入框。
             </Text>
-            <Text style={styles.sideSubtitle}>
+            <Text style={themedStyles.sideSubtitle}>
               中国地区请统一使用“华语”作为地区标识（例如筛选时输入“华语”）。
             </Text>
           </div>

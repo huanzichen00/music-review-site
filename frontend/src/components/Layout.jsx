@@ -1,4 +1,4 @@
-import { Layout as AntLayout, Menu, Button, Dropdown, Avatar } from 'antd';
+import { Layout as AntLayout, Menu, Button, Dropdown, Avatar, Select, Space } from 'antd';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   UserOutlined, 
@@ -13,6 +13,7 @@ import {
   CalendarOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { resolveAvatarUrl } from '../utils/avatar';
 
 const { Header, Content, Footer } = AntLayout;
@@ -31,8 +32,10 @@ const menuItemStyle = {
 
 const Layout = ({ children }) => {
   const { user, logout, isAuthenticated } = useAuth();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const isBlue = theme === 'blue';
 
   const handleLogout = () => {
     logout();
@@ -142,13 +145,15 @@ const Layout = ({ children }) => {
         height: '88px',
         lineHeight: '88px',
         padding: '0 50px',
-        background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #CD853F 100%)',
-        boxShadow: '0 2px 8px rgba(139, 69, 19, 0.3)',
-        borderBottom: '1.5px solid #E8D5C4',
+        background: isBlue
+          ? 'linear-gradient(135deg, #1E4F9E 0%, #2E6FC4 50%, #5A97EF 100%)'
+          : 'linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #CD853F 100%)',
+        boxShadow: isBlue ? '0 2px 8px rgba(30, 79, 158, 0.3)' : '0 2px 8px rgba(139, 69, 19, 0.3)',
+        borderBottom: isBlue ? '1.5px solid #C9DDFB' : '1.5px solid #E8D5C4',
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Link to="/music/home" style={{ 
-            color: '#FFF8E7', 
+            color: isBlue ? '#EEF4FF' : '#FFF8E7',
             fontSize: '34px', 
             fontWeight: 700,
             marginRight: '40px',
@@ -179,7 +184,28 @@ const Layout = ({ children }) => {
           />
         </div>
         
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Space align="center">
+            <span
+              style={{
+                color: isBlue ? '#EEF4FF' : '#FFF8E7',
+                fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
+                fontSize: 16,
+              }}
+            >
+              主题
+            </span>
+            <Select
+              size="middle"
+              value={theme}
+              onChange={setTheme}
+              style={{ width: 120 }}
+              options={[
+                { value: 'warm', label: '暖色' },
+                { value: 'blue', label: '蓝色' },
+              ]}
+            />
+          </Space>
           {isAuthenticated ? (
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
               <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
@@ -188,11 +214,11 @@ const Layout = ({ children }) => {
                   size={44}
                   style={{ 
                     marginRight: 8,
-                    border: '2px solid #FFE4B5',
+                    border: isBlue ? '2px solid #CFE2FF' : '2px solid #FFE4B5',
                   }} 
                 />
                 <span style={{ 
-                  color: '#FFF8E7', 
+                  color: isBlue ? '#EEF4FF' : '#FFF8E7',
                   fontWeight: 500,
                   fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
                   fontSize: '20px',
@@ -208,7 +234,7 @@ const Layout = ({ children }) => {
                 icon={<LoginOutlined />}
                 onClick={() => navigate('/login')}
                 style={{ 
-                  color: '#FFF8E7',
+                  color: isBlue ? '#EEF4FF' : '#FFF8E7',
                   fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
                   fontSize: '20px',
                 }}
@@ -218,9 +244,11 @@ const Layout = ({ children }) => {
               <Button 
                 onClick={() => navigate('/register')}
                 style={{ 
-                  background: 'linear-gradient(135deg, #FFE4B5 0%, #F5DEB3 100%)',
+                  background: isBlue
+                    ? 'linear-gradient(135deg, #CFE2FF 0%, #BCD7FF 100%)'
+                    : 'linear-gradient(135deg, #FFE4B5 0%, #F5DEB3 100%)',
                   border: 'none',
-                  color: '#8B4513',
+                  color: isBlue ? '#1E4F9E' : '#8B4513',
                   fontWeight: 500,
                   fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
                   fontSize: '20px',
@@ -241,9 +269,11 @@ const Layout = ({ children }) => {
             gap: 8,
             padding: '8px 10px',
             borderRadius: 10,
-            border: '1px solid #E8D5C4',
-            background: 'linear-gradient(180deg, #FFF8EF 0%, #FFF2E6 100%)',
-            boxShadow: '0 1px 4px rgba(139, 69, 19, 0.08)',
+            border: isBlue ? '1px solid #C9DDFB' : '1px solid #E8D5C4',
+            background: isBlue
+              ? 'linear-gradient(180deg, #F8FBFF 0%, #EEF5FF 100%)'
+              : 'linear-gradient(180deg, #FFF8EF 0%, #FFF2E6 100%)',
+            boxShadow: isBlue ? '0 1px 4px rgba(30, 79, 158, 0.08)' : '0 1px 4px rgba(139, 69, 19, 0.08)',
           }}
         >
           <Button
@@ -308,9 +338,11 @@ const Layout = ({ children }) => {
       
       <Footer style={{ 
         textAlign: 'center', 
-        background: 'linear-gradient(180deg, #F5E6D3 0%, #EDE0D4 100%)',
-        color: '#8D6E63',
-        borderTop: '1px solid #E8D5C4',
+        background: isBlue
+          ? 'linear-gradient(180deg, #DFECFF 0%, #D5E6FF 100%)'
+          : 'linear-gradient(180deg, #F5E6D3 0%, #EDE0D4 100%)',
+        color: isBlue ? '#6788AE' : '#8D6E63',
+        borderTop: isBlue ? '1px solid #C9DDFB' : '1px solid #E8D5C4',
         padding: '16px 50px',
       }}>
         <span style={{ 

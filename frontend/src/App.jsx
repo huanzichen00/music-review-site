@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ConfigProvider } from 'antd';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Albums from './pages/Albums';
@@ -22,7 +23,6 @@ import UserHome from './pages/UserHome';
 import GuessBand from './pages/GuessBand';
 import GuessBandBanks from './pages/GuessBandBanks';
 
-// 暖色系主题配置
 const warmTheme = {
   token: {
     colorPrimary: '#D4A574',        // 焦糖色主色
@@ -34,8 +34,8 @@ const warmTheme = {
     colorTextSecondary: '#8D6E63',  // 次要文字色
     borderRadius: 8,                // 圆角
     colorLink: '#B8860B',           // 链接色
-    colorSuccess: '#8BC34A',        // 成功色
-    colorWarning: '#FFB74D',        // 警告色
+    colorSuccess: '#FFB300',        // 成功色
+    colorWarning: '#D4A574',        // 警告色
     colorError: '#E57373',          // 错误色
   },
   components: {
@@ -44,22 +44,58 @@ const warmTheme = {
       algorithm: true,
     },
     Card: {
-      colorBgContainer: '#FFFCF8',
+      colorBgContainer: '#FFFBF7',
     },
     Menu: {
       itemBg: 'transparent',
-      itemColor: '#FFF8E7',
+      itemColor: '#FDF5ED',
       itemSelectedColor: '#FFE4B5',
-      itemSelectedBg: 'rgba(255, 228, 181, 0.2)',
+      itemSelectedBg: 'rgba(212, 165, 116, 0.2)',
       itemHoverColor: '#FFE4B5',
-      itemHoverBg: 'rgba(255, 228, 181, 0.1)',
+      itemHoverBg: 'rgba(212, 165, 116, 0.1)',
     },
   },
 };
 
-function App() {
+const blueTheme = {
+  token: {
+    colorPrimary: '#5B9BFF',
+    colorBgContainer: '#F5F9FF',
+    colorBgLayout: '#EEF4FF',
+    colorBgElevated: '#FFFFFF',
+    colorBorder: '#C9DDFB',
+    colorText: '#274B7A',
+    colorTextSecondary: '#6788AE',
+    borderRadius: 8,
+    colorLink: '#2B6FD6',
+    colorSuccess: '#4DA3FF',
+    colorWarning: '#5B9BFF',
+    colorError: '#E57373',
+  },
+  components: {
+    Button: {
+      colorPrimary: '#4C86E8',
+      algorithm: true,
+    },
+    Card: {
+      colorBgContainer: '#F5F9FF',
+    },
+    Menu: {
+      itemBg: 'transparent',
+      itemColor: '#EEF4FF',
+      itemSelectedColor: '#CFE2FF',
+      itemSelectedBg: 'rgba(91, 155, 255, 0.22)',
+      itemHoverColor: '#CFE2FF',
+      itemHoverBg: 'rgba(91, 155, 255, 0.14)',
+    },
+  },
+};
+
+function AppContent() {
+  const { theme } = useTheme();
+
   return (
-    <ConfigProvider theme={warmTheme}>
+    <ConfigProvider theme={theme === 'blue' ? blueTheme : warmTheme}>
       <AuthProvider>
         <Router>
           <Layout>
@@ -103,6 +139,14 @@ function App() {
         </Router>
       </AuthProvider>
     </ConfigProvider>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
 

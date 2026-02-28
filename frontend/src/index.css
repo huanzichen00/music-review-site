@@ -5,17 +5,30 @@
 }
 
 :root {
-  /* 暖色系配色变量 */
-  --warm-bg-primary: #F8E9D6;
+  /* 暖色系配色变量（默认） */
+  --warm-bg-primary: #FDF5ED;
   --warm-bg-secondary: #FBE6D2;
-  --warm-bg-card: #FFF1E3;
+  --warm-bg-card: #FFFBF7;
   --warm-header: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #CD853F 100%);
-  --warm-footer: #F0DCC5;
+  --warm-footer: #EDE0D4;
   --warm-text: #5D4037;
   --warm-text-secondary: #8D6E63;
   --warm-border: #E8D5C4;
   --warm-accent: #D4A574;
   --warm-accent-light: #F5DEB3;
+}
+
+:root[data-theme='blue'] {
+  --warm-bg-primary: #EEF4FF;
+  --warm-bg-secondary: #E4EEFF;
+  --warm-bg-card: #F5F9FF;
+  --warm-header: linear-gradient(135deg, #1E4F9E 0%, #2E6FC4 50%, #5A97EF 100%);
+  --warm-footer: #D5E6FF;
+  --warm-text: #274B7A;
+  --warm-text-secondary: #6788AE;
+  --warm-border: #C9DDFB;
+  --warm-accent: #5B9BFF;
+  --warm-accent-light: #BCD7FF;
 }
 
 body {
@@ -39,7 +52,11 @@ h1, h2, h3, h4, h5, h6 {
 /* 全局背景渐变 */
 #root {
   min-height: 100vh;
-  background: linear-gradient(180deg, #F8E2C8 0%, #FDE4C7 50%, #FFE0BD 100%);
+  background: linear-gradient(180deg, #FDF5ED 0%, #FBE6D2 50%, #F5DEB3 100%);
+}
+
+:root[data-theme='blue'] #root {
+  background: linear-gradient(180deg, #EEF4FF 0%, #E4EEFF 50%, #DAE9FF 100%);
 }
 
 /* Ensure Ant Layout doesn't cover the page gradient */
@@ -47,7 +64,7 @@ h1, h2, h3, h4, h5, h6 {
   background: transparent !important;
 }
 
-/* Custom scrollbar - 暖色系 */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -107,7 +124,7 @@ h1, h2, h3, h4, h5, h6 {
 .ant-select-selector,
 .ant-picker {
   border-color: var(--warm-border) !important;
-  background: #FFFCF8 !important;
+  background: #FFFBF7 !important;
 }
 
 .ant-input:focus,
@@ -119,7 +136,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* 选中状态 */
 .ant-select-item-option-selected {
-  background: #FFF8E7 !important;
+  background: #FDF5ED !important;
 }
 
 /* 分割线 */
@@ -138,7 +155,7 @@ h1, h2, h3, h4, h5, h6 {
 /* 标签 */
 .ant-tag {
   border-color: var(--warm-border);
-  background: #FFF8E7;
+  background: #FDF5ED;
 }
 
 /* 统计数字 */
@@ -152,7 +169,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Alert 样式 */
 .ant-alert-info {
-  background: #FFF8E7;
+  background: #FDF5ED;
   border-color: #FFE4B5;
 }
 
@@ -162,38 +179,77 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .ant-table-thead > tr > th {
-  background: #FFF3E0 !important;
+  background: #f6ffed !important;
   color: var(--warm-text);
+}
+
+:root[data-theme='blue'] .ant-btn-primary {
+  background: linear-gradient(135deg, #5B9BFF 0%, #4C86E8 100%);
+  box-shadow: 0 2px 8px rgba(76, 134, 232, 0.34);
+}
+
+:root[data-theme='blue'] .ant-btn-primary:hover {
+  background: linear-gradient(135deg, #4C86E8 0%, #2B6FD6 100%);
+  box-shadow: 0 4px 12px rgba(76, 134, 232, 0.42);
+}
+
+:root[data-theme='blue'] .ant-input,
+:root[data-theme='blue'] .ant-input-affix-wrapper,
+:root[data-theme='blue'] .ant-select-selector,
+:root[data-theme='blue'] .ant-picker {
+  background: #F5F9FF !important;
+}
+
+:root[data-theme='blue'] .ant-select-item-option-selected,
+:root[data-theme='blue'] .ant-tag,
+:root[data-theme='blue'] .ant-alert-info,
+:root[data-theme='blue'] .ant-dropdown-menu-item:hover,
+:root[data-theme='blue'] .ant-modal-header {
+  background: #EEF4FF !important;
+}
+
+:root[data-theme='blue'] .ant-alert-info {
+  border-color: #CFE2FF;
+}
+
+:root[data-theme='blue'] .ant-dropdown-menu,
+:root[data-theme='blue'] .ant-modal-content,
+:root[data-theme='blue'] .ant-message-notice-content {
+  background: #F5F9FF;
+}
+
+:root[data-theme='blue'] .ant-rate-star-full .anticon {
+  color: #4DA3FF !important;
 }
 
 /* 下拉菜单 */
 .ant-dropdown-menu {
-  background: #FFFCF8;
+  background: #FFFBF7;
 }
 
 .ant-dropdown-menu-item:hover {
-  background: #FFF8E7;
+  background: #FDF5ED;
 }
 
 /* 模态框 */
 .ant-modal-content {
-  background: #FFFCF8;
+  background: #FFFBF7;
 }
 
 .ant-modal-header {
-  background: #FFF8E7;
+  background: #FDF5ED;
   border-bottom-color: var(--warm-border);
 }
 
 /* 消息提示 */
 .ant-message-notice-content {
-  background: #FFFCF8;
+  background: #FFFBF7;
   box-shadow: 0 4px 12px rgba(139, 69, 19, 0.15);
 }
 
 /* 评分星星 */
 .ant-rate-star-full .anticon {
-  color: #FFB74D !important;
+  color: #FFB300 !important;
 }
 
 /* 加载动画 */

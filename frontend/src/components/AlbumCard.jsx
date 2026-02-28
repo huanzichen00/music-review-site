@@ -11,7 +11,7 @@ const styles = {
     maxWidth: 220,
     borderRadius: '12px',
     overflow: 'hidden',
-    background: 'linear-gradient(145deg, #FFFCF8 0%, #FFF8F0 100%)',
+    background: 'linear-gradient(145deg, #FFFBF7 0%, #FFF2E6 100%)',
   },
   coverContainer: {
     height: 220,

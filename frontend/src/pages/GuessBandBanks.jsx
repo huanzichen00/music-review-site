@@ -289,9 +289,9 @@ const GuessBandBanks = () => {
               onClick={() => navigate('/music/guess-band')}
               style={{
                 border: 'none',
-                color: '#FFF8E7',
+                color: '#FDF5ED',
                 fontWeight: 700,
-                background: 'linear-gradient(135deg, #FF6A00 0%, #E53935 100%)',
+                background: 'linear-gradient(135deg, #FFB300 0%, #2E7BE6 100%)',
                 boxShadow: '0 4px 12px rgba(229, 57, 53, 0.32)',
               }}
             >
