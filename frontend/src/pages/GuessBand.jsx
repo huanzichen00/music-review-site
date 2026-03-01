@@ -267,7 +267,7 @@ const toGameBand = (artist) => ({
 
 const GuessBand = () => {
   const location = useLocation();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { theme } = useTheme();
   const isBlue = theme === 'blue';
   const isDark = theme === 'dark';
@@ -465,23 +465,11 @@ const GuessBand = () => {
 
         const allPublicBanks = publicBanksRes.data || [];
         const mineBanks = mineBanksRes.data || [];
-        const visiblePublicBanks = allPublicBanks.filter((bank) => {
-          if (!isAuthenticated) {
-            return true;
-          }
-          if (user?.id != null && bank.ownerUserId != null) {
-            return bank.ownerUserId !== user.id;
-          }
-          if (user?.username && bank.ownerUsername) {
-            return bank.ownerUsername !== user.username;
-          }
-          return true;
-        });
         const mineOptions = mineBanks.map((bank) => ({
           value: `mine:${bank.id}`,
           label: `${bank.name} (${bank.itemCount || 0})`,
         }));
-        const publicOptions = visiblePublicBanks.map((bank) => ({
+        const publicOptions = allPublicBanks.map((bank) => ({
           value: `public:${bank.id}`,
           label: `公开 · ${bank.name}（${bank.ownerUsername || '匿名'}） (${bank.itemCount || 0})`,
         }));
@@ -529,7 +517,7 @@ const GuessBand = () => {
 
     loadBands();
     return () => controller.abort();
-  }, [isAuthenticated, location.search, user?.id, user?.username]);
+  }, [isAuthenticated, location.search]);
 
   useEffect(() => {
     if (!roundOver && !solved && attempts.length >= maxAttempts && attempts.length > 0) {
@@ -791,7 +779,7 @@ const GuessBand = () => {
               猜乐队
             </Title>
             <Text style={themedStyles.subtitle}>
-              支持默认题库、你的自选题库和分享题库。每轮最多猜 {maxAttempts} 次，猜中或用尽机会后可开始下一题。
+              支持默认题库、公开题库、你的自选题库和分享题库。每轮最多猜 {maxAttempts} 次，猜中或用尽机会后可开始下一题。
             </Text>
           </div>
           <Space size={10} wrap>
