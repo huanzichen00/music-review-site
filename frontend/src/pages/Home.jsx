@@ -18,6 +18,54 @@ const shuffleArray = (arr) => {
   return copy;
 };
 
+const getGenreRefsFromAlbum = (album) => {
+  if (Array.isArray(album?.genres) && album.genres.length > 0) {
+    return album.genres
+      .map((genre) => {
+        if (typeof genre === 'number') {
+          return { id: genre, name: '' };
+        }
+        return { id: genre?.id, name: genre?.name || '' };
+      })
+      .filter((genre) => genre.id != null || genre.name);
+  }
+  if (Array.isArray(album?.genreIds) && album.genreIds.length > 0) {
+    return album.genreIds.map((id) => ({ id, name: '' }));
+  }
+  if (album?.genreId != null) {
+    return [{ id: album.genreId, name: album.genreName || '' }];
+  }
+  if (album?.genreName) {
+    return [{ id: null, name: album.genreName }];
+  }
+  return [];
+};
+
+const buildGenreCoverLookup = (albums) => {
+  const byId = new Map();
+  const byName = new Map();
+
+  albums.forEach((album) => {
+    const coverUrl = album?.coverUrl || null;
+    if (!coverUrl) {
+      return;
+    }
+
+    const refs = getGenreRefsFromAlbum(album);
+    refs.forEach((genreRef) => {
+      if (genreRef.id != null && !byId.has(genreRef.id)) {
+        byId.set(genreRef.id, coverUrl);
+      }
+      const normalizedName = (genreRef.name || '').trim().toLowerCase();
+      if (normalizedName && !byName.has(normalizedName)) {
+        byName.set(normalizedName, coverUrl);
+      }
+    });
+  });
+
+  return { byId, byName };
+};
+
 // 自定义样式
 const styles = {
   pageTitle: {
@@ -236,25 +284,20 @@ const Home = () => {
         genresApi.getAll(),
         reviewsApi.getRecent(),
       ]);
-      const genresWithCover = await Promise.all(
-        (genresRes.data || []).map(async (genre) => {
-          if (!genre?.id || (genre.albumCount ?? 0) <= 0) {
-            return genre;
-          }
-          try {
-            const genreAlbumsRes = await albumsApi.getByGenre(genre.id);
-            const genreAlbums = genreAlbumsRes.data || [];
-            const pickedAlbum = genreAlbums.find((a) => a.coverUrl) || genreAlbums[0];
-            return {
-              ...genre,
-              genreCoverUrl: pickedAlbum?.coverUrl || null,
-            };
-          } catch {
-            return genre;
-          }
-        })
-      );
       const allAlbums = albumsRes.data || [];
+      const genresData = genresRes.data || [];
+      const { byId, byName } = buildGenreCoverLookup(allAlbums);
+      const genresWithCover = genresData.map((genre) => {
+        if (!genre?.id || (genre.albumCount ?? 0) <= 0) {
+          return genre;
+        }
+        const byGenreId = byId.get(genre.id) || null;
+        const byGenreName = byName.get((genre.name || '').trim().toLowerCase()) || null;
+        return {
+          ...genre,
+          genreCoverUrl: byGenreId || byGenreName || null,
+        };
+      });
       setAlbums(shuffleArray(allAlbums));
       setGenres(genresWithCover);
       setRecentReviews(reviewsRes.data);

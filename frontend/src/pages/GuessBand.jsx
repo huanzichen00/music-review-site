@@ -396,10 +396,10 @@ const GuessBand = () => {
 
   const getCellStyleByTheme = (state) => {
     if (state === 'exact') {
-      return { background: isDark ? '#3F3F46' : isBlue ? '#245DAD' : '#516E93' };
+      return { background: isDark ? '#3F3F46' : isBlue ? '#245DAD' : '#2F5B42' };
     }
     if (state === 'close') {
-      return { background: isDark ? '#52525B' : isBlue ? '#3D79BF' : '#64748B' };
+      return { background: isDark ? '#52525B' : isBlue ? '#3D79BF' : '#7A5A35' };
     }
     return { background: isDark ? '#18181B' : isBlue ? '#122742' : '#2B1627' };
   };

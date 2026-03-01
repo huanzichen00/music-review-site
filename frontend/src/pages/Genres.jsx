@@ -7,6 +7,54 @@ import { useTheme } from '../context/ThemeContext';
 
 const { Title } = Typography;
 
+const getGenreRefsFromAlbum = (album) => {
+  if (Array.isArray(album?.genres) && album.genres.length > 0) {
+    return album.genres
+      .map((genre) => {
+        if (typeof genre === 'number') {
+          return { id: genre, name: '' };
+        }
+        return { id: genre?.id, name: genre?.name || '' };
+      })
+      .filter((genre) => genre.id != null || genre.name);
+  }
+  if (Array.isArray(album?.genreIds) && album.genreIds.length > 0) {
+    return album.genreIds.map((id) => ({ id, name: '' }));
+  }
+  if (album?.genreId != null) {
+    return [{ id: album.genreId, name: album.genreName || '' }];
+  }
+  if (album?.genreName) {
+    return [{ id: null, name: album.genreName }];
+  }
+  return [];
+};
+
+const buildGenreCoverLookup = (albums) => {
+  const byId = new Map();
+  const byName = new Map();
+
+  albums.forEach((album) => {
+    const coverUrl = album?.coverUrl || null;
+    if (!coverUrl) {
+      return;
+    }
+
+    const refs = getGenreRefsFromAlbum(album);
+    refs.forEach((genreRef) => {
+      if (genreRef.id != null && !byId.has(genreRef.id)) {
+        byId.set(genreRef.id, coverUrl);
+      }
+      const normalizedName = (genreRef.name || '').trim().toLowerCase();
+      if (normalizedName && !byName.has(normalizedName)) {
+        byName.set(normalizedName, coverUrl);
+      }
+    });
+  });
+
+  return { byId, byName };
+};
+
 const styles = {
   pageTitle: {
     fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
@@ -109,25 +157,24 @@ const Genres = () => {
     const loadGenres = async () => {
       setLoading(true);
       try {
-        const response = await genresApi.getAll();
-        const genresWithCover = await Promise.all(
-          (response.data || []).map(async (genre) => {
-            if (!genre?.id || (genre.albumCount ?? 0) <= 0) {
-              return genre;
-            }
-            try {
-              const genreAlbumsRes = await albumsApi.getByGenre(genre.id);
-              const genreAlbums = genreAlbumsRes.data || [];
-              const pickedAlbum = genreAlbums.find((a) => a.coverUrl) || genreAlbums[0];
-              return {
-                ...genre,
-                genreCoverUrl: pickedAlbum?.coverUrl || null,
-              };
-            } catch {
-              return genre;
-            }
-          })
-        );
+        const [genresRes, albumsRes] = await Promise.all([
+          genresApi.getAll(),
+          albumsApi.getAll(),
+        ]);
+        const genresData = genresRes.data || [];
+        const albums = albumsRes.data || [];
+        const { byId, byName } = buildGenreCoverLookup(albums);
+        const genresWithCover = genresData.map((genre) => {
+          if (!genre?.id || (genre.albumCount ?? 0) <= 0) {
+            return genre;
+          }
+          const byGenreId = byId.get(genre.id) || null;
+          const byGenreName = byName.get((genre.name || '').trim().toLowerCase()) || null;
+          return {
+            ...genre,
+            genreCoverUrl: byGenreId || byGenreName || null,
+          };
+        });
         setGenres(genresWithCover);
       } catch {
         message.error('加载风格失败');
