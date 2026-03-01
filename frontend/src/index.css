@@ -437,6 +437,21 @@ h1, h2, h3, h4, h5, h6 {
   caret-color: #E5E7EB !important;
 }
 
+:root[data-theme='dark'] .guess-band-input .ant-select-selection-search-input::placeholder,
+:root[data-theme='dark'] .guess-band-input input.ant-input::placeholder,
+:root[data-theme='dark'] .guess-band-input input::placeholder {
+  color: #9CA3AF !important;
+  -webkit-text-fill-color: #9CA3AF !important;
+  opacity: 1 !important;
+}
+
+:root[data-theme='dark'] .guess-band-input .ant-select-selection-search,
+:root[data-theme='dark'] .guess-band-input .ant-select-selection-search-input,
+:root[data-theme='dark'] .guess-band-input .ant-select-selection-item,
+:root[data-theme='dark'] .guess-band-input .ant-select-selection-placeholder {
+  color: #E5E7EB !important;
+}
+
 /* 下拉菜单 */
 .ant-dropdown-menu {
   background: #FFFBF7;
