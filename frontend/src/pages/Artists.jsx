@@ -178,6 +178,14 @@ const Artists = () => {
       render: (value) => value || '-',
     },
     {
+      title: '简介',
+      dataIndex: 'description',
+      key: 'description',
+      width: 260,
+      ellipsis: true,
+      render: (value) => value || '-',
+    },
+    {
       title: 'GENRE',
       dataIndex: 'genre',
       key: 'genre',
