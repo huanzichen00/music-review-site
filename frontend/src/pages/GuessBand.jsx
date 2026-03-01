@@ -864,31 +864,35 @@ const GuessBand = () => {
         <div style={themedStyles.actionRow}>
           <AutoComplete
             className="guess-band-input"
-            size="large"
             value={guessInput}
             onChange={(value) => setGuessInput(value)}
             onSelect={(value) => setGuessInput(value)}
             options={filteredBands.map((band) => ({ value: band.name }))}
-            placeholder="输入乐队名，例如：Radiohead / Queen / The Beatles"
             style={{ flex: 1, minWidth: 260 }}
             filterOption={(inputValue, option) =>
               option?.value?.toLowerCase().includes(inputValue.toLowerCase())
             }
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                submitGuess();
-              }
-              if (
-                event.key === 'Tab' &&
-                filteredBands.length > 0 &&
-                !roundOver
-              ) {
-                event.preventDefault();
-                submitGuess(filteredBands[0].name);
-              }
-            }}
             disabled={roundOver || bankSwitching}
-          />
+          >
+            <Input
+              className="guess-band-real-input"
+              size="large"
+              placeholder="输入乐队名，例如：Radiohead / Queen / The Beatles"
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  submitGuess();
+                }
+                if (
+                  event.key === 'Tab' &&
+                  filteredBands.length > 0 &&
+                  !roundOver
+                ) {
+                  event.preventDefault();
+                  submitGuess(filteredBands[0].name);
+                }
+              }}
+            />
+          </AutoComplete>
           <Button type="primary" size="large" icon={<RocketOutlined />} onClick={() => submitGuess()} disabled={roundOver || bankSwitching}>
             提交猜测
           </Button>
