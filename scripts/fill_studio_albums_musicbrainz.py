@@ -99,6 +99,11 @@ def parse_args() -> argparse.Namespace:
         default="/opt/music-review/uploads",
         help="Backend upload root dir for local covers (default: /opt/music-review/uploads)",
     )
+    parser.add_argument(
+        "--localize-existing-only",
+        action="store_true",
+        help="Only replace existing coverartarchive URLs with local cover URLs, then exit",
+    )
     parser.add_argument("--host", default=MYSQL_HOST, help="MySQL host")
     parser.add_argument("--port", type=int, default=MYSQL_PORT, help="MySQL port")
     parser.add_argument("--user", default=MYSQL_USER, help="MySQL user")
@@ -127,6 +132,13 @@ def normalize_title(title: str) -> str:
     return re.sub(r"\s+", " ", (title or "").strip().lower())
 
 
+def normalize_artist_key(name: str) -> str:
+    lowered = (name or "").strip().lower()
+    lowered = re.sub(r"^the\s+", "", lowered)
+    lowered = re.sub(r"[^a-z0-9\u4e00-\u9fa5]+", "", lowered)
+    return lowered
+
+
 def artist_query_variants(name: str) -> List[str]:
     raw = (name or "").strip()
     out: List[str] = []
@@ -141,6 +153,32 @@ def artist_query_variants(name: str) -> List[str]:
         if no_the and no_the not in out:
             out.append(no_the)
     return out[:4]
+
+
+def group_belongs_to_artist(group: Dict, artist_name: str) -> bool:
+    expected_keys = {normalize_artist_key(v) for v in artist_query_variants(artist_name)}
+    expected_keys = {key for key in expected_keys if key}
+    if not expected_keys:
+        return True
+
+    credits = group.get("artist-credit") or []
+    found_keys: set[str] = set()
+    for item in credits:
+        if not isinstance(item, dict):
+            continue
+        display_name = item.get("name")
+        artist_obj = item.get("artist") or {}
+        artist_name_field = artist_obj.get("name")
+        sort_name_field = artist_obj.get("sort-name")
+        for candidate in (display_name, artist_name_field, sort_name_field):
+            key = normalize_artist_key(str(candidate or ""))
+            if key:
+                found_keys.add(key)
+
+    # If MB did not return artist-credit details, keep old behavior.
+    if not found_keys:
+        return True
+    return bool(found_keys & expected_keys)
 
 
 def mysql_base_cmd(args: argparse.Namespace) -> List[str]:
@@ -386,6 +424,8 @@ def fetch_studio_candidates_for_artist(
             if not group_id or group_id in seen_group_ids:
                 continue
             seen_group_ids.add(group_id)
+            if not group_belongs_to_artist(group, artist_name):
+                continue
             if not is_studio_release_group(group):
                 continue
             gathered.append(group)
@@ -545,8 +585,73 @@ JOIN albums a2
 """
 
 
+def get_albums_with_caa_cover(args: argparse.Namespace) -> List[Tuple[int, str, int, str]]:
+    q = f"""
+USE {args.database};
+SELECT id, title, artist_id, cover_url
+FROM albums
+WHERE cover_url LIKE 'https://coverartarchive.org/%'
+ORDER BY id;
+"""
+    rows = run_mysql_query(args, q)
+    out: List[Tuple[int, str, int, str]] = []
+    for row in rows:
+        parts = row.split("\t")
+        if len(parts) < 4:
+            continue
+        out.append((int(parts[0]), parts[1], int(parts[2]), parts[3]))
+    return out
+
+
+def localize_existing_cover_urls(args: argparse.Namespace) -> Tuple[int, int]:
+    rows = get_albums_with_caa_cover(args)
+    if not rows:
+        print("No existing coverartarchive URLs need localization.")
+        return 0, 0
+
+    print(f"Localizing existing cover URLs: {len(rows)}")
+    ok = 0
+    failed = 0
+    for idx, (album_id, title, artist_id, remote_url) in enumerate(rows, start=1):
+        try:
+            local = None
+            if not args.dry_run:
+                local = download_cover_to_local(
+                    upload_root=args.upload_dir,
+                    remote_url=remote_url,
+                    stable_key=f"album:{album_id}:{artist_id}:{normalize_title(title)}",
+                )
+            if args.dry_run:
+                ok += 1
+            elif local:
+                sql = f"""
+USE {args.database};
+UPDATE albums
+SET cover_url = {sql_quote(local)}
+WHERE id = {album_id}
+  AND cover_url LIKE 'https://coverartarchive.org/%';
+"""
+                run_mysql_sql(args, sql)
+                ok += 1
+            else:
+                failed += 1
+            if idx % 20 == 0:
+                print(f"  progress: {idx}/{len(rows)}")
+        except Exception:
+            failed += 1
+        time.sleep(max(0.05, args.sleep / 4))
+
+    print(f"Localized cover URLs: success={ok}, failed={failed}")
+    return ok, failed
+
+
 def main() -> int:
     args = parse_args()
+    if args.localize_existing_only:
+        localize_existing_cover_urls(args)
+        return 0
+
+    localize_existing_cover_urls(args)
     artists = get_artists_to_process(args)
     if not artists:
         print("No artists need studio album top-up.")
