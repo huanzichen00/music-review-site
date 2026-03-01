@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Card, Col, Empty, Row, Spin, Tag, Typography, message } from 'antd';
+import { Card, Col, Empty, Pagination, Row, Spin, Tag, Typography, message } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import { albumsApi } from '../api/albums';
 import { artistsApi } from '../api/artists';
@@ -37,6 +37,10 @@ const YearDetail = () => {
   const [loading, setLoading] = useState(true);
   const [albums, setAlbums] = useState([]);
   const [formedBands, setFormedBands] = useState([]);
+  const [albumPage, setAlbumPage] = useState(1);
+  const [bandPage, setBandPage] = useState(1);
+  const ALBUM_PAGE_SIZE = 24;
+  const BAND_PAGE_SIZE = 24;
 
   useEffect(() => {
     const loadData = async () => {
@@ -61,6 +65,8 @@ const YearDetail = () => {
 
         setAlbums(yearAlbums);
         setFormedBands(artistsFoundedThisYear);
+        setAlbumPage(1);
+        setBandPage(1);
       } catch {
         message.error('加载年份页面失败');
       } finally {
@@ -123,13 +129,26 @@ const YearDetail = () => {
           <Empty description={`${parsedYear} 年暂无专辑数据`} />
         </Card>
       ) : (
-        <Row gutter={[24, 24]}>
-          {albums.map((album) => (
-            <Col key={album.id} xs={12} sm={8} md={6} lg={4}>
-              <AlbumCard album={album} />
-            </Col>
-          ))}
-        </Row>
+        <>
+          <Row gutter={[24, 24]}>
+            {albums
+              .slice((albumPage - 1) * ALBUM_PAGE_SIZE, albumPage * ALBUM_PAGE_SIZE)
+              .map((album) => (
+                <Col key={album.id} xs={12} sm={8} md={6} lg={4}>
+                  <AlbumCard album={album} />
+                </Col>
+              ))}
+          </Row>
+          <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
+            <Pagination
+              current={albumPage}
+              pageSize={ALBUM_PAGE_SIZE}
+              total={albums.length}
+              showSizeChanger={false}
+              onChange={setAlbumPage}
+            />
+          </div>
+        </>
       )}
 
       <Title level={3} style={themedStyles.sectionTitle}>{parsedYear} 年成立的乐队</Title>
@@ -138,20 +157,33 @@ const YearDetail = () => {
           <Empty description={`${parsedYear} 年暂无成立乐队数据`} />
         </Card>
       ) : (
-        <Row gutter={[16, 16]}>
-          {formedBands.map((band) => (
-            <Col key={band.id} xs={24} sm={12} md={8} lg={6}>
-              <Card
-                hoverable
-                onClick={() => navigate(`/music/artists/${band.id}`)}
-                style={{ ...themedStyles.bandCard, cursor: 'pointer' }}
-              >
-                <Title level={5} style={{ marginBottom: 6 }}>{band.name}</Title>
-                <Text type="secondary">这支乐队成立于 {parsedYear} 年</Text>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+        <>
+          <Row gutter={[16, 16]}>
+            {formedBands
+              .slice((bandPage - 1) * BAND_PAGE_SIZE, bandPage * BAND_PAGE_SIZE)
+              .map((band) => (
+                <Col key={band.id} xs={24} sm={12} md={8} lg={6}>
+                  <Card
+                    hoverable
+                    onClick={() => navigate(`/music/artists/${band.id}`)}
+                    style={{ ...themedStyles.bandCard, cursor: 'pointer' }}
+                  >
+                    <Title level={5} style={{ marginBottom: 6 }}>{band.name}</Title>
+                    <Text type="secondary">这支乐队成立于 {parsedYear} 年</Text>
+                  </Card>
+                </Col>
+              ))}
+          </Row>
+          <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
+            <Pagination
+              current={bandPage}
+              pageSize={BAND_PAGE_SIZE}
+              total={formedBands.length}
+              showSizeChanger={false}
+              onChange={setBandPage}
+            />
+          </div>
+        </>
       )}
     </div>
   );

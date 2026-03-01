@@ -8,13 +8,16 @@ import { resolveAvatarUrl } from '../utils/avatar';
 import { useTheme } from '../context/ThemeContext';
 
 const HOME_ALBUM_LIMIT = 12;
-const shuffleArray = (arr) => {
+const pickRandomAlbums = (arr, limit) => {
+  if (!Array.isArray(arr) || arr.length <= limit) {
+    return arr || [];
+  }
   const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
+  for (let i = 0; i < limit; i += 1) {
+    const j = i + Math.floor(Math.random() * (copy.length - i));
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
-  return copy;
+  return copy.slice(0, limit);
 };
 
 const styles = {
@@ -181,7 +184,7 @@ const Home = () => {
           reviewsApi.getRecent(),
         ]);
         const allAlbums = albumsRes.data || [];
-        setAlbums(shuffleArray(allAlbums));
+        setAlbums(pickRandomAlbums(allAlbums, HOME_ALBUM_LIMIT));
         setRecentReviews(reviewsRes.data);
       } catch {
         message.error('加载数据失败');
@@ -246,7 +249,7 @@ const Home = () => {
             </Card>
           ) : (
             <Row gutter={[24, 24]}>
-              {albums.slice(0, HOME_ALBUM_LIMIT).map((album) => (
+              {albums.map((album) => (
                 <Col key={album.id} xs={12} sm={8} md={6} lg={4}>
                   <AlbumCard album={album} />
                 </Col>

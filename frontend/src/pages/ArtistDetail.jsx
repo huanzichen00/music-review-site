@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Card, Col, Empty, Row, Spin, Tag, Typography, message } from 'antd';
+import { Card, Col, Empty, Pagination, Row, Spin, Tag, Typography, message } from 'antd';
 import { useParams } from 'react-router-dom';
 import { artistsApi } from '../api/artists';
 import { albumsApi } from '../api/albums';
@@ -67,6 +67,8 @@ const ArtistDetail = () => {
   const [artist, setArtist] = useState(null);
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [albumPage, setAlbumPage] = useState(1);
+  const ALBUM_PAGE_SIZE = 24;
   const resolveMediaUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http://') || url.startsWith('https://')) {
@@ -88,6 +90,7 @@ const ArtistDetail = () => {
         ]);
         setArtist(artistRes.data || null);
         setAlbums(albumsRes.data || []);
+        setAlbumPage(1);
       } catch {
         message.error('加载乐队详情失败');
       } finally {
@@ -170,13 +173,26 @@ const ArtistDetail = () => {
           <Empty description="该乐队暂无专辑" />
         </Card>
       ) : (
-        <Row gutter={[24, 24]}>
-          {albums.map((album) => (
-            <Col key={album.id} xs={12} sm={8} md={6} lg={4}>
-              <AlbumCard album={album} />
-            </Col>
-          ))}
-        </Row>
+        <>
+          <Row gutter={[24, 24]}>
+            {albums
+              .slice((albumPage - 1) * ALBUM_PAGE_SIZE, albumPage * ALBUM_PAGE_SIZE)
+              .map((album) => (
+                <Col key={album.id} xs={12} sm={8} md={6} lg={4}>
+                  <AlbumCard album={album} />
+                </Col>
+              ))}
+          </Row>
+          <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
+            <Pagination
+              current={albumPage}
+              pageSize={ALBUM_PAGE_SIZE}
+              total={albums.length}
+              showSizeChanger={false}
+              onChange={setAlbumPage}
+            />
+          </div>
+        </>
       )}
     </div>
   );

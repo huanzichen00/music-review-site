@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Card, Col, Empty, Row, Spin, Tag, Typography, message } from 'antd';
+import { Card, Col, Empty, Pagination, Row, Spin, Tag, Typography, message } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import { genresApi } from '../api/genres';
 import { albumsApi } from '../api/albums';
@@ -50,6 +50,10 @@ const GenreDetail = () => {
   const [albums, setAlbums] = useState([]);
   const [artists, setArtists] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [bandPage, setBandPage] = useState(1);
+  const [albumPage, setAlbumPage] = useState(1);
+  const BAND_PAGE_SIZE = 24;
+  const ALBUM_PAGE_SIZE = 24;
   const themedStyles = useMemo(() => {
     if (!isDark) {
       return styles;
@@ -96,6 +100,8 @@ const GenreDetail = () => {
           }
         );
         setArtists(sameGenreArtists);
+        setBandPage(1);
+        setAlbumPage(1);
       } catch {
         message.error('加载风格详情失败');
       } finally {
@@ -165,27 +171,40 @@ const GenreDetail = () => {
           <Empty description="该风格下暂无乐队数据" />
         </Card>
       ) : (
-        <Row gutter={[16, 16]}>
-          {bands.map((band) => (
-            <Col key={`${band.artistId}-${band.artistName}`} xs={24} sm={12} md={8} lg={6}>
-              <Card
-                hoverable={Boolean(band.artistId)}
-                onClick={() => {
-                  if (band.artistId) {
-                    navigate(`/music/artists/${band.artistId}`);
-                  }
-                }}
-                style={{
-                  ...themedStyles.bandCard,
-                  cursor: band.artistId ? 'pointer' : 'default',
-                }}
-              >
-                <Title level={5} style={{ marginBottom: 6, color: isDark ? '#E5E7EB' : '#4E342E' }}>{band.artistName}</Title>
-                <Text style={{ color: isDark ? '#9CA3AF' : '#8D6E63' }}>{band.albumCount} 张专辑</Text>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+        <>
+          <Row gutter={[16, 16]}>
+            {bands
+              .slice((bandPage - 1) * BAND_PAGE_SIZE, bandPage * BAND_PAGE_SIZE)
+              .map((band) => (
+                <Col key={`${band.artistId}-${band.artistName}`} xs={24} sm={12} md={8} lg={6}>
+                  <Card
+                    hoverable={Boolean(band.artistId)}
+                    onClick={() => {
+                      if (band.artistId) {
+                        navigate(`/music/artists/${band.artistId}`);
+                      }
+                    }}
+                    style={{
+                      ...themedStyles.bandCard,
+                      cursor: band.artistId ? 'pointer' : 'default',
+                    }}
+                  >
+                    <Title level={5} style={{ marginBottom: 6, color: isDark ? '#E5E7EB' : '#4E342E' }}>{band.artistName}</Title>
+                    <Text style={{ color: isDark ? '#9CA3AF' : '#8D6E63' }}>{band.albumCount} 张专辑</Text>
+                  </Card>
+                </Col>
+              ))}
+          </Row>
+          <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
+            <Pagination
+              current={bandPage}
+              pageSize={BAND_PAGE_SIZE}
+              total={bands.length}
+              showSizeChanger={false}
+              onChange={setBandPage}
+            />
+          </div>
+        </>
       )}
 
       <Title level={3} style={themedStyles.sectionTitle}>对应专辑</Title>
@@ -194,13 +213,26 @@ const GenreDetail = () => {
           <Empty description="该风格下暂无专辑" />
         </Card>
       ) : (
-        <Row gutter={[24, 24]}>
-          {albums.map((album) => (
-            <Col key={album.id} xs={12} sm={8} md={6} lg={4}>
-              <AlbumCard album={album} />
-            </Col>
-          ))}
-        </Row>
+        <>
+          <Row gutter={[24, 24]}>
+            {albums
+              .slice((albumPage - 1) * ALBUM_PAGE_SIZE, albumPage * ALBUM_PAGE_SIZE)
+              .map((album) => (
+                <Col key={album.id} xs={12} sm={8} md={6} lg={4}>
+                  <AlbumCard album={album} />
+                </Col>
+              ))}
+          </Row>
+          <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
+            <Pagination
+              current={albumPage}
+              pageSize={ALBUM_PAGE_SIZE}
+              total={albums.length}
+              showSizeChanger={false}
+              onChange={setAlbumPage}
+            />
+          </div>
+        </>
       )}
     </div>
   );
