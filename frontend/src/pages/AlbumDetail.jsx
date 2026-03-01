@@ -16,6 +16,7 @@ import { repliesApi } from '../api/replies';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { resolveAvatarUrl } from '../utils/avatar';
+import { isRequestCanceled } from '../utils/http';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -173,27 +174,30 @@ const AlbumDetail = () => {
   const [submittingReply, setSubmittingReply] = useState(false);
   const [expandedReplies, setExpandedReplies] = useState({});
 
-  const loadAlbum = useCallback(async () => {
+  const loadAlbum = useCallback(async (signal) => {
     setLoading(true);
     try {
       const [albumRes, reviewsRes] = await Promise.all([
-        albumsApi.getById(id),
-        reviewsApi.getByAlbum(id),
+        albumsApi.getById(id, { signal }),
+        reviewsApi.getByAlbum(id, { signal }),
       ]);
       setAlbum(albumRes.data);
       setReviews(reviewsRes.data);
 
       if (isAuthenticated) {
         const [favRes, myReviewRes] = await Promise.all([
-          favoritesApi.checkFavorite(id),
-          reviewsApi.getMyReviewForAlbum(id),
+          favoritesApi.checkFavorite(id, { signal }),
+          reviewsApi.getMyReviewForAlbum(id, { signal }),
         ]);
         setIsFavorited(favRes.data.isFavorited);
         if (myReviewRes.data && myReviewRes.data.id) {
           setMyReview(myReviewRes.data);
         }
       }
-    } catch {
+    } catch (error) {
+      if (isRequestCanceled(error)) {
+        return;
+      }
       message.error('加载专辑失败');
       navigate('/music/home');
     } finally {
@@ -202,7 +206,9 @@ const AlbumDetail = () => {
   }, [id, isAuthenticated, navigate]);
 
   useEffect(() => {
-    loadAlbum();
+    const controller = new AbortController();
+    loadAlbum(controller.signal);
+    return () => controller.abort();
   }, [loadAlbum]);
 
   const handleEditAlbum = () => {

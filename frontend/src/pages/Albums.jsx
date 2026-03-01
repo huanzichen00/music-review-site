@@ -4,6 +4,7 @@ import { albumsApi } from '../api/albums';
 import AlbumCard from '../components/AlbumCard';
 import AlphabetFilter from '../components/AlphabetFilter';
 import { useTheme } from '../context/ThemeContext';
+import { isRequestCanceled } from '../utils/http';
 
 const styles = {
   pageTitle: {
@@ -35,21 +36,27 @@ const Albums = () => {
   const PAGE_SIZE = 24;
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const loadAlbums = async () => {
       setLoading(true);
       try {
         const albumsRes = selectedLetter
-          ? await albumsApi.getByInitial(selectedLetter)
-          : await albumsApi.getAll();
+          ? await albumsApi.getByInitial(selectedLetter, { signal: controller.signal })
+          : await albumsApi.getAll({ signal: controller.signal });
         setAlbums(albumsRes.data);
         setCurrentPage(1);
-      } catch {
+      } catch (error) {
+        if (isRequestCanceled(error)) {
+          return;
+        }
         message.error('加载专辑失败');
       } finally {
         setLoading(false);
       }
     };
     loadAlbums();
+    return () => controller.abort();
   }, [selectedLetter]);
 
   return (

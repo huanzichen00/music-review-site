@@ -5,6 +5,7 @@ import { artistsApi } from '../api/artists';
 import { albumsApi } from '../api/albums';
 import AlbumCard from '../components/AlbumCard';
 import { useTheme } from '../context/ThemeContext';
+import { isRequestCanceled } from '../utils/http';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -81,23 +82,29 @@ const ArtistDetail = () => {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const loadData = async () => {
       setLoading(true);
       try {
         const [artistRes, albumsRes] = await Promise.all([
-          artistsApi.getById(id),
-          albumsApi.getByArtist(id),
+          artistsApi.getById(id, { signal: controller.signal }),
+          albumsApi.getByArtist(id, { signal: controller.signal }),
         ]);
         setArtist(artistRes.data || null);
         setAlbums(albumsRes.data || []);
         setAlbumPage(1);
-      } catch {
+      } catch (error) {
+        if (isRequestCanceled(error)) {
+          return;
+        }
         message.error('加载乐队详情失败');
       } finally {
         setLoading(false);
       }
     };
     loadData();
+    return () => controller.abort();
   }, [id]);
 
   if (loading) {

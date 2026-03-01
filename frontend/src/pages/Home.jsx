@@ -6,6 +6,7 @@ import { reviewsApi } from '../api/reviews';
 import AlbumCard from '../components/AlbumCard';
 import { resolveAvatarUrl } from '../utils/avatar';
 import { useTheme } from '../context/ThemeContext';
+import { isRequestCanceled } from '../utils/http';
 
 const HOME_ALBUM_LIMIT = 12;
 const pickRandomAlbums = (arr, limit) => {
@@ -176,17 +177,22 @@ const Home = () => {
   }, [isDark]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const loadData = async () => {
       setLoading(true);
       try {
         const [albumsRes, reviewsRes] = await Promise.all([
-          albumsApi.getAll(),
-          reviewsApi.getRecent(),
+          albumsApi.getAll({ signal: controller.signal }),
+          reviewsApi.getRecent({ signal: controller.signal }),
         ]);
         const allAlbums = albumsRes.data || [];
         setAlbums(pickRandomAlbums(allAlbums, HOME_ALBUM_LIMIT));
         setRecentReviews(reviewsRes.data);
-      } catch {
+      } catch (error) {
+        if (isRequestCanceled(error)) {
+          return;
+        }
         message.error('加载数据失败');
       } finally {
         setLoading(false);
@@ -194,6 +200,7 @@ const Home = () => {
     };
 
     loadData();
+    return () => controller.abort();
   }, []);
 
   const formatDate = (dateString) => {

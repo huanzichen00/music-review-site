@@ -3,6 +3,7 @@ import { Card, Col, Empty, Row, Spin, Typography, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { genresApi } from '../api/genres';
 import { useTheme } from '../context/ThemeContext';
+import { isRequestCanceled } from '../utils/http';
 
 const { Text } = Typography;
 
@@ -110,18 +111,24 @@ const Genres = () => {
   }, [isDark]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const loadGenres = async () => {
       setLoading(true);
       try {
-        const response = await genresApi.getAll();
+        const response = await genresApi.getAll({ signal: controller.signal });
         setGenres((response.data || []).sort((a, b) => (b.albumCount || 0) - (a.albumCount || 0)));
-      } catch {
+      } catch (error) {
+        if (isRequestCanceled(error)) {
+          return;
+        }
         message.error('加载风格失败');
       } finally {
         setLoading(false);
       }
     };
     loadGenres();
+    return () => controller.abort();
   }, []);
 
   return (

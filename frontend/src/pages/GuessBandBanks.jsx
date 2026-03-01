@@ -21,6 +21,7 @@ import { artistsApi } from '../api/artists';
 import { questionBanksApi } from '../api/questionBanks';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { isRequestCanceled } from '../utils/http';
 
 const { Title, Text } = Typography;
 const MIN_ITEMS = 10;
@@ -58,7 +59,7 @@ const GuessBandBanks = () => {
   const [publicDetailLoading, setPublicDetailLoading] = useState(false);
   const [publicSearch, setPublicSearch] = useState('');
 
-  const loadInitial = async () => {
+  const loadInitial = async (signal) => {
     if (!isAuthenticated) {
       setLoading(false);
       return;
@@ -67,9 +68,9 @@ const GuessBandBanks = () => {
     setLoading(true);
     try {
       const [banksRes, artistsRes, publicBanksRes] = await Promise.all([
-        questionBanksApi.getMine(),
-        artistsApi.getAll(),
-        questionBanksApi.getPublic(),
+        questionBanksApi.getMine({ signal }),
+        artistsApi.getAll({ signal }),
+        questionBanksApi.getPublic({ signal }),
       ]);
       const mineBanks = banksRes.data || [];
       const playableArtists = (artistsRes.data || []).filter(isPlayableArtist);
@@ -101,7 +102,10 @@ const GuessBandBanks = () => {
         setSelectedPublicBankId(null);
         setSelectedPublicBank(null);
       }
-    } catch {
+    } catch (error) {
+      if (isRequestCanceled(error)) {
+        return;
+      }
       message.error('加载题库管理数据失败');
     } finally {
       setLoading(false);
@@ -109,7 +113,9 @@ const GuessBandBanks = () => {
   };
 
   useEffect(() => {
-    loadInitial();
+    const controller = new AbortController();
+    loadInitial(controller.signal);
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user?.id, user?.username]);
 

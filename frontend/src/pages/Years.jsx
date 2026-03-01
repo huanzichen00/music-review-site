@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { albumsApi } from '../api/albums';
 import { artistsApi } from '../api/artists';
 import { useTheme } from '../context/ThemeContext';
+import { isRequestCanceled } from '../utils/http';
 
 const { Title } = Typography;
 
@@ -58,13 +59,15 @@ const Years = () => {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const loadData = async () => {
       setLoading(true);
       try {
         const [yearsRes, albumsRes, artistsRes] = await Promise.all([
-          albumsApi.getYears(),
-          albumsApi.getAll(),
-          artistsApi.getAll(),
+          albumsApi.getYears({ signal: controller.signal }),
+          albumsApi.getAll({ signal: controller.signal }),
+          artistsApi.getAll({ signal: controller.signal }),
         ]);
 
         const sortedYears = (yearsRes.data || []).slice().sort((a, b) => b - a);
@@ -90,7 +93,10 @@ const Years = () => {
           formedCountMap.set(artist.formedYear, (formedCountMap.get(artist.formedYear) || 0) + 1);
         });
         setFormedBandCountByYear(formedCountMap);
-      } catch {
+      } catch (error) {
+        if (isRequestCanceled(error)) {
+          return;
+        }
         message.error('加载年份失败');
       } finally {
         setLoading(false);
@@ -98,6 +104,7 @@ const Years = () => {
     };
 
     loadData();
+    return () => controller.abort();
   }, []);
 
   const yearCards = useMemo(

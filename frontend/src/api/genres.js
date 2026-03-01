@@ -8,11 +8,11 @@ export const genresApi = {
   getAll: (options = {}) =>
     cachedApiGet({
       key: GENRES_ALL_CACHE_KEY,
-      request: () => api.get('/genres'),
+      request: () => api.get('/genres', { signal: options.signal }),
       ttlMs: GENRES_ALL_TTL_MS,
       force: Boolean(options.force),
     }),
-  getById: (id) => api.get(`/genres/${id}`),
+  getById: (id, config = {}) => api.get(`/genres/${id}`, config),
   create: async (data) => {
     const res = await api.post('/genres', data);
     invalidateApiCache(GENRES_ALL_CACHE_KEY);

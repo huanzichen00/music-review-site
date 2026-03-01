@@ -8,13 +8,13 @@ export const reviewsApi = {
   getRecent: (options = {}) =>
     cachedApiGet({
       key: REVIEWS_RECENT_CACHE_KEY,
-      request: () => api.get('/reviews/recent'),
+      request: () => api.get('/reviews/recent', { signal: options.signal }),
       ttlMs: REVIEWS_RECENT_TTL_MS,
       force: Boolean(options.force),
     }),
-  getByAlbum: (albumId) => api.get(`/reviews/album/${albumId}`),
-  getMyReviews: () => api.get('/reviews/my'),
-  getMyReviewForAlbum: (albumId) => api.get(`/reviews/my/${albumId}`),
+  getByAlbum: (albumId, config = {}) => api.get(`/reviews/album/${albumId}`, config),
+  getMyReviews: (config = {}) => api.get('/reviews/my', config),
+  getMyReviewForAlbum: (albumId, config = {}) => api.get(`/reviews/my/${albumId}`, config),
   createOrUpdate: async (data) => {
     const res = await api.post('/reviews', data);
     invalidateApiCache(REVIEWS_RECENT_CACHE_KEY);
@@ -25,5 +25,5 @@ export const reviewsApi = {
     invalidateApiCache(REVIEWS_RECENT_CACHE_KEY);
     return res;
   },
-  getStats: (albumId) => api.get(`/reviews/stats/${albumId}`),
+  getStats: (albumId, config = {}) => api.get(`/reviews/stats/${albumId}`, config),
 };

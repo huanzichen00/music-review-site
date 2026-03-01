@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { favoritesApi } from '../api/favorites';
 import { useAuth } from '../context/AuthContext';
 import AlbumCard from '../components/AlbumCard';
+import { isRequestCanceled } from '../utils/http';
 
 const { Title } = Typography;
 
@@ -14,6 +15,8 @@ const Favorites = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const controller = new AbortController();
+
     if (authLoading) {
       return;
     }
@@ -24,15 +27,19 @@ const Favorites = () => {
     const loadFavorites = async () => {
       setLoading(true);
       try {
-        const response = await favoritesApi.getMyFavorites();
+        const response = await favoritesApi.getMyFavorites({ signal: controller.signal });
         setFavorites(response.data);
-      } catch {
+      } catch (error) {
+        if (isRequestCanceled(error)) {
+          return;
+        }
         message.error('加载收藏失败');
       } finally {
         setLoading(false);
       }
     };
     loadFavorites();
+    return () => controller.abort();
   }, [authLoading, isAuthenticated, navigate]);
 
   if (loading) {

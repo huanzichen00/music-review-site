@@ -8,17 +8,17 @@ export const albumsApi = {
   getAll: (options = {}) =>
     cachedApiGet({
       key: ALBUMS_ALL_CACHE_KEY,
-      request: () => api.get('/albums'),
+      request: () => api.get('/albums', { signal: options.signal }),
       ttlMs: ALBUMS_ALL_TTL_MS,
       force: Boolean(options.force),
     }),
-  getByInitial: (letter) => api.get(`/albums/initial/${letter}`),
-  getById: (id) => api.get(`/albums/${id}`),
-  getByArtist: (artistId) => api.get(`/albums/artist/${artistId}`),
-  getByGenre: (genreId) => api.get(`/albums/genre/${genreId}`),
-  getByYear: (year) => api.get(`/albums/year/${year}`),
-  getYears: () => api.get('/albums/years'),
-  search: (query) => api.get(`/albums/search?q=${query}`),
+  getByInitial: (letter, config = {}) => api.get(`/albums/initial/${letter}`, config),
+  getById: (id, config = {}) => api.get(`/albums/${id}`, config),
+  getByArtist: (artistId, config = {}) => api.get(`/albums/artist/${artistId}`, config),
+  getByGenre: (genreId, config = {}) => api.get(`/albums/genre/${genreId}`, config),
+  getByYear: (year, config = {}) => api.get(`/albums/year/${year}`, config),
+  getYears: (config = {}) => api.get('/albums/years', config),
+  search: (query, config = {}) => api.get(`/albums/search?q=${query}`, config),
   create: async (data) => {
     const res = await api.post('/albums', data);
     invalidateApiCache(ALBUMS_ALL_CACHE_KEY);

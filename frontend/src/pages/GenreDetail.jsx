@@ -6,6 +6,7 @@ import { albumsApi } from '../api/albums';
 import { artistsApi } from '../api/artists';
 import AlbumCard from '../components/AlbumCard';
 import { useTheme } from '../context/ThemeContext';
+import { isRequestCanceled } from '../utils/http';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -77,17 +78,19 @@ const GenreDetail = () => {
   }, [isDark]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const loadData = async () => {
       setLoading(true);
       try {
         const [genreRes, albumsRes] = await Promise.all([
-          genresApi.getById(id),
-          albumsApi.getByGenre(id),
+          genresApi.getById(id, { signal: controller.signal }),
+          albumsApi.getByGenre(id, { signal: controller.signal }),
         ]);
         setGenre(genreRes.data || null);
         setAlbums(albumsRes.data || []);
 
-        const artistsRes = await artistsApi.getAll();
+        const artistsRes = await artistsApi.getAll({ signal: controller.signal });
         const allArtists = artistsRes.data || [];
         const genreName = normalizeGenre(genreRes.data?.name || '');
         const sameGenreArtists = allArtists.filter(
@@ -102,13 +105,17 @@ const GenreDetail = () => {
         setArtists(sameGenreArtists);
         setBandPage(1);
         setAlbumPage(1);
-      } catch {
+      } catch (error) {
+        if (isRequestCanceled(error)) {
+          return;
+        }
         message.error('加载风格详情失败');
       } finally {
         setLoading(false);
       }
     };
     loadData();
+    return () => controller.abort();
   }, [id]);
 
   const bands = useMemo(() => {

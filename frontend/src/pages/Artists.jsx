@@ -19,6 +19,7 @@ import { artistsApi } from '../api/artists';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { isRequestCanceled } from '../utils/http';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -44,21 +45,26 @@ const Artists = () => {
     return url;
   };
 
-  useEffect(() => {
-    loadArtists();
-  }, []);
-
-  const loadArtists = async () => {
+  const loadArtists = async (signal) => {
     setLoading(true);
     try {
-      const response = await artistsApi.getAll();
+      const response = await artistsApi.getAll({ signal });
       setArtists(response.data);
-    } catch {
+    } catch (error) {
+      if (isRequestCanceled(error)) {
+        return;
+      }
       message.error('加载艺术家失败');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadArtists(controller.signal);
+    return () => controller.abort();
+  }, []);
 
   const handleDeleteArtist = async (artistId) => {
     try {

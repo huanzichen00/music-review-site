@@ -8,13 +8,13 @@ export const artistsApi = {
   getAll: (options = {}) =>
     cachedApiGet({
       key: ARTISTS_ALL_CACHE_KEY,
-      request: () => api.get('/artists'),
+      request: () => api.get('/artists', { signal: options.signal }),
       ttlMs: ARTISTS_ALL_TTL_MS,
       force: Boolean(options.force),
     }),
-  getByInitial: (letter) => api.get(`/artists/initial/${letter}`),
-  getById: (id) => api.get(`/artists/${id}`),
-  search: (query) => api.get(`/artists/search?q=${query}`),
+  getByInitial: (letter, config = {}) => api.get(`/artists/initial/${letter}`, config),
+  getById: (id, config = {}) => api.get(`/artists/${id}`, config),
+  search: (query, config = {}) => api.get(`/artists/search?q=${query}`, config),
   create: async (data) => {
     const res = await api.post('/artists', data);
     invalidateApiCache(ARTISTS_ALL_CACHE_KEY);

@@ -5,6 +5,7 @@ import { albumsApi } from '../api/albums';
 import { artistsApi } from '../api/artists';
 import AlbumCard from '../components/AlbumCard';
 import { useTheme } from '../context/ThemeContext';
+import { isRequestCanceled } from '../utils/http';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -43,6 +44,8 @@ const YearDetail = () => {
   const BAND_PAGE_SIZE = 24;
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const loadData = async () => {
       if (!Number.isInteger(parsedYear) || parsedYear < 1900 || parsedYear > 2100) {
         message.error('年份参数无效');
@@ -53,8 +56,8 @@ const YearDetail = () => {
       setLoading(true);
       try {
         const [albumsRes, artistsRes] = await Promise.all([
-          albumsApi.getByYear(parsedYear),
-          artistsApi.getAll(),
+          albumsApi.getByYear(parsedYear, { signal: controller.signal }),
+          artistsApi.getAll({ signal: controller.signal }),
         ]);
 
         const yearAlbums = albumsRes.data || [];
@@ -67,7 +70,10 @@ const YearDetail = () => {
         setFormedBands(artistsFoundedThisYear);
         setAlbumPage(1);
         setBandPage(1);
-      } catch {
+      } catch (error) {
+        if (isRequestCanceled(error)) {
+          return;
+        }
         message.error('加载年份页面失败');
       } finally {
         setLoading(false);
@@ -75,6 +81,7 @@ const YearDetail = () => {
     };
 
     loadData();
+    return () => controller.abort();
   }, [parsedYear]);
 
   const summary = useMemo(

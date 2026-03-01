@@ -6,6 +6,7 @@ import { artistsApi } from '../api/artists';
 import { questionBanksApi } from '../api/questionBanks';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { isRequestCanceled } from '../utils/http';
 
 const { Title, Text } = Typography;
 const DEFAULT_MAX_ATTEMPTS = 10;
@@ -405,6 +406,8 @@ const GuessBand = () => {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const loadBands = async () => {
       setLoading(true);
       try {
@@ -412,9 +415,9 @@ const GuessBand = () => {
         const shareToken = params.get('share');
 
         const [artistsRes, publicBanksRes, mineBanksRes] = await Promise.all([
-          artistsApi.getAll(),
-          questionBanksApi.getPublic(),
-          isAuthenticated ? questionBanksApi.getMine() : Promise.resolve({ data: [] }),
+          artistsApi.getAll({ signal: controller.signal }),
+          questionBanksApi.getPublic({ signal: controller.signal }),
+          isAuthenticated ? questionBanksApi.getMine({ signal: controller.signal }) : Promise.resolve({ data: [] }),
         ]);
 
         const gameBands = (artistsRes.data || []).filter(isPlayableArtist).map(toGameBand);
@@ -450,7 +453,7 @@ const GuessBand = () => {
 
         if (shareToken) {
           try {
-            const shareRes = await questionBanksApi.getByShareToken(shareToken);
+            const shareRes = await questionBanksApi.getByShareToken(shareToken, { signal: controller.signal });
             const sharedDetail = shareRes.data;
             const sharedBands = (sharedDetail?.artists || []).filter(isPlayableArtist).map(toGameBand);
             if (sharedBands.length > 0) {
@@ -472,7 +475,10 @@ const GuessBand = () => {
         setCurrentBankKey(nextBankKey);
         setCurrentBankLabel(nextBankLabel);
         setTargetBand(pickRandomBand(nextBands));
-      } catch {
+      } catch (error) {
+        if (isRequestCanceled(error)) {
+          return;
+        }
         message.error('加载乐队数据失败');
       } finally {
         setLoading(false);
@@ -480,6 +486,7 @@ const GuessBand = () => {
     };
 
     loadBands();
+    return () => controller.abort();
   }, [isAuthenticated, location.search, user?.id, user?.username]);
 
   useEffect(() => {
