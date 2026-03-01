@@ -302,6 +302,24 @@ h1, h2, h3, h4, h5, h6 {
   color: #AEB4BE !important;
 }
 
+:root[data-theme='dark'] .ant-input-affix-wrapper .ant-input {
+  background: transparent !important;
+  color: #E5E7EB !important;
+}
+
+:root[data-theme='dark'] input.ant-input:-webkit-autofill,
+:root[data-theme='dark'] input.ant-input:-webkit-autofill:hover,
+:root[data-theme='dark'] input.ant-input:-webkit-autofill:focus,
+:root[data-theme='dark'] .ant-input-affix-wrapper input:-webkit-autofill,
+:root[data-theme='dark'] .ant-input-affix-wrapper input:-webkit-autofill:hover,
+:root[data-theme='dark'] .ant-input-affix-wrapper input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #E5E7EB !important;
+  box-shadow: 0 0 0 1000px #171719 inset !important;
+  -webkit-box-shadow: 0 0 0 1000px #171719 inset !important;
+  transition: background-color 9999s ease-in-out 0s;
+  caret-color: #E5E7EB;
+}
+
 :root[data-theme='dark'] .ant-input-prefix,
 :root[data-theme='dark'] .ant-input-suffix,
 :root[data-theme='dark'] .ant-input-password-icon,

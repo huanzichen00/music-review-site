@@ -2,9 +2,6 @@ import { Card, Rate, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 
-const { Meta } = Card;
-const { Text } = Typography;
-
 // 自定义样式
 const styles = {
   card: {
@@ -69,13 +66,38 @@ const AlbumCard = ({ album }) => {
     if (!url) return '';
     return url.startsWith('/api') ? new URL(url, window.location.origin).toString() : url;
   };
+  const themedStyles = isDark
+    ? {
+        card: {
+          ...styles.card,
+          background: 'linear-gradient(145deg, #1A1A1D 0%, #141417 100%)',
+          border: '1px solid #2F2F33',
+        },
+        coverContainer: {
+          ...styles.coverContainer,
+          background: 'linear-gradient(145deg, #202024 0%, #18181B 100%)',
+          borderBottom: '1px solid #2F2F33',
+        },
+        title: { ...styles.title, color: '#E5E7EB' },
+        artist: { ...styles.artist, color: '#B8BDC7' },
+        year: { ...styles.year, color: '#9CA3AF' },
+        ratingColor: '#9CA3AF',
+      }
+    : {
+        card: styles.card,
+        coverContainer: styles.coverContainer,
+        title: styles.title,
+        artist: styles.artist,
+        year: styles.year,
+        ratingColor: '#D4A574',
+      };
 
   return (
     <Card
       hoverable
-      style={styles.card}
+      style={themedStyles.card}
       cover={
-        <div style={styles.coverContainer}>
+        <div style={themedStyles.coverContainer}>
           {album.coverUrl ? (
             <img 
               alt={album.title} 
@@ -96,15 +118,15 @@ const AlbumCard = ({ album }) => {
       onClick={() => navigate(`/music/albums/${album.id}`)}
       styles={{ body: { padding: '16px' } }}
     >
-      <div style={styles.title} title={album.title}>
+      <div style={themedStyles.title} title={album.title}>
         {album.title}
       </div>
       <div>
-        <span style={styles.artist}>
+        <span style={themedStyles.artist}>
           {album.artistName}
         </span>
         {album.releaseYear && (
-          <span style={styles.year}>
+          <span style={themedStyles.year}>
             {album.releaseYear}
           </span>
         )}
@@ -114,7 +136,7 @@ const AlbumCard = ({ album }) => {
               disabled 
               defaultValue={album.averageRating} 
               allowHalf 
-              style={{ fontSize: '14px', color: '#D4A574' }} 
+              style={{ fontSize: '14px', color: themedStyles.ratingColor }} 
             />
           </div>
         )}
