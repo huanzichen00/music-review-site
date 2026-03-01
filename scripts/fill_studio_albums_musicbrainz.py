@@ -13,6 +13,7 @@ Default behavior:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -79,7 +80,7 @@ class AlbumCandidate:
     mb_release_group_id: str
     year: Optional[int]
     description: str
-    cover_url: Optional[str]
+    remote_cover_url: Optional[str]
     tracks: List[Tuple[int, str, Optional[int]]]
 
 
@@ -93,6 +94,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sleep", type=float, default=1.1, help="Seconds between MusicBrainz requests")
     parser.add_argument("--dry-run", action="store_true", help="Print actions without writing DB")
     parser.add_argument("--no-dedup-cleanup", action="store_true", help="Skip final DB duplicate cleanup")
+    parser.add_argument(
+        "--upload-dir",
+        default="/opt/music-review/uploads",
+        help="Backend upload root dir for local covers (default: /opt/music-review/uploads)",
+    )
     parser.add_argument("--host", default=MYSQL_HOST, help="MySQL host")
     parser.add_argument("--port", type=int, default=MYSQL_PORT, help="MySQL port")
     parser.add_argument("--user", default=MYSQL_USER, help="MySQL user")
@@ -313,6 +319,48 @@ def build_cover_url(release_group_id: str) -> str:
     return f"https://coverartarchive.org/release-group/{urllib.parse.quote(release_group_id)}/front-250"
 
 
+def file_ext_from_content_type(content_type: str) -> str:
+    ct = (content_type or "").lower()
+    if "png" in ct:
+        return ".png"
+    if "webp" in ct:
+        return ".webp"
+    if "gif" in ct:
+        return ".gif"
+    return ".jpg"
+
+
+def ensure_cover_dir(upload_root: str) -> str:
+    cover_dir = os.path.join(upload_root, "album-covers")
+    os.makedirs(cover_dir, exist_ok=True)
+    return cover_dir
+
+
+def download_cover_to_local(upload_root: str, remote_url: Optional[str], stable_key: str) -> Optional[str]:
+    if not remote_url:
+        return None
+    cover_dir = ensure_cover_dir(upload_root)
+    req = urllib.request.Request(
+        remote_url,
+        headers={"User-Agent": USER_AGENT, "Accept": "image/*,*/*;q=0.8"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=40) as resp:
+            content = resp.read()
+            if not content:
+                return None
+            ext = file_ext_from_content_type(resp.headers.get("Content-Type", ""))
+    except Exception:
+        return None
+
+    filename = hashlib.sha1(stable_key.encode("utf-8")).hexdigest()[:32] + ext
+    full_path = os.path.join(cover_dir, filename)
+    if not os.path.exists(full_path):
+        with open(full_path, "wb") as f:
+            f.write(content)
+    return f"/api/files/album-covers/{filename}"
+
+
 def fetch_studio_candidates_for_artist(
     artist_name: str,
     artist_genre: str,
@@ -382,7 +430,7 @@ def fetch_studio_candidates_for_artist(
                 mb_release_group_id=group_id,
                 year=year,
                 description=description,
-                cover_url=build_cover_url(group_id),
+                remote_cover_url=build_cover_url(group_id),
                 tracks=tracks,
             )
         )
@@ -410,6 +458,14 @@ def insert_albums_for_artist(
 ) -> int:
     inserted = 0
     for album in candidates:
+        local_cover_url = None
+        if not args.dry_run:
+            local_cover_url = download_cover_to_local(
+                upload_root=args.upload_dir,
+                remote_url=album.remote_cover_url,
+                stable_key=f"{artist.artist_id}:{normalize_title(album.title)}:{album.mb_release_group_id}",
+            )
+
         sql_parts = [
             f"USE {args.database};",
             "START TRANSACTION;",
@@ -418,7 +474,7 @@ def insert_albums_for_artist(
                 "INSERT INTO albums (title, title_initial, artist_id, release_year, cover_url, description, created_by) "
                 "SELECT "
                 f"{sql_quote(album.title)}, {sql_quote(title_initial(album.title))}, {artist.artist_id}, "
-                f"{sql_quote(album.year)}, {sql_quote(album.cover_url)}, {sql_quote(album.description)}, NULL "
+                f"{sql_quote(album.year)}, {sql_quote(local_cover_url)}, {sql_quote(album.description)}, NULL "
                 "FROM DUAL "
                 "WHERE NOT EXISTS ("
                 "SELECT 1 FROM albums "
@@ -433,6 +489,13 @@ def insert_albums_for_artist(
                 f"AND LOWER(TRIM(title)) = LOWER(TRIM({sql_quote(album.title)})) "
                 "ORDER BY id ASC LIMIT 1"
                 ");"
+            ),
+            (
+                "UPDATE albums "
+                f"SET cover_url = {sql_quote(local_cover_url)} "
+                "WHERE id = @album_id "
+                f"AND {sql_quote(local_cover_url)} IS NOT NULL "
+                "AND (cover_url IS NULL OR cover_url = '' OR cover_url LIKE 'https://coverartarchive.org/%');"
             ),
             (
                 "INSERT INTO album_genres (album_id, genre_id) "
