@@ -140,6 +140,12 @@ def normalize_artist_key(name: str) -> str:
     return lowered
 
 
+def normalize_text_key(value: str) -> str:
+    text = (value or "").strip().lower()
+    text = re.sub(r"\s+", " ", text)
+    return re.sub(r"[^a-z0-9\u4e00-\u9fa5]+", "", text)
+
+
 def artist_query_variants(name: str) -> List[str]:
     raw = (name or "").strip()
     out: List[str] = []
@@ -375,15 +381,7 @@ def ensure_cover_dir(upload_root: str) -> str:
     return cover_dir
 
 
-def download_cover_to_local(
-    upload_root: str,
-    remote_url: Optional[str],
-    stable_key: str,
-    timeout_sec: float,
-) -> Optional[str]:
-    if not remote_url:
-        return None
-    cover_dir = ensure_cover_dir(upload_root)
+def fetch_image_bytes(remote_url: str, timeout_sec: float) -> Tuple[Optional[bytes], Optional[str]]:
     req = urllib.request.Request(
         remote_url,
         headers={"User-Agent": USER_AGENT, "Accept": "image/*,*/*;q=0.8"},
@@ -392,9 +390,72 @@ def download_cover_to_local(
         with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
             content = resp.read()
             if not content:
-                return None
-            ext = file_ext_from_content_type(resp.headers.get("Content-Type", ""))
+                return None, None
+            return content, file_ext_from_content_type(resp.headers.get("Content-Type", ""))
     except Exception:
+        return None, None
+
+
+def search_itunes_cover_url(artist_name: str, album_title: str, timeout_sec: float) -> Optional[str]:
+    query = urllib.parse.urlencode(
+        {
+            "term": f"{artist_name} {album_title}",
+            "entity": "album",
+            "limit": "8",
+            "country": "US",
+        }
+    )
+    url = f"https://itunes.apple.com/search?{query}"
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except Exception:
+        return None
+
+    expected_artist = normalize_text_key(artist_name)
+    expected_album = normalize_text_key(album_title)
+    results = data.get("results") or []
+    for row in results:
+        artist = normalize_text_key(str(row.get("artistName") or ""))
+        album = normalize_text_key(str(row.get("collectionName") or ""))
+        if expected_artist and artist != expected_artist:
+            continue
+        if expected_album and expected_album not in album and album not in expected_album:
+            continue
+        artwork = str(row.get("artworkUrl100") or "").strip()
+        if artwork:
+            return artwork.replace("100x100bb", "1000x1000bb")
+
+    for row in results:
+        artwork = str(row.get("artworkUrl100") or "").strip()
+        if artwork:
+            return artwork.replace("100x100bb", "1000x1000bb")
+    return None
+
+
+def download_cover_to_local(
+    upload_root: str,
+    remote_url: Optional[str],
+    stable_key: str,
+    timeout_sec: float,
+    artist_name: str = "",
+    album_title: str = "",
+) -> Optional[str]:
+    primary = (remote_url or "").strip()
+    fallback = search_itunes_cover_url(artist_name, album_title, timeout_sec) if artist_name or album_title else None
+    candidate_urls = [u for u in [primary, fallback] if u]
+    if not candidate_urls:
+        return None
+
+    cover_dir = ensure_cover_dir(upload_root)
+    content = None
+    ext = None
+    for url in candidate_urls:
+        content, ext = fetch_image_bytes(url, timeout_sec)
+        if content:
+            break
+    if not content:
         return None
 
     filename = hashlib.sha1(stable_key.encode("utf-8")).hexdigest()[:32] + ext
@@ -511,6 +572,8 @@ def insert_albums_for_artist(
                 remote_url=album.remote_cover_url,
                 stable_key=f"{artist.artist_id}:{normalize_title(album.title)}:{album.mb_release_group_id}",
                 timeout_sec=args.cover_timeout,
+                artist_name=artist.name,
+                album_title=album.title,
             )
 
         sql_parts = [
@@ -592,21 +655,22 @@ JOIN albums a2
 """
 
 
-def get_albums_with_caa_cover(args: argparse.Namespace) -> List[Tuple[int, str, int, str]]:
+def get_albums_with_caa_cover(args: argparse.Namespace) -> List[Tuple[int, str, int, str, str]]:
     q = f"""
 USE {args.database};
-SELECT id, title, artist_id, cover_url
-FROM albums
+SELECT al.id, al.title, al.artist_id, ar.name, al.cover_url
+FROM albums al
+JOIN artists ar ON ar.id = al.artist_id
 WHERE cover_url LIKE 'https://coverartarchive.org/%'
-ORDER BY id;
+ORDER BY al.id;
 """
     rows = run_mysql_query(args, q)
-    out: List[Tuple[int, str, int, str]] = []
+    out: List[Tuple[int, str, int, str, str]] = []
     for row in rows:
         parts = row.split("\t")
-        if len(parts) < 4:
+        if len(parts) < 5:
             continue
-        out.append((int(parts[0]), parts[1], int(parts[2]), parts[3]))
+        out.append((int(parts[0]), parts[1], int(parts[2]), parts[3], parts[4]))
     return out
 
 
@@ -619,7 +683,7 @@ def localize_existing_cover_urls(args: argparse.Namespace) -> Tuple[int, int]:
     print(f"Localizing existing cover URLs: {len(rows)}")
     ok = 0
     failed = 0
-    for idx, (album_id, title, artist_id, remote_url) in enumerate(rows, start=1):
+    for idx, (album_id, title, artist_id, artist_name, remote_url) in enumerate(rows, start=1):
         try:
             local = None
             if not args.dry_run:
@@ -628,6 +692,8 @@ def localize_existing_cover_urls(args: argparse.Namespace) -> Tuple[int, int]:
                     remote_url=remote_url,
                     stable_key=f"album:{album_id}:{artist_id}:{normalize_title(title)}",
                     timeout_sec=args.cover_timeout,
+                    artist_name=artist_name,
+                    album_title=title,
                 )
             if args.dry_run:
                 ok += 1
