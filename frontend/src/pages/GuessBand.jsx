@@ -291,7 +291,6 @@ const GuessBand = () => {
       bands.map((band) => ({
         ...band,
         normalizedName: normalizeBand(band.name),
-        normalizedRegion: band.region.toLowerCase(),
       })),
     [bands]
   );
@@ -550,15 +549,14 @@ const GuessBand = () => {
       .slice(0, 10);
   }, [indexedBands, guessInput]);
 
-  const countryMatchedBands = useMemo(() => {
-    const keyword = countryInput.trim().toLowerCase();
-    if (!keyword) {
-      return sortedBands.slice(0, 24);
-    }
-    return sortedBands
-      .filter((band) => band.normalizedRegion.includes(keyword))
-      .slice(0, 50);
-  }, [countryInput, sortedBands]);
+  const bankBandOptions = useMemo(
+    () =>
+      sortedBands.map((band) => ({
+        value: band.name,
+        label: countryInput.trim() ? `${band.name} (${band.region})` : band.name,
+      })),
+    [countryInput, sortedBands]
+  );
 
   const resetRoundWithBands = (nextBands, excludeCurrent = false) => {
     setGuessInput('');
@@ -728,25 +726,24 @@ const GuessBand = () => {
             allowClear
           />
           <div style={{ marginTop: 14 }}>
-            <Text strong style={{ color: isDark ? '#E5E7EB' : isBlue ? '#274B7A' : '#334155' }}>匹配乐队</Text>
+            <Text strong style={{ color: isDark ? '#E5E7EB' : isBlue ? '#274B7A' : '#334155' }}>当前题库乐队</Text>
+            <Text style={{ ...themedStyles.sideSubtitle, display: 'block' }}>{sortedBands.length} 支</Text>
           </div>
-          <div style={{ marginTop: 10, maxHeight: 560, overflowY: 'auto' }}>
-            <Space wrap>
-              {countryMatchedBands.length === 0 ? (
-                <Text style={themedStyles.sideSubtitle}>没有匹配结果</Text>
-              ) : (
-                countryMatchedBands.map((band) => (
-                  <Tag
-                    key={`country-${band.name}`}
-                    color="processing"
-                    style={{ cursor: 'pointer', marginBottom: 8 }}
-                    onClick={() => setGuessInput(band.name)}
-                  >
-                    {band.name}
-                  </Tag>
-                ))
-              )}
-            </Space>
+          <div style={{ marginTop: 10 }}>
+            <Select
+              showSearch
+              allowClear
+              placeholder="当前题库全部乐队（可搜索）"
+              options={bankBandOptions}
+              onChange={(value) => {
+                if (value) {
+                  setGuessInput(value);
+                }
+              }}
+              optionFilterProp="label"
+              style={{ width: '100%' }}
+              listHeight={300}
+            />
           </div>
         </Card>
 
