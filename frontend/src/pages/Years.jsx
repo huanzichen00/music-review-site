@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Card, Col, Empty, Input, InputNumber, Row, Spin, Table, Typography, message } from 'antd';
+import { Card, Col, Empty, Input, InputNumber, Row, Select, Spin, Table, Typography, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { albumsApi } from '../api/albums';
 import { artistsApi } from '../api/artists';
@@ -33,8 +33,10 @@ const Years = () => {
   const [yearKeyword, setYearKeyword] = useState('');
   const [minAlbumCount, setMinAlbumCount] = useState(undefined);
   const [minFormedBandCount, setMinFormedBandCount] = useState(undefined);
-  const [albumNameKeyword, setAlbumNameKeyword] = useState('');
-  const [bandNameKeyword, setBandNameKeyword] = useState('');
+  const [selectedAlbumName, setSelectedAlbumName] = useState(undefined);
+  const [selectedBandName, setSelectedBandName] = useState(undefined);
+  const [albumNameOptions, setAlbumNameOptions] = useState([]);
+  const [bandNameOptions, setBandNameOptions] = useState([]);
   const [albumNameIndexByYear, setAlbumNameIndexByYear] = useState(new Map());
   const [bandNameIndexByYear, setBandNameIndexByYear] = useState(new Map());
   const navigate = useNavigate();
@@ -75,6 +77,8 @@ const Years = () => {
       setBandNameIndexByYear(
         new Map(Object.entries(summary.bandNameIndexByYear || {}).map(([k, v]) => [Number(k), v]))
       );
+      setAlbumNameOptions((summary.albumNameOptions || []).map((item) => ({ value: item, label: item })));
+      setBandNameOptions((summary.bandNameOptions || []).map((item) => ({ value: item, label: item })));
     };
     const cachedSummary = readSummaryCache();
     if (cachedSummary) {
@@ -98,6 +102,7 @@ const Years = () => {
         const albumCountByYearObj = {};
         const yearCoverByYearObj = {};
         const albumNamesByYear = {};
+        const albumNameSet = new Set();
         allAlbums.forEach((album) => {
           if (!album?.releaseYear) return;
           const year = Number(album.releaseYear);
@@ -109,13 +114,16 @@ const Years = () => {
             albumNamesByYear[year] = [];
           }
           if (album.title) {
-            albumNamesByYear[year].push(String(album.title).toLowerCase());
+            const title = String(album.title);
+            albumNamesByYear[year].push(title.toLowerCase());
+            albumNameSet.add(title);
           }
         });
 
         const allArtists = artistsRes.data || [];
         const formedBandCountByYearObj = {};
         const bandNamesByYear = {};
+        const bandNameSet = new Set();
         allArtists.forEach((artist) => {
           if (!artist?.formedYear) return;
           const year = Number(artist.formedYear);
@@ -124,9 +132,13 @@ const Years = () => {
             bandNamesByYear[year] = [];
           }
           if (artist.name) {
-            bandNamesByYear[year].push(String(artist.name).toLowerCase());
+            const name = String(artist.name);
+            bandNamesByYear[year].push(name.toLowerCase());
+            bandNameSet.add(name);
           }
         });
+        const albumNameOptionsList = Array.from(albumNameSet).sort((a, b) => a.localeCompare(b));
+        const bandNameOptionsList = Array.from(bandNameSet).sort((a, b) => a.localeCompare(b));
         const albumNameIndexByYearObj = Object.fromEntries(
           Object.entries(albumNamesByYear).map(([year, names]) => [year, names.join('|')])
         );
@@ -140,6 +152,8 @@ const Years = () => {
           yearCoverByYear: yearCoverByYearObj,
           albumNameIndexByYear: albumNameIndexByYearObj,
           bandNameIndexByYear: bandNameIndexByYearObj,
+          albumNameOptions: albumNameOptionsList,
+          bandNameOptions: bandNameOptionsList,
         };
         applySummary(summary);
         writeSummaryCache(summary);
@@ -175,8 +189,8 @@ const Years = () => {
   );
   const filteredYearRows = useMemo(() => {
     const yearNeedle = yearKeyword.trim();
-    const albumNeedle = albumNameKeyword.trim().toLowerCase();
-    const bandNeedle = bandNameKeyword.trim().toLowerCase();
+    const albumNeedle = selectedAlbumName?.trim().toLowerCase() || '';
+    const bandNeedle = selectedBandName?.trim().toLowerCase() || '';
     return yearCards.filter((item) => {
       const yearMatch = !yearNeedle || String(item.year).includes(yearNeedle);
       const albumMatch = minAlbumCount == null || item.albumCount >= minAlbumCount;
@@ -185,7 +199,7 @@ const Years = () => {
       const bandNameMatch = !bandNeedle || item.bandNameIndex.includes(bandNeedle);
       return yearMatch && albumMatch && formedMatch && albumNameMatch && bandNameMatch;
     });
-  }, [yearCards, yearKeyword, minAlbumCount, minFormedBandCount, albumNameKeyword, bandNameKeyword]);
+  }, [yearCards, yearKeyword, minAlbumCount, minFormedBandCount, selectedAlbumName, selectedBandName]);
 
   const themedStyles = useMemo(() => {
     if (!isDark) {
@@ -266,19 +280,27 @@ const Years = () => {
               />
             </Col>
             <Col xs={24} sm={12} md={8} lg={5}>
-              <Input
+              <Select
                 allowClear
+                showSearch
+                optionFilterProp="label"
                 placeholder="按专辑名称检索"
-                value={albumNameKeyword}
-                onChange={(e) => setAlbumNameKeyword(e.target.value)}
+                value={selectedAlbumName}
+                onChange={setSelectedAlbumName}
+                options={albumNameOptions}
+                style={{ width: '100%' }}
               />
             </Col>
             <Col xs={24} sm={12} md={8} lg={5}>
-              <Input
+              <Select
                 allowClear
+                showSearch
+                optionFilterProp="label"
                 placeholder="按乐队名称检索"
-                value={bandNameKeyword}
-                onChange={(e) => setBandNameKeyword(e.target.value)}
+                value={selectedBandName}
+                onChange={setSelectedBandName}
+                options={bandNameOptions}
+                style={{ width: '100%' }}
               />
             </Col>
             <Col xs={24} sm={12} md={8} lg={5}>
