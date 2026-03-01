@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Card, Col, Empty, Row, Spin, Tag, Typography, message } from 'antd';
+import { Card, Col, Empty, Pagination, Row, Spin, Tag, Typography, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { albumsApi } from '../api/albums';
 import { artistsApi } from '../api/artists';
@@ -7,6 +7,9 @@ import { useTheme } from '../context/ThemeContext';
 import { isRequestCanceled } from '../utils/http';
 
 const { Title } = Typography;
+const YEARS_PAGE_SIZE = 24;
+const YEARS_SUMMARY_CACHE_KEY = 'years:summary:v1';
+const YEARS_SUMMARY_CACHE_TTL_MS = 10 * 60 * 1000;
 
 const styles = {
   pageTitle: {
@@ -52,6 +55,7 @@ const Years = () => {
   const [albumCountByYear, setAlbumCountByYear] = useState(new Map());
   const [formedBandCountByYear, setFormedBandCountByYear] = useState(new Map());
   const [yearCoverByYear, setYearCoverByYear] = useState(new Map());
+  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
   const resolveCoverUrl = (url) => {
     if (!url) return '';
@@ -60,9 +64,46 @@ const Years = () => {
 
   useEffect(() => {
     const controller = new AbortController();
+    const readSummaryCache = () => {
+      try {
+        const raw = window.sessionStorage.getItem(YEARS_SUMMARY_CACHE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed?.updatedAt || Date.now() - parsed.updatedAt > YEARS_SUMMARY_CACHE_TTL_MS) {
+          return null;
+        }
+        return parsed.summary || null;
+      } catch {
+        return null;
+      }
+    };
+    const writeSummaryCache = (summary) => {
+      try {
+        window.sessionStorage.setItem(
+          YEARS_SUMMARY_CACHE_KEY,
+          JSON.stringify({ updatedAt: Date.now(), summary })
+        );
+      } catch {
+        // Ignore storage write failures.
+      }
+    };
+    const applySummary = (summary) => {
+      setYears(summary.years || []);
+      setAlbumCountByYear(new Map(Object.entries(summary.albumCountByYear || {}).map(([k, v]) => [Number(k), v])));
+      setFormedBandCountByYear(new Map(Object.entries(summary.formedBandCountByYear || {}).map(([k, v]) => [Number(k), v])));
+      setYearCoverByYear(new Map(Object.entries(summary.yearCoverByYear || {}).map(([k, v]) => [Number(k), v])));
+      setCurrentPage(1);
+    };
+    const cachedSummary = readSummaryCache();
+    if (cachedSummary) {
+      applySummary(cachedSummary);
+      setLoading(false);
+    }
 
     const loadData = async () => {
-      setLoading(true);
+      if (!cachedSummary) {
+        setLoading(true);
+      }
       try {
         const [yearsRes, albumsRes, artistsRes] = await Promise.all([
           albumsApi.getYears({ signal: controller.signal }),
@@ -71,35 +112,44 @@ const Years = () => {
         ]);
 
         const sortedYears = (yearsRes.data || []).slice().sort((a, b) => b - a);
-        setYears(sortedYears);
-
         const allAlbums = albumsRes.data || [];
-        const albumCountMap = new Map();
-        const coverMap = new Map();
+        const albumCountByYearObj = {};
+        const yearCoverByYearObj = {};
         allAlbums.forEach((album) => {
           if (!album?.releaseYear) return;
-          albumCountMap.set(album.releaseYear, (albumCountMap.get(album.releaseYear) || 0) + 1);
-          if (!coverMap.has(album.releaseYear) && album.coverUrl) {
-            coverMap.set(album.releaseYear, album.coverUrl);
+          const year = Number(album.releaseYear);
+          albumCountByYearObj[year] = (albumCountByYearObj[year] || 0) + 1;
+          if (!yearCoverByYearObj[year] && album.coverUrl) {
+            yearCoverByYearObj[year] = album.coverUrl;
           }
         });
-        setAlbumCountByYear(albumCountMap);
-        setYearCoverByYear(coverMap);
 
         const allArtists = artistsRes.data || [];
-        const formedCountMap = new Map();
+        const formedBandCountByYearObj = {};
         allArtists.forEach((artist) => {
           if (!artist?.formedYear) return;
-          formedCountMap.set(artist.formedYear, (formedCountMap.get(artist.formedYear) || 0) + 1);
+          const year = Number(artist.formedYear);
+          formedBandCountByYearObj[year] = (formedBandCountByYearObj[year] || 0) + 1;
         });
-        setFormedBandCountByYear(formedCountMap);
+        const summary = {
+          years: sortedYears,
+          albumCountByYear: albumCountByYearObj,
+          formedBandCountByYear: formedBandCountByYearObj,
+          yearCoverByYear: yearCoverByYearObj,
+        };
+        applySummary(summary);
+        writeSummaryCache(summary);
       } catch (error) {
         if (isRequestCanceled(error)) {
           return;
         }
-        message.error('加载年份失败');
+        if (!cachedSummary) {
+          message.error('加载年份失败');
+        }
       } finally {
-        setLoading(false);
+        if (!cachedSummary) {
+          setLoading(false);
+        }
       }
     };
 
@@ -116,6 +166,10 @@ const Years = () => {
         coverUrl: yearCoverByYear.get(year) || '',
       })),
     [years, albumCountByYear, formedBandCountByYear, yearCoverByYear]
+  );
+  const pagedYearCards = useMemo(
+    () => yearCards.slice((currentPage - 1) * YEARS_PAGE_SIZE, currentPage * YEARS_PAGE_SIZE),
+    [yearCards, currentPage]
   );
 
   const themedStyles = useMemo(() => {
@@ -150,26 +204,43 @@ const Years = () => {
           <Empty description="暂无年份数据" />
         </Card>
       ) : (
-        <Row gutter={[20, 20]}>
-          {yearCards.map((item) => (
-            <Col key={item.year} xs={12} sm={8} md={6} lg={4}>
-              <Card
-                hoverable
-                style={themedStyles.card}
-                onClick={() => navigate(`/music/years/${item.year}`)}
-              >
-                <Title level={4} style={themedStyles.yearName}>{item.year}</Title>
-                <div style={themedStyles.coverWrap}>
-                  {item.coverUrl ? (
-                    <img src={resolveCoverUrl(item.coverUrl)} alt={`${item.year} 年专辑封面`} style={styles.coverImage} />
-                  ) : null}
-                </div>
-                <Tag color={isDark ? 'default' : 'blue'}>{item.albumCount} 张专辑</Tag>
-                <Tag color={isDark ? 'default' : 'geekblue'}>{item.formedBandCount} 支当年成立乐队</Tag>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+        <>
+          <Row gutter={[20, 20]}>
+            {pagedYearCards.map((item) => (
+              <Col key={item.year} xs={12} sm={8} md={6} lg={4}>
+                <Card
+                  hoverable
+                  style={themedStyles.card}
+                  onClick={() => navigate(`/music/years/${item.year}`)}
+                >
+                  <Title level={4} style={themedStyles.yearName}>{item.year}</Title>
+                  <div style={themedStyles.coverWrap}>
+                    {item.coverUrl ? (
+                      <img
+                        src={resolveCoverUrl(item.coverUrl)}
+                        alt={`${item.year} 年专辑封面`}
+                        style={styles.coverImage}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : null}
+                  </div>
+                  <Tag color={isDark ? 'default' : 'blue'}>{item.albumCount} 张专辑</Tag>
+                  <Tag color={isDark ? 'default' : 'geekblue'}>{item.formedBandCount} 支当年成立乐队</Tag>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+          <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
+            <Pagination
+              current={currentPage}
+              pageSize={YEARS_PAGE_SIZE}
+              total={yearCards.length}
+              showSizeChanger={false}
+              onChange={setCurrentPage}
+            />
+          </div>
+        </>
       )}
     </div>
   );

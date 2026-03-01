@@ -276,6 +276,24 @@ const GuessBand = () => {
   const [roundOver, setRoundOver] = useState(false);
   const [maxAttempts, setMaxAttempts] = useState(DEFAULT_MAX_ATTEMPTS);
   const [countryInput, setCountryInput] = useState('');
+  const indexedBands = useMemo(
+    () =>
+      bands.map((band) => ({
+        ...band,
+        normalizedName: normalizeBand(band.name),
+        normalizedRegion: band.region.toLowerCase(),
+      })),
+    [bands]
+  );
+  const bandLookup = useMemo(() => {
+    const map = new Map();
+    indexedBands.forEach((band) => map.set(band.normalizedName, band));
+    return map;
+  }, [indexedBands]);
+  const sortedBands = useMemo(
+    () => indexedBands.slice().sort((a, b) => a.name.localeCompare(b.name)),
+    [indexedBands]
+  );
 
   const themedStyles = useMemo(() => {
     if (isDark) {
@@ -465,8 +483,10 @@ const GuessBand = () => {
             } else {
               message.warning('分享题库暂无可用题目，已回退默认题库');
             }
-          } catch {
-            message.warning('分享题库加载失败，已回退默认题库');
+          } catch (error) {
+            if (!isRequestCanceled(error)) {
+              message.warning('分享题库加载失败，已回退默认题库');
+            }
           }
         }
 
@@ -501,23 +521,22 @@ const GuessBand = () => {
   const filteredBands = useMemo(() => {
     const keyword = normalizeBand(guessInput);
     if (!keyword) {
-      return bands.slice(0, 10);
+      return indexedBands.slice(0, 10);
     }
-    return bands
-      .filter((band) => normalizeBand(band.name).includes(keyword))
+    return indexedBands
+      .filter((band) => band.normalizedName.includes(keyword))
       .slice(0, 10);
-  }, [bands, guessInput]);
+  }, [indexedBands, guessInput]);
 
   const countryMatchedBands = useMemo(() => {
     const keyword = countryInput.trim().toLowerCase();
-    const sortedBands = [...bands].sort((a, b) => a.name.localeCompare(b.name));
     if (!keyword) {
       return sortedBands.slice(0, 24);
     }
     return sortedBands
-      .filter((band) => band.region.toLowerCase().includes(keyword))
+      .filter((band) => band.normalizedRegion.includes(keyword))
       .slice(0, 50);
-  }, [bands, countryInput]);
+  }, [countryInput, sortedBands]);
 
   const resetRoundWithBands = (nextBands, excludeCurrent = false) => {
     setGuessInput('');
@@ -633,7 +652,7 @@ const GuessBand = () => {
     }
 
     const normalizedInput = normalizeBand(finalInput);
-    const matchedBand = bands.find((band) => normalizeBand(band.name) === normalizedInput);
+    const matchedBand = bandLookup.get(normalizedInput);
 
     if (!matchedBand) {
       message.warning('请从乐队库里选择一个名字（可参考下方联想）');
