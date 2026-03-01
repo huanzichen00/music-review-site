@@ -403,6 +403,24 @@ h1, h2, h3, h4, h5, h6 {
   color: #AEB4BE !important;
 }
 
+:root[data-theme='dark'] .artists-filters .ant-input,
+:root[data-theme='dark'] .artists-filters .ant-select-selector {
+  background: #171719 !important;
+  color: #E5E7EB !important;
+  border-color: #2F2F33 !important;
+}
+
+:root[data-theme='dark'] .artists-filters .ant-input::placeholder,
+:root[data-theme='dark'] .artists-filters .ant-select-selection-placeholder {
+  color: #9CA3AF !important;
+}
+
+:root[data-theme='dark'] .artists-filters .ant-select-selection-item,
+:root[data-theme='dark'] .artists-filters .ant-select-selection-search-input {
+  color: #E5E7EB !important;
+  -webkit-text-fill-color: #E5E7EB !important;
+}
+
 /* 下拉菜单 */
 .ant-dropdown-menu {
   background: #FFFBF7;

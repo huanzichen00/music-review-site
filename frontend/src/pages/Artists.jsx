@@ -251,7 +251,7 @@ const Artists = () => {
       <Title level={2}>艺术家</Title>
       
       <Card loading={loading}>
-        <Row gutter={[12, 12]} style={{ marginBottom: 14 }}>
+        <Row className="artists-filters" gutter={[12, 12]} style={{ marginBottom: 14 }}>
           <Col xs={24} sm={12} md={8} lg={6}>
             <Input
               allowClear
