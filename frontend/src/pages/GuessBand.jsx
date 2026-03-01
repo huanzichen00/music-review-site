@@ -863,6 +863,7 @@ const GuessBand = () => {
 
         <div style={themedStyles.actionRow}>
           <AutoComplete
+            className="guess-band-input"
             size="large"
             value={guessInput}
             onChange={(value) => setGuessInput(value)}
