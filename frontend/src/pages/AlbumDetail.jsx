@@ -525,19 +525,25 @@ const AlbumDetail = () => {
       {/* Track List */}
       {album.tracks && album.tracks.length > 0 && (
         <Card 
-          title={<span style={styles.cardTitle}>📀 曲目列表</span>}
+          title={
+            <span style={{ ...styles.cardTitle, color: isDark ? '#E5E7EB' : styles.cardTitle.color }}>
+              {isDark ? '曲目列表' : '📀 曲目列表'}
+            </span>
+          }
           style={{ marginTop: '40px', borderRadius: '16px' }}
         >
           <List
             dataSource={album.tracks}
             renderItem={(track) => (
               <List.Item style={{ padding: '12px 0' }}>
-                <span style={styles.trackNumber}>
+                <span style={{ ...styles.trackNumber, color: isDark ? '#9CA3AF' : styles.trackNumber.color }}>
                   {track.trackNumber}.
                 </span>
-                <span style={styles.trackTitle}>{track.title}</span>
+                <span style={{ ...styles.trackTitle, color: isDark ? '#E5E7EB' : styles.trackTitle.color }}>{track.title}</span>
                 {track.formattedDuration && (
-                  <span style={styles.trackDuration}>{track.formattedDuration}</span>
+                  <span style={{ ...styles.trackDuration, color: isDark ? '#9CA3AF' : styles.trackDuration.color }}>
+                    {track.formattedDuration}
+                  </span>
                 )}
               </List.Item>
             )}
@@ -548,7 +554,7 @@ const AlbumDetail = () => {
               marginTop: '16px', 
               fontFamily: "'Cormorant Garamond', serif",
               fontSize: '16px',
-              color: '#8D6E63',
+              color: isDark ? '#9CA3AF' : '#8D6E63',
             }}>
               合计：{album.formattedTotalDuration}
             </div>

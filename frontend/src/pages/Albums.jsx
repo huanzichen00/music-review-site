@@ -26,6 +26,22 @@ const styles = {
   },
 };
 
+const getInitialGroup = (title) => {
+  const firstChar = String(title || '').trim().charAt(0).toUpperCase();
+  return /^[A-Z]$/.test(firstChar) ? firstChar : '#';
+};
+
+const compareAlbumsByInitial = (a, b) => {
+  const aGroup = getInitialGroup(a?.title);
+  const bGroup = getInitialGroup(b?.title);
+  const aOrder = aGroup === '#' ? 26 : aGroup.charCodeAt(0) - 65;
+  const bOrder = bGroup === '#' ? 26 : bGroup.charCodeAt(0) - 65;
+  if (aOrder !== bOrder) {
+    return aOrder - bOrder;
+  }
+  return String(a?.title || '').localeCompare(String(b?.title || ''), 'en', { sensitivity: 'base' });
+};
+
 const Albums = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -44,7 +60,7 @@ const Albums = () => {
         const albumsRes = selectedLetter
           ? await albumsApi.getByInitial(selectedLetter, { signal: controller.signal })
           : await albumsApi.getAll({ signal: controller.signal });
-        setAlbums(albumsRes.data);
+        setAlbums((albumsRes.data || []).slice().sort(compareAlbumsByInitial));
         setCurrentPage(1);
       } catch (error) {
         if (isRequestCanceled(error)) {

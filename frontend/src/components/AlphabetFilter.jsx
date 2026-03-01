@@ -1,6 +1,6 @@
 import { Button } from 'antd';
 
-const LETTERS = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''), '#'];
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('');
 
 const AlphabetFilter = ({ selected, onChange }) => {
   return (
