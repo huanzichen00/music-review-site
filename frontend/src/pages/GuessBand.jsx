@@ -549,15 +549,6 @@ const GuessBand = () => {
       .slice(0, 10);
   }, [indexedBands, guessInput]);
 
-  const bankBandOptions = useMemo(
-    () =>
-      sortedBands.map((band) => ({
-        value: band.name,
-        label: countryInput.trim() ? `${band.name} (${band.region})` : band.name,
-      })),
-    [countryInput, sortedBands]
-  );
-
   const resetRoundWithBands = (nextBands, excludeCurrent = false) => {
     setGuessInput('');
     setAttempts([]);
@@ -730,20 +721,37 @@ const GuessBand = () => {
             <Text style={{ ...themedStyles.sideSubtitle, display: 'block' }}>{sortedBands.length} 支</Text>
           </div>
           <div style={{ marginTop: 10 }}>
-            <Select
-              showSearch
-              allowClear
-              placeholder="当前题库全部乐队（可搜索）"
-              options={bankBandOptions}
-              onChange={(value) => {
-                if (value) {
-                  setGuessInput(value);
-                }
+            <div
+              style={{
+                height: 320,
+                overflowY: 'auto',
+                borderRadius: 8,
+                border: isDark ? '1px solid #2F2F33' : '1px solid #CBD5E1',
+                background: isDark ? '#121214' : '#FFFFFF',
+                padding: '6px 8px',
               }}
-              optionFilterProp="label"
-              style={{ width: '100%' }}
-              listHeight={300}
-            />
+            >
+              <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                {sortedBands.map((band) => (
+                  <Button
+                    key={`bank-band-${band.name}`}
+                    type="text"
+                    onClick={() => setGuessInput(band.name)}
+                    style={{
+                      width: '100%',
+                      justifyContent: 'space-between',
+                      paddingInline: 8,
+                      color: isDark ? '#E5E7EB' : '#1F2937',
+                    }}
+                  >
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{band.name}</span>
+                    <Text type="secondary" style={{ marginLeft: 8, fontSize: 12, flexShrink: 0 }}>
+                      {band.region}
+                    </Text>
+                  </Button>
+                ))}
+              </Space>
+            </div>
           </div>
         </Card>
 
