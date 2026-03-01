@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  Avatar,
   Button,
   Card,
+  Col,
   Form,
   Input,
   InputNumber,
-  List,
   message,
   Modal,
   Popconfirm,
+  Row,
   Select,
-  Tag,
+  Table,
   Typography,
 } from 'antd';
 import { DeleteOutlined, EditOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
@@ -30,20 +30,14 @@ const Artists = () => {
   const [loading, setLoading] = useState(true);
   const [editingArtist, setEditingArtist] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [nameKeyword, setNameKeyword] = useState('');
+  const [genreKeyword, setGenreKeyword] = useState(undefined);
+  const [countryKeyword, setCountryKeyword] = useState(undefined);
+  const [formedYearKeyword, setFormedYearKeyword] = useState(undefined);
   const { user } = useAuth();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const navigate = useNavigate();
-  const resolveMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    if (url.startsWith('/api') || url.startsWith('/')) {
-      return new URL(url, window.location.origin).toString();
-    }
-    return url;
-  };
 
   const loadArtists = async (signal) => {
     setLoading(true);
@@ -77,6 +71,39 @@ const Artists = () => {
   };
 
   const canManage = user?.username === 'Huan';
+
+  const countryOptions = useMemo(
+    () =>
+      Array.from(new Set((artists || []).map((artist) => artist.country).filter(Boolean)))
+        .sort((a, b) => a.localeCompare(b))
+        .map((country) => ({ value: country, label: country })),
+    [artists]
+  );
+  const genreOptions = useMemo(
+    () =>
+      Array.from(new Set((artists || []).map((artist) => artist.genre).filter(Boolean)))
+        .sort((a, b) => a.localeCompare(b))
+        .map((genre) => ({ value: genre, label: genre })),
+    [artists]
+  );
+  const formedYearOptions = useMemo(
+    () =>
+      Array.from(new Set((artists || []).map((artist) => artist.formedYear).filter(Boolean)))
+        .sort((a, b) => b - a)
+        .map((year) => ({ value: year, label: String(year) })),
+    [artists]
+  );
+
+  const filteredArtists = useMemo(() => {
+    const name = nameKeyword.trim().toLowerCase();
+    return (artists || []).filter((artist) => {
+      const matchesName = !name || String(artist.name || '').toLowerCase().includes(name);
+      const matchesGenre = !genreKeyword || artist.genre === genreKeyword;
+      const matchesCountry = !countryKeyword || artist.country === countryKeyword;
+      const matchesYear = !formedYearKeyword || artist.formedYear === formedYearKeyword;
+      return matchesName && matchesGenre && matchesCountry && matchesYear;
+    });
+  }, [artists, countryKeyword, formedYearKeyword, genreKeyword, nameKeyword]);
 
   const openEditModal = (artist) => {
     setEditingArtist(artist);
@@ -123,127 +150,164 @@ const Artists = () => {
     }
   };
 
+  const columns = [
+    {
+      title: 'NAME',
+      dataIndex: 'name',
+      key: 'name',
+      sorter: (a, b) => String(a.name || '').localeCompare(String(b.name || '')),
+      render: (_, artist) => (
+        <span
+          onClick={() => navigate(`/music/artists/${artist.id}`)}
+          style={{
+            cursor: 'pointer',
+            fontWeight: 700,
+            color: isDark ? '#E5E7EB' : '#4E342E',
+            letterSpacing: '0.2px',
+          }}
+        >
+          {artist.name}
+        </span>
+      ),
+    },
+    {
+      title: 'REGION',
+      dataIndex: 'country',
+      key: 'country',
+      width: 130,
+      render: (value) => value || '-',
+    },
+    {
+      title: 'GENRE',
+      dataIndex: 'genre',
+      key: 'genre',
+      width: 180,
+      render: (value) => value || '-',
+    },
+    {
+      title: 'FORMED',
+      dataIndex: 'formedYear',
+      key: 'formedYear',
+      width: 110,
+      sorter: (a, b) => (a.formedYear || 0) - (b.formedYear || 0),
+      render: (value) => value || '-',
+    },
+    {
+      title: 'ALBUMS',
+      dataIndex: 'albumCount',
+      key: 'albumCount',
+      width: 110,
+      sorter: (a, b) => (a.albumCount || 0) - (b.albumCount || 0),
+      render: (value) => value || 0,
+    },
+    {
+      title: 'STATUS',
+      dataIndex: 'status',
+      key: 'status',
+      width: 100,
+      render: (value) => value || '-',
+    },
+  ];
+  if (canManage) {
+    columns.push({
+      title: 'ACTIONS',
+      key: 'actions',
+      width: 180,
+      render: (_, artist) => (
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button
+            key={`edit-${artist.id}`}
+            icon={<EditOutlined />}
+            size="small"
+            onClick={() => openEditModal(artist)}
+          >
+            编辑
+          </Button>
+          <Popconfirm
+            key={`delete-${artist.id}`}
+            title="删除艺术家"
+            description={
+              artist.albumCount > 0
+                ? `该艺术家下有 ${artist.albumCount} 张专辑，确认仍要删除 "${artist.name}" 吗？`
+                : `确定要删除艺术家 "${artist.name}" 吗？`
+            }
+            icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
+            onConfirm={() => handleDeleteArtist(artist.id)}
+            okText="确定"
+            cancelText="取消"
+            okButtonProps={{ danger: true }}
+          >
+            <Button danger icon={<DeleteOutlined />} size="small">
+              删除
+            </Button>
+          </Popconfirm>
+        </div>
+      ),
+    });
+  }
+
   return (
     <div>
       <Title level={2}>艺术家</Title>
       
       <Card loading={loading}>
-        <List
-          itemLayout="horizontal"
-          dataSource={artists}
+        <Row gutter={[12, 12]} style={{ marginBottom: 14 }}>
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <Input
+              allowClear
+              placeholder="搜索名称"
+              value={nameKeyword}
+              onChange={(e) => setNameKeyword(e.target.value)}
+            />
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <Select
+              allowClear
+              showSearch
+              placeholder="按风格筛选"
+              optionFilterProp="label"
+              value={genreKeyword}
+              options={genreOptions}
+              onChange={setGenreKeyword}
+              style={{ width: '100%' }}
+            />
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <Select
+              allowClear
+              showSearch
+              placeholder="按地区筛选"
+              optionFilterProp="label"
+              value={countryKeyword}
+              options={countryOptions}
+              onChange={setCountryKeyword}
+              style={{ width: '100%' }}
+            />
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <Select
+              allowClear
+              showSearch
+              placeholder="按成立年份筛选"
+              optionFilterProp="label"
+              value={formedYearKeyword}
+              options={formedYearOptions}
+              onChange={setFormedYearKeyword}
+              style={{ width: '100%' }}
+            />
+          </Col>
+        </Row>
+
+        <Table
+          rowKey="id"
+          columns={columns}
+          dataSource={filteredArtists}
           pagination={{
-            pageSize: 24,
+            pageSize: 30,
             showSizeChanger: false,
             hideOnSinglePage: true,
           }}
-          renderItem={(artist) => (
-            <List.Item
-              actions={
-                canManage
-                  ? [
-                      <Button
-                        key={`edit-${artist.id}`}
-                        icon={<EditOutlined />}
-                        size="small"
-                        onClick={() => openEditModal(artist)}
-                      >
-                        编辑
-                      </Button>,
-                      <Popconfirm
-                        key={`delete-${artist.id}`}
-                        title="删除艺术家"
-                        description={
-                          artist.albumCount > 0
-                            ? `该艺术家下有 ${artist.albumCount} 张专辑，确认仍要删除 "${artist.name}" 吗？`
-                            : `确定要删除艺术家 "${artist.name}" 吗？`
-                        }
-                        icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
-                        onConfirm={() => handleDeleteArtist(artist.id)}
-                        okText="确定"
-                        cancelText="取消"
-                        okButtonProps={{ danger: true }}
-                      >
-                        <Button
-                          danger
-                          icon={<DeleteOutlined />}
-                          size="small"
-                        >
-                          删除
-                        </Button>
-                      </Popconfirm>,
-                    ]
-                  : []
-              }
-            >
-              <List.Item.Meta
-                avatar={
-                  <Avatar
-                    size={52}
-                    src={
-                      artist.photoUrl ? (
-                        <img
-                          src={resolveMediaUrl(artist.photoUrl)}
-                          alt={artist.name || 'artist'}
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      ) : undefined
-                    }
-                    style={{
-                      border: isDark ? '1px solid #2F2F33' : '1px solid #E5B992',
-                      backgroundColor: isDark ? '#1F1F22' : '#E8D5C4',
-                      color: isDark ? '#D1D5DB' : '#5D4037',
-                    }}
-                  >
-                    {artist.name?.slice(0, 1)?.toUpperCase() || 'A'}
-                  </Avatar>
-                }
-                title={
-                  <div>
-                    <span style={{ 
-                      fontFamily: "'Playfair Display', serif",
-                      fontSize: '18px',
-                      fontWeight: 600,
-                      color: isDark ? '#E5E7EB' : '#4E342E',
-                      cursor: 'pointer',
-                    }}>
-                      <span onClick={() => navigate(`/music/artists/${artist.id}`)}>
-                        {artist.name}
-                      </span>
-                    </span>
-                    {artist.country && (
-                      <Tag style={{ marginLeft: '8px' }}>{artist.country}</Tag>
-                    )}
-                    {artist.formedYear && (
-                      <Tag style={{ marginLeft: '8px' }}>{artist.formedYear}</Tag>
-                    )}
-                  </div>
-                }
-                description={
-                  <div>
-                    {artist.description && (
-                      <p style={{ 
-                        fontFamily: "'Noto Serif SC', serif",
-                        color: '#6D4C41',
-                        marginTop: '4px',
-                      }}>
-                        {artist.description}
-                      </p>
-                    )}
-                    {artist.albumCount > 0 && (
-                      <span style={{ 
-                        fontFamily: "'Cormorant Garamond', serif",
-                        color: '#8D6E63',
-                        fontSize: '14px',
-                      }}>
-                        {artist.albumCount} albums
-                      </span>
-                    )}
-                  </div>
-                }
-              />
-            </List.Item>
-          )}
+          size="middle"
         />
       </Card>
 
