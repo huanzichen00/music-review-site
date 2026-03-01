@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, AutoComplete, Button, Card, Input, InputNumber, Select, Space, Spin, Tag, Typography, message } from 'antd';
-import { TrophyOutlined, ReloadOutlined, RocketOutlined, AppstoreOutlined, TagsOutlined } from '@ant-design/icons';
+import { TrophyOutlined, ReloadOutlined, RocketOutlined, AppstoreOutlined, TagsOutlined, CalendarOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
 import { artistsApi } from '../api/artists';
 import { questionBanksApi } from '../api/questionBanks';
@@ -85,6 +85,16 @@ const styles = {
     fontWeight: 700,
     boxShadow: '0 4px 12px rgba(255, 145, 0, 0.32)',
     background: 'linear-gradient(135deg, #FFB300 0%, #FB8C00 100%)',
+    border: 'none',
+    color: '#FDF5ED',
+  },
+  yearsLinkButton: {
+    marginTop: 12,
+    height: 44,
+    borderRadius: 10,
+    fontWeight: 700,
+    boxShadow: '0 4px 12px rgba(176, 95, 48, 0.32)',
+    background: 'linear-gradient(135deg, #D58C52 0%, #B25F30 100%)',
     border: 'none',
     color: '#FDF5ED',
   },
@@ -327,6 +337,12 @@ const GuessBand = () => {
           background: 'linear-gradient(135deg, #52525B 0%, #3F3F46 100%)',
           color: '#E5E7EB',
         },
+        yearsLinkButton: {
+          ...styles.yearsLinkButton,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.32)',
+          background: 'linear-gradient(135deg, #4B5563 0%, #374151 100%)',
+          color: '#E5E7EB',
+        },
         banksLinkButton: {
           ...styles.banksLinkButton,
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.32)',
@@ -384,6 +400,12 @@ const GuessBand = () => {
         ...styles.genresLinkButton,
         boxShadow: '0 4px 12px rgba(70, 110, 190, 0.24)',
         background: 'linear-gradient(135deg, #5D8EEB 0%, #406DC6 100%)',
+        color: '#EEF4FF',
+      },
+      yearsLinkButton: {
+        ...styles.yearsLinkButton,
+        boxShadow: '0 4px 12px rgba(70, 105, 170, 0.24)',
+        background: 'linear-gradient(135deg, #6A96E8 0%, #4F73BE 100%)',
         color: '#EEF4FF',
       },
       banksLinkButton: {
@@ -794,6 +816,17 @@ const GuessBand = () => {
               style={themedStyles.genresLinkButton}
             >
               查看所有风格
+            </Button>
+            <Button
+              type="primary"
+              size="large"
+              icon={<CalendarOutlined />}
+              href="/music/years"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={themedStyles.yearsLinkButton}
+            >
+              查看所有年份
             </Button>
             {isAuthenticated ? (
               <Button
