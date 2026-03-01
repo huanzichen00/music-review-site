@@ -128,7 +128,7 @@ const Artists = () => {
           renderItem={(artist) => (
             <List.Item
               actions={
-                canManage && artist.albumCount === 0
+                canManage
                   ? [
                       <Button
                         key={`edit-${artist.id}`}
@@ -141,7 +141,11 @@ const Artists = () => {
                       <Popconfirm
                         key={`delete-${artist.id}`}
                         title="删除艺术家"
-                        description={`确定要删除艺术家 "${artist.name}" 吗？`}
+                        description={
+                          artist.albumCount > 0
+                            ? `该艺术家下有 ${artist.albumCount} 张专辑，确认仍要删除 "${artist.name}" 吗？`
+                            : `确定要删除艺术家 "${artist.name}" 吗？`
+                        }
                         icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
                         onConfirm={() => handleDeleteArtist(artist.id)}
                         okText="确定"
@@ -157,26 +161,6 @@ const Artists = () => {
                         </Button>
                       </Popconfirm>,
                     ]
-                  : canManage && artist.albumCount > 0
-                  ? [
-                      <Button
-                        key={`edit-${artist.id}`}
-                        icon={<EditOutlined />}
-                        size="small"
-                        onClick={() => openEditModal(artist)}
-                      >
-                        编辑
-                      </Button>,
-                      <Button
-                        key={`delete-disabled-${artist.id}`}
-                        disabled
-                        icon={<DeleteOutlined />}
-                        size="small"
-                        title="该艺术家有专辑，无法删除"
-                      >
-                        删除
-                      </Button>,
-                    ]
                   : []
               }
             >
@@ -184,7 +168,16 @@ const Artists = () => {
                 avatar={
                   <Avatar
                     size={52}
-                    src={artist.photoUrl ? resolveMediaUrl(artist.photoUrl) : undefined}
+                    src={
+                      artist.photoUrl ? (
+                        <img
+                          src={resolveMediaUrl(artist.photoUrl)}
+                          alt={artist.name || 'artist'}
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      ) : undefined
+                    }
                     style={{
                       border: isDark ? '1px solid #2F2F33' : '1px solid #E5B992',
                       backgroundColor: isDark ? '#1F1F22' : '#E8D5C4',

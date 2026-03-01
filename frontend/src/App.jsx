@@ -1,27 +1,29 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, Spin } from 'antd';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import Layout from './components/Layout';
-import Home from './pages/Home';
-import Albums from './pages/Albums';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import AlbumDetail from './pages/AlbumDetail';
-import Favorites from './pages/Favorites';
-import AddAlbum from './pages/AddAlbum';
-import EditAlbum from './pages/EditAlbum';
-import Profile from './pages/Profile';
-import Artists from './pages/Artists';
-import ArtistDetail from './pages/ArtistDetail';
-import Genres from './pages/Genres';
-import GenreDetail from './pages/GenreDetail';
-import Years from './pages/Years';
-import YearDetail from './pages/YearDetail';
-import Blog from './pages/Blog';
-import UserHome from './pages/UserHome';
-import GuessBand from './pages/GuessBand';
-import GuessBandBanks from './pages/GuessBandBanks';
+
+const Home = lazy(() => import('./pages/Home'));
+const Albums = lazy(() => import('./pages/Albums'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const AlbumDetail = lazy(() => import('./pages/AlbumDetail'));
+const Favorites = lazy(() => import('./pages/Favorites'));
+const AddAlbum = lazy(() => import('./pages/AddAlbum'));
+const EditAlbum = lazy(() => import('./pages/EditAlbum'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Artists = lazy(() => import('./pages/Artists'));
+const ArtistDetail = lazy(() => import('./pages/ArtistDetail'));
+const Genres = lazy(() => import('./pages/Genres'));
+const GenreDetail = lazy(() => import('./pages/GenreDetail'));
+const Years = lazy(() => import('./pages/Years'));
+const YearDetail = lazy(() => import('./pages/YearDetail'));
+const Blog = lazy(() => import('./pages/Blog'));
+const UserHome = lazy(() => import('./pages/UserHome'));
+const GuessBand = lazy(() => import('./pages/GuessBand'));
+const GuessBandBanks = lazy(() => import('./pages/GuessBandBanks'));
 
 const warmTheme = {
   token: {
@@ -133,42 +135,44 @@ function AppContent() {
       <AuthProvider>
         <Router>
           <Layout>
-            <Routes>
-              <Route path="/" element={<Navigate to="/music/home" replace />} />
-              <Route path="/music" element={<Navigate to="/music/home" replace />} />
-              <Route path="/music/home" element={<Home />} />
-              <Route path="/music/albums" element={<Albums />} />
-              <Route path="/music/artists" element={<Artists />} />
-              <Route path="/music/artists/:id" element={<ArtistDetail />} />
-              <Route path="/music/genres" element={<Genres />} />
-              <Route path="/music/genres/:id" element={<GenreDetail />} />
-              <Route path="/music/years" element={<Years />} />
-              <Route path="/music/years/:year" element={<YearDetail />} />
-              <Route path="/music/guess-band" element={<GuessBand />} />
-              <Route path="/music/guess-band/banks" element={<GuessBandBanks />} />
-              <Route path="/music/albums/:id" element={<AlbumDetail />} />
-              <Route path="/music/albums/:id/edit" element={<EditAlbum />} />
-              <Route path="/music/add-album" element={<AddAlbum />} />
-              <Route path="/guess-band" element={<GuessBand />} />
-              <Route path="/guess-band/banks" element={<GuessBandBanks />} />
-              <Route path="/albums" element={<Albums />} />
-              <Route path="/albums/:id" element={<AlbumDetail />} />
-              <Route path="/albums/:id/edit" element={<EditAlbum />} />
-              <Route path="/add-album" element={<AddAlbum />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/favorites" element={<Favorites />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/users/:id" element={<UserHome />} />
-              <Route path="/artists" element={<Artists />} />
-              <Route path="/artists/:id" element={<ArtistDetail />} />
-              <Route path="/genres" element={<Genres />} />
-              <Route path="/genres/:id" element={<GenreDetail />} />
-              <Route path="/years" element={<Years />} />
-              <Route path="/years/:year" element={<YearDetail />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="*" element={<Navigate to="/music/home" replace />} />
-            </Routes>
+            <Suspense fallback={<div style={{ textAlign: 'center', padding: 60 }}><Spin size="large" /></div>}>
+              <Routes>
+                <Route path="/" element={<Navigate to="/music/home" replace />} />
+                <Route path="/music" element={<Navigate to="/music/home" replace />} />
+                <Route path="/music/home" element={<Home />} />
+                <Route path="/music/albums" element={<Albums />} />
+                <Route path="/music/artists" element={<Artists />} />
+                <Route path="/music/artists/:id" element={<ArtistDetail />} />
+                <Route path="/music/genres" element={<Genres />} />
+                <Route path="/music/genres/:id" element={<GenreDetail />} />
+                <Route path="/music/years" element={<Years />} />
+                <Route path="/music/years/:year" element={<YearDetail />} />
+                <Route path="/music/guess-band" element={<GuessBand />} />
+                <Route path="/music/guess-band/banks" element={<GuessBandBanks />} />
+                <Route path="/music/albums/:id" element={<AlbumDetail />} />
+                <Route path="/music/albums/:id/edit" element={<EditAlbum />} />
+                <Route path="/music/add-album" element={<AddAlbum />} />
+                <Route path="/guess-band" element={<GuessBand />} />
+                <Route path="/guess-band/banks" element={<GuessBandBanks />} />
+                <Route path="/albums" element={<Albums />} />
+                <Route path="/albums/:id" element={<AlbumDetail />} />
+                <Route path="/albums/:id/edit" element={<EditAlbum />} />
+                <Route path="/add-album" element={<AddAlbum />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/favorites" element={<Favorites />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/users/:id" element={<UserHome />} />
+                <Route path="/artists" element={<Artists />} />
+                <Route path="/artists/:id" element={<ArtistDetail />} />
+                <Route path="/genres" element={<Genres />} />
+                <Route path="/genres/:id" element={<GenreDetail />} />
+                <Route path="/years" element={<Years />} />
+                <Route path="/years/:year" element={<YearDetail />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="*" element={<Navigate to="/music/home" replace />} />
+              </Routes>
+            </Suspense>
           </Layout>
         </Router>
       </AuthProvider>

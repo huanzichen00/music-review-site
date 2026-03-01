@@ -81,6 +81,8 @@ const AlbumCard = ({ album }) => {
               alt={album.title} 
               src={resolveCoverUrl(album.coverUrl)} 
               style={styles.coverImage}
+              loading="lazy"
+              decoding="async"
               onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
               onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
             />

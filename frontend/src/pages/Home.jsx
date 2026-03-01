@@ -121,6 +121,13 @@ const styles = {
     inset: 0,
     background: 'linear-gradient(180deg, rgba(24, 17, 13, 0.35) 0%, rgba(24, 17, 13, 0.65) 100%)',
   },
+  genreCardImage: {
+    position: 'absolute',
+    inset: 0,
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+  },
   genreCardContent: {
     position: 'relative',
     zIndex: 1,
@@ -451,12 +458,22 @@ const Home = () => {
                         ...(genre.genreCoverUrl
                           ? {
                               ...styles.genreCardWithCover,
-                              backgroundImage: `url(${resolveMediaUrl(genre.genreCoverUrl)})`,
                             }
                           : {}),
                       }}
                     >
-                      {genre.genreCoverUrl && <div style={styles.genreCardOverlay} />}
+                      {genre.genreCoverUrl && (
+                        <>
+                          <img
+                            src={resolveMediaUrl(genre.genreCoverUrl)}
+                            alt={genre.name}
+                            style={styles.genreCardImage}
+                            loading="lazy"
+                            decoding="async"
+                          />
+                          <div style={styles.genreCardOverlay} />
+                        </>
+                      )}
                       <div style={styles.genreCardContent}>
                         <div
                           style={{

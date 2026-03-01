@@ -83,6 +83,13 @@ const styles = {
     inset: 0,
     background: 'linear-gradient(180deg, rgba(24, 17, 13, 0.35) 0%, rgba(24, 17, 13, 0.65) 100%)',
   },
+  cardImage: {
+    position: 'absolute',
+    inset: 0,
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+  },
   cardContent: {
     position: 'relative',
     zIndex: 1,
@@ -207,13 +214,23 @@ const Genres = () => {
                   ...(genre.genreCoverUrl
                     ? {
                         ...styles.cardWithCover,
-                        backgroundImage: `url(${resolveMediaUrl(genre.genreCoverUrl)})`,
                       }
                     : {}),
                 }}
                 onClick={() => navigate(`/music/genres/${genre.id}`)}
               >
-                {genre.genreCoverUrl && <div style={styles.cardOverlay} />}
+                {genre.genreCoverUrl && (
+                  <>
+                    <img
+                      src={resolveMediaUrl(genre.genreCoverUrl)}
+                      alt={genre.name}
+                      style={styles.cardImage}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <div style={styles.cardOverlay} />
+                  </>
+                )}
                 <div style={styles.cardContent}>
                   <Title
                     level={4}

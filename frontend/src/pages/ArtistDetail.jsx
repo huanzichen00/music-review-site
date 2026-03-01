@@ -119,7 +119,13 @@ const ArtistDetail = () => {
         <div style={styles.heroRow}>
           <div style={styles.photoWrap}>
             {artist.photoUrl ? (
-              <img src={resolveMediaUrl(artist.photoUrl)} alt={`${artist.name} 成员照`} style={styles.photo} />
+              <img
+                src={resolveMediaUrl(artist.photoUrl)}
+                alt={`${artist.name} 成员照`}
+                style={styles.photo}
+                loading="lazy"
+                decoding="async"
+              />
             ) : (
               <div
                 style={{

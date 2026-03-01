@@ -11,6 +11,9 @@ BACKEND_SERVICE="${BACKEND_SERVICE:-music-review}"
 
 BACKEND_HEALTH_URL="${BACKEND_HEALTH_URL:-http://127.0.0.1/api/albums}"
 FRONTEND_HEALTH_URL="${FRONTEND_HEALTH_URL:-http://127.0.0.1/}"
+FORCE_BACKEND_RESTART="${FORCE_BACKEND_RESTART:-0}"
+
+BACKEND_CHANGED=0
 
 log() {
   printf '[deploy-nginx] %s\n' "$*"
@@ -26,7 +29,8 @@ Usage:
   scripts/deploy_nginx.sh [command]
 
 Commands:
-  deploy            Build + publish + restart backend + reload nginx + health check (default)
+  deploy            Build + publish + restart backend(if changed) + reload nginx + health check (default)
+  deploy_frontend   Build + publish frontend only + reload nginx + frontend health check
   build             Build frontend and backend artifacts only
   publish_frontend  Sync frontend dist to nginx root
   publish_backend   Copy backend jar to service path
@@ -92,20 +96,47 @@ publish_frontend() {
 
 publish_backend() {
   local jar_file
+  local source_sum=""
+  local target_sum=""
   jar_file="$(ls "$BACKEND_DIR"/target/backend-*.jar 2>/dev/null | grep -v '\.original$' | head -n 1 || true)"
   if [[ -z "$jar_file" ]]; then
     err "backend jar not found. Run build first."
     exit 1
   fi
 
+  source_sum="$(sha256sum "$jar_file" | awk '{print $1}')"
+  if [[ -f "$BACKEND_TARGET_JAR" ]]; then
+    target_sum="$(sha256sum "$BACKEND_TARGET_JAR" | awk '{print $1}')"
+  fi
+
+  if [[ -n "$target_sum" && "$source_sum" == "$target_sum" ]]; then
+    BACKEND_CHANGED=0
+    log "Backend jar unchanged, skip publish and restart."
+    return 0
+  fi
+
   log "Publishing backend jar to $BACKEND_TARGET_JAR ..."
   install -m 644 "$jar_file" "$BACKEND_TARGET_JAR"
   chown musicapp:musicapp "$BACKEND_TARGET_JAR"
+  BACKEND_CHANGED=1
 }
 
 restart_backend() {
   log "Restarting backend service: $BACKEND_SERVICE"
   systemctl restart "$BACKEND_SERVICE"
+}
+
+restart_backend_if_needed() {
+  if [[ "$FORCE_BACKEND_RESTART" == "1" ]]; then
+    log "FORCE_BACKEND_RESTART=1, restarting backend."
+    restart_backend
+    return 0
+  fi
+  if [[ "$BACKEND_CHANGED" == "1" ]]; then
+    restart_backend
+    return 0
+  fi
+  log "Skipping backend restart (no backend artifact change)."
 }
 
 reload_nginx() {
@@ -141,10 +172,23 @@ deploy_all() {
   build_backend
   publish_frontend
   publish_backend
-  restart_backend
+  restart_backend_if_needed
   reload_nginx
   check_health
   log "Deploy completed"
+}
+
+deploy_frontend_only() {
+  build_frontend
+  publish_frontend
+  reload_nginx
+  log "Checking frontend: $FRONTEND_HEALTH_URL"
+  if wait_http_ok "$FRONTEND_HEALTH_URL" 20; then
+    log "Frontend-only deploy completed"
+  else
+    err "Frontend health check failed: $FRONTEND_HEALTH_URL"
+    exit 1
+  fi
 }
 
 main() {
@@ -154,11 +198,15 @@ main() {
   require_cmd systemctl
   require_cmd nginx
   require_cmd java
+  require_cmd sha256sum
 
   local cmd="${1:-deploy}"
   case "$cmd" in
     deploy)
       deploy_all
+      ;;
+    deploy_frontend)
+      deploy_frontend_only
       ;;
     build)
       build_frontend
