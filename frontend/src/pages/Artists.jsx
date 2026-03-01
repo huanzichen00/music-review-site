@@ -201,6 +201,14 @@ const Artists = () => {
       render: (value) => value || '-',
     },
     {
+      title: '人数',
+      dataIndex: 'memberCount',
+      key: 'memberCount',
+      width: 100,
+      sorter: (a, b) => (a.memberCount || 0) - (b.memberCount || 0),
+      render: (value) => value || '-',
+    },
+    {
       title: 'ALBUMS',
       dataIndex: 'albumCount',
       key: 'albumCount',
@@ -314,6 +322,7 @@ const Artists = () => {
             pageSize: 30,
             showSizeChanger: false,
             hideOnSinglePage: true,
+            position: ['bottomCenter'],
           }}
           size="middle"
         />
