@@ -80,6 +80,30 @@ const ArtistDetail = () => {
     }
     return url;
   };
+  const themedStyles = {
+    artistCard: {
+      ...styles.artistCard,
+      ...(isDark
+        ? {
+            border: '1px solid #2F2F33',
+            background: 'linear-gradient(145deg, #171719 0%, #121214 100%)',
+          }
+        : {}),
+    },
+    photoWrap: {
+      ...styles.photoWrap,
+      ...(isDark
+        ? {
+            border: '1px solid #2F2F33',
+            background: 'linear-gradient(145deg, #1D1D21 0%, #18181B 100%)',
+          }
+        : {}),
+    },
+    sectionTitle: {
+      ...styles.sectionTitle,
+      color: isDark ? '#D1D5DB' : styles.sectionTitle.color,
+    },
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -125,9 +149,9 @@ const ArtistDetail = () => {
 
   return (
     <div>
-      <Card style={styles.artistCard}>
+      <Card style={themedStyles.artistCard}>
         <div style={styles.heroRow}>
-          <div style={styles.photoWrap}>
+          <div style={themedStyles.photoWrap}>
             {artist.photoUrl ? (
               <img
                 src={resolveMediaUrl(artist.photoUrl)}
@@ -158,15 +182,15 @@ const ArtistDetail = () => {
           <div style={styles.heroContent}>
             <h1 style={{ ...styles.pageTitle, color: isDark ? '#E5E7EB' : styles.pageTitle.color }}>{artist.name}</h1>
             <div style={styles.metaRow}>
-              {artist.country ? <Tag color="processing">地区：{artist.country}</Tag> : null}
-              {artist.formedYear ? <Tag color="gold">成立：{artist.formedYear}</Tag> : null}
-              {artist.genre ? <Tag color="purple">风格：{artist.genre}</Tag> : null}
-              {artist.memberCount ? <Tag color="cyan">成员：{artist.memberCount} 人</Tag> : null}
-              {artist.status ? <Tag color={artist.status === '活跃' ? 'success' : 'default'}>{artist.status}</Tag> : null}
-              <Tag color="blue">专辑：{albums.length} 张</Tag>
+              {artist.country ? <Tag color={isDark ? 'default' : 'processing'}>地区：{artist.country}</Tag> : null}
+              {artist.formedYear ? <Tag color={isDark ? 'default' : 'gold'}>成立：{artist.formedYear}</Tag> : null}
+              {artist.genre ? <Tag color={isDark ? 'default' : 'purple'}>风格：{artist.genre}</Tag> : null}
+              {artist.memberCount ? <Tag color={isDark ? 'default' : 'cyan'}>成员：{artist.memberCount} 人</Tag> : null}
+              {artist.status ? <Tag color={isDark ? 'default' : artist.status === '活跃' ? 'success' : 'default'}>{artist.status}</Tag> : null}
+              <Tag color={isDark ? 'default' : 'blue'}>专辑：{albums.length} 张</Tag>
             </div>
             {artist.description ? (
-              <Paragraph>{artist.description}</Paragraph>
+              <Paragraph style={{ color: isDark ? '#D1D5DB' : undefined }}>{artist.description}</Paragraph>
             ) : (
               <Text type="secondary">暂无乐队简介</Text>
             )}
@@ -174,7 +198,7 @@ const ArtistDetail = () => {
         </div>
       </Card>
 
-      <Title level={3} style={styles.sectionTitle}>专辑</Title>
+      <Title level={3} style={themedStyles.sectionTitle}>专辑</Title>
       {albums.length === 0 ? (
         <Card style={{ borderRadius: 12 }}>
           <Empty description="该乐队暂无专辑" />

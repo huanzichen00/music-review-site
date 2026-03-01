@@ -33,6 +33,10 @@ const Years = () => {
   const [yearKeyword, setYearKeyword] = useState('');
   const [minAlbumCount, setMinAlbumCount] = useState(undefined);
   const [minFormedBandCount, setMinFormedBandCount] = useState(undefined);
+  const [albumNameKeyword, setAlbumNameKeyword] = useState('');
+  const [bandNameKeyword, setBandNameKeyword] = useState('');
+  const [albumNameIndexByYear, setAlbumNameIndexByYear] = useState(new Map());
+  const [bandNameIndexByYear, setBandNameIndexByYear] = useState(new Map());
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -65,6 +69,12 @@ const Years = () => {
       setAlbumCountByYear(new Map(Object.entries(summary.albumCountByYear || {}).map(([k, v]) => [Number(k), v])));
       setFormedBandCountByYear(new Map(Object.entries(summary.formedBandCountByYear || {}).map(([k, v]) => [Number(k), v])));
       setYearCoverByYear(new Map(Object.entries(summary.yearCoverByYear || {}).map(([k, v]) => [Number(k), v])));
+      setAlbumNameIndexByYear(
+        new Map(Object.entries(summary.albumNameIndexByYear || {}).map(([k, v]) => [Number(k), v]))
+      );
+      setBandNameIndexByYear(
+        new Map(Object.entries(summary.bandNameIndexByYear || {}).map(([k, v]) => [Number(k), v]))
+      );
     };
     const cachedSummary = readSummaryCache();
     if (cachedSummary) {
@@ -87,6 +97,7 @@ const Years = () => {
         const allAlbums = albumsRes.data || [];
         const albumCountByYearObj = {};
         const yearCoverByYearObj = {};
+        const albumNamesByYear = {};
         allAlbums.forEach((album) => {
           if (!album?.releaseYear) return;
           const year = Number(album.releaseYear);
@@ -94,20 +105,41 @@ const Years = () => {
           if (!yearCoverByYearObj[year] && album.coverUrl) {
             yearCoverByYearObj[year] = album.coverUrl;
           }
+          if (!albumNamesByYear[year]) {
+            albumNamesByYear[year] = [];
+          }
+          if (album.title) {
+            albumNamesByYear[year].push(String(album.title).toLowerCase());
+          }
         });
 
         const allArtists = artistsRes.data || [];
         const formedBandCountByYearObj = {};
+        const bandNamesByYear = {};
         allArtists.forEach((artist) => {
           if (!artist?.formedYear) return;
           const year = Number(artist.formedYear);
           formedBandCountByYearObj[year] = (formedBandCountByYearObj[year] || 0) + 1;
+          if (!bandNamesByYear[year]) {
+            bandNamesByYear[year] = [];
+          }
+          if (artist.name) {
+            bandNamesByYear[year].push(String(artist.name).toLowerCase());
+          }
         });
+        const albumNameIndexByYearObj = Object.fromEntries(
+          Object.entries(albumNamesByYear).map(([year, names]) => [year, names.join('|')])
+        );
+        const bandNameIndexByYearObj = Object.fromEntries(
+          Object.entries(bandNamesByYear).map(([year, names]) => [year, names.join('|')])
+        );
         const summary = {
           years: sortedYears,
           albumCountByYear: albumCountByYearObj,
           formedBandCountByYear: formedBandCountByYearObj,
           yearCoverByYear: yearCoverByYearObj,
+          albumNameIndexByYear: albumNameIndexByYearObj,
+          bandNameIndexByYear: bandNameIndexByYearObj,
         };
         applySummary(summary);
         writeSummaryCache(summary);
@@ -136,19 +168,24 @@ const Years = () => {
         year,
         albumCount: albumCountByYear.get(year) || 0,
         formedBandCount: formedBandCountByYear.get(year) || 0,
-        coverUrl: yearCoverByYear.get(year) || '',
+        albumNameIndex: albumNameIndexByYear.get(year) || '',
+        bandNameIndex: bandNameIndexByYear.get(year) || '',
       })),
-    [years, albumCountByYear, formedBandCountByYear, yearCoverByYear]
+    [years, albumCountByYear, formedBandCountByYear, albumNameIndexByYear, bandNameIndexByYear]
   );
   const filteredYearRows = useMemo(() => {
     const yearNeedle = yearKeyword.trim();
+    const albumNeedle = albumNameKeyword.trim().toLowerCase();
+    const bandNeedle = bandNameKeyword.trim().toLowerCase();
     return yearCards.filter((item) => {
       const yearMatch = !yearNeedle || String(item.year).includes(yearNeedle);
       const albumMatch = minAlbumCount == null || item.albumCount >= minAlbumCount;
       const formedMatch = minFormedBandCount == null || item.formedBandCount >= minFormedBandCount;
-      return yearMatch && albumMatch && formedMatch;
+      const albumNameMatch = !albumNeedle || item.albumNameIndex.includes(albumNeedle);
+      const bandNameMatch = !bandNeedle || item.bandNameIndex.includes(bandNeedle);
+      return yearMatch && albumMatch && formedMatch && albumNameMatch && bandNameMatch;
     });
-  }, [yearCards, yearKeyword, minAlbumCount, minFormedBandCount]);
+  }, [yearCards, yearKeyword, minAlbumCount, minFormedBandCount, albumNameKeyword, bandNameKeyword]);
 
   const themedStyles = useMemo(() => {
     if (!isDark) {
@@ -220,7 +257,7 @@ const Years = () => {
       ) : (
         <Card>
           <Row gutter={[12, 12]} style={{ marginBottom: 14 }}>
-            <Col xs={24} sm={8} md={6}>
+            <Col xs={24} sm={12} md={8} lg={4}>
               <Input
                 allowClear
                 placeholder="按年份搜索，如 1998"
@@ -228,7 +265,23 @@ const Years = () => {
                 onChange={(e) => setYearKeyword(e.target.value)}
               />
             </Col>
-            <Col xs={24} sm={8} md={6}>
+            <Col xs={24} sm={12} md={8} lg={5}>
+              <Input
+                allowClear
+                placeholder="按专辑名称检索"
+                value={albumNameKeyword}
+                onChange={(e) => setAlbumNameKeyword(e.target.value)}
+              />
+            </Col>
+            <Col xs={24} sm={12} md={8} lg={5}>
+              <Input
+                allowClear
+                placeholder="按乐队名称检索"
+                value={bandNameKeyword}
+                onChange={(e) => setBandNameKeyword(e.target.value)}
+              />
+            </Col>
+            <Col xs={24} sm={12} md={8} lg={5}>
               <InputNumber
                 min={0}
                 style={{ width: '100%' }}
@@ -237,7 +290,7 @@ const Years = () => {
                 onChange={setMinAlbumCount}
               />
             </Col>
-            <Col xs={24} sm={8} md={6}>
+            <Col xs={24} sm={12} md={8} lg={5}>
               <InputNumber
                 min={0}
                 style={{ width: '100%' }}
