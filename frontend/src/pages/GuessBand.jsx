@@ -739,15 +739,12 @@ const GuessBand = () => {
                     onClick={() => setGuessInput(band.name)}
                     style={{
                       width: '100%',
-                      justifyContent: 'space-between',
+                      justifyContent: 'flex-start',
                       paddingInline: 8,
                       color: isDark ? '#E5E7EB' : '#1F2937',
                     }}
                   >
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{band.name}</span>
-                    <Text type="secondary" style={{ marginLeft: 8, fontSize: 12, flexShrink: 0 }}>
-                      {band.region}
-                    </Text>
                   </Button>
                 ))}
               </Space>
