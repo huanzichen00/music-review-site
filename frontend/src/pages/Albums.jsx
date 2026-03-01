@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Row, Col, Card, Spin, message } from 'antd';
+import { Row, Col, Card, Pagination, Spin, message } from 'antd';
 import { albumsApi } from '../api/albums';
 import AlbumCard from '../components/AlbumCard';
 import AlphabetFilter from '../components/AlphabetFilter';
@@ -31,6 +31,8 @@ const Albums = () => {
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedLetter, setSelectedLetter] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 24;
 
   useEffect(() => {
     const loadAlbums = async () => {
@@ -40,6 +42,7 @@ const Albums = () => {
           ? await albumsApi.getByInitial(selectedLetter)
           : await albumsApi.getAll();
         setAlbums(albumsRes.data);
+        setCurrentPage(1);
       } catch {
         message.error('加载专辑失败');
       } finally {
@@ -71,13 +74,26 @@ const Albums = () => {
               </p>
             </Card>
           ) : (
-            <Row gutter={[24, 24]}>
-              {albums.map((album) => (
-                <Col key={album.id} xs={12} sm={8} md={6} lg={4}>
-                  <AlbumCard album={album} />
-                </Col>
-              ))}
-            </Row>
+            <>
+              <Row gutter={[24, 24]}>
+                {albums
+                  .slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+                  .map((album) => (
+                    <Col key={album.id} xs={12} sm={8} md={6} lg={4}>
+                      <AlbumCard album={album} />
+                    </Col>
+                  ))}
+              </Row>
+              <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
+                <Pagination
+                  current={currentPage}
+                  pageSize={PAGE_SIZE}
+                  total={albums.length}
+                  showSizeChanger={false}
+                  onChange={setCurrentPage}
+                />
+              </div>
+            </>
           )}
         </>
       )}

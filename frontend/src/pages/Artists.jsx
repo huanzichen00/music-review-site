@@ -125,6 +125,11 @@ const Artists = () => {
         <List
           itemLayout="horizontal"
           dataSource={artists}
+          pagination={{
+            pageSize: 24,
+            showSizeChanger: false,
+            hideOnSinglePage: true,
+          }}
           renderItem={(artist) => (
             <List.Item
               actions={
