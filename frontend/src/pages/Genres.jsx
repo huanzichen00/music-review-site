@@ -2,58 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Card, Col, Empty, Row, Spin, Typography, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { genresApi } from '../api/genres';
-import { albumsApi } from '../api/albums';
 import { useTheme } from '../context/ThemeContext';
 
-const { Title } = Typography;
-
-const getGenreRefsFromAlbum = (album) => {
-  if (Array.isArray(album?.genres) && album.genres.length > 0) {
-    return album.genres
-      .map((genre) => {
-        if (typeof genre === 'number') {
-          return { id: genre, name: '' };
-        }
-        return { id: genre?.id, name: genre?.name || '' };
-      })
-      .filter((genre) => genre.id != null || genre.name);
-  }
-  if (Array.isArray(album?.genreIds) && album.genreIds.length > 0) {
-    return album.genreIds.map((id) => ({ id, name: '' }));
-  }
-  if (album?.genreId != null) {
-    return [{ id: album.genreId, name: album.genreName || '' }];
-  }
-  if (album?.genreName) {
-    return [{ id: null, name: album.genreName }];
-  }
-  return [];
-};
-
-const buildGenreCoverLookup = (albums) => {
-  const byId = new Map();
-  const byName = new Map();
-
-  albums.forEach((album) => {
-    const coverUrl = album?.coverUrl || null;
-    if (!coverUrl) {
-      return;
-    }
-
-    const refs = getGenreRefsFromAlbum(album);
-    refs.forEach((genreRef) => {
-      if (genreRef.id != null && !byId.has(genreRef.id)) {
-        byId.set(genreRef.id, coverUrl);
-      }
-      const normalizedName = (genreRef.name || '').trim().toLowerCase();
-      if (normalizedName && !byName.has(normalizedName)) {
-        byName.set(normalizedName, coverUrl);
-      }
-    });
-  });
-
-  return { byId, byName };
-};
+const { Text } = Typography;
 
 const styles = {
   pageTitle: {
@@ -65,56 +16,55 @@ const styles = {
     letterSpacing: '1px',
   },
   card: {
-    textAlign: 'center',
-    background: 'linear-gradient(145deg, #FFFBF7 0%, #FFF2E6 100%)',
-    borderRadius: '12px',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    border: '1px solid #E5B992',
-    aspectRatio: '1 / 1',
-    cursor: 'pointer',
-  },
-  cardWithCover: {
     position: 'relative',
+    borderRadius: '8px',
+    border: '1px solid #B08B67',
+    background: 'linear-gradient(180deg, #2B2016 0%, #21180F 100%)',
+    minHeight: 122,
+    cursor: 'pointer',
     overflow: 'hidden',
   },
-  cardOverlay: {
+  cardAccent: {
     position: 'absolute',
-    inset: 0,
-    background: 'linear-gradient(180deg, rgba(24, 17, 13, 0.35) 0%, rgba(24, 17, 13, 0.65) 100%)',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    background: 'linear-gradient(180deg, #E0A15E 0%, #AF6B32 100%)',
   },
-  cardImage: {
-    position: 'absolute',
-    inset: 0,
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-  },
-  cardContent: {
-    position: 'relative',
-    zIndex: 1,
-    height: '100%',
+  cardInner: {
+    padding: '16px 16px 14px 18px',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    textAlign: 'center',
-    padding: '12px',
+    gap: 8,
   },
   name: {
     fontFamily: "'Cormorant Garamond', 'Noto Serif SC', Georgia, serif",
-    fontSize: 'clamp(17px, 2.2vw, 22px)',
+    fontSize: '24px',
+    lineHeight: 1.1,
     fontWeight: 700,
-    color: '#4E342E',
-    lineHeight: 1.25,
+    letterSpacing: '0.6px',
+    color: '#F3E0C8',
+    textTransform: 'uppercase',
     marginBottom: 0,
   },
+  metaRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 10,
+  },
   count: {
-    fontFamily: "'Cormorant Garamond', serif",
-    color: '#6D4C41',
-    fontSize: 'clamp(13px, 1.5vw, 16px)',
-    fontWeight: 600,
-    marginTop: '4px',
+    fontFamily: "'Courier New', 'Noto Sans SC', monospace",
+    color: '#D6B089',
+    fontSize: '13px',
+    letterSpacing: '0.8px',
+  },
+  action: {
+    fontFamily: "'Courier New', 'Noto Sans SC', monospace",
+    color: '#F1C387',
+    fontSize: '12px',
+    letterSpacing: '1px',
   },
 };
 
@@ -124,6 +74,7 @@ const Genres = () => {
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
   const themedStyles = useMemo(() => {
     if (!isDark) {
       return styles;
@@ -136,8 +87,12 @@ const Genres = () => {
       },
       card: {
         ...styles.card,
-        background: 'linear-gradient(145deg, #171719 0%, #121214 100%)',
-        border: '1px solid #2F2F33',
+        border: '1px solid #3A3A40',
+        background: 'linear-gradient(180deg, #171719 0%, #121214 100%)',
+      },
+      cardAccent: {
+        ...styles.cardAccent,
+        background: 'linear-gradient(180deg, #7C8088 0%, #545A63 100%)',
       },
       name: {
         ...styles.name,
@@ -145,44 +100,21 @@ const Genres = () => {
       },
       count: {
         ...styles.count,
-        color: '#9CA3AF',
+        color: '#A3A3A3',
+      },
+      action: {
+        ...styles.action,
+        color: '#B2B6BE',
       },
     };
   }, [isDark]);
-  const resolveMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    if (url.startsWith('/api') || url.startsWith('/')) {
-      return new URL(url, window.location.origin).toString();
-    }
-    return url;
-  };
 
   useEffect(() => {
     const loadGenres = async () => {
       setLoading(true);
       try {
-        const [genresRes, albumsRes] = await Promise.all([
-          genresApi.getAll(),
-          albumsApi.getAll(),
-        ]);
-        const genresData = genresRes.data || [];
-        const albums = albumsRes.data || [];
-        const { byId, byName } = buildGenreCoverLookup(albums);
-        const genresWithCover = genresData.map((genre) => {
-          if (!genre?.id || (genre.albumCount ?? 0) <= 0) {
-            return genre;
-          }
-          const byGenreId = byId.get(genre.id) || null;
-          const byGenreName = byName.get((genre.name || '').trim().toLowerCase()) || null;
-          return {
-            ...genre,
-            genreCoverUrl: byGenreId || byGenreName || null,
-          };
-        });
-        setGenres(genresWithCover);
+        const response = await genresApi.getAll();
+        setGenres((response.data || []).sort((a, b) => (b.albumCount || 0) - (a.albumCount || 0)));
       } catch {
         message.error('加载风格失败');
       } finally {
@@ -204,62 +136,21 @@ const Genres = () => {
           <Empty description="暂无风格数据" />
         </Card>
       ) : (
-        <Row gutter={[20, 20]}>
+        <Row gutter={[14, 14]}>
           {genres.map((genre) => (
-            <Col key={genre.id} xs={12} sm={8} md={6} lg={4}>
+            <Col key={genre.id} xs={24} sm={12} md={8} lg={6}>
               <Card
                 hoverable
-                style={{
-                  ...themedStyles.card,
-                  ...(genre.genreCoverUrl
-                    ? {
-                        ...styles.cardWithCover,
-                      }
-                    : {}),
-                }}
+                style={themedStyles.card}
+                styles={{ body: { padding: 0 } }}
                 onClick={() => navigate(`/music/genres/${genre.id}`)}
               >
-                {genre.genreCoverUrl && (
-                  <>
-                    <img
-                      src={resolveMediaUrl(genre.genreCoverUrl)}
-                      alt={genre.name}
-                      style={styles.cardImage}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <div style={styles.cardOverlay} />
-                  </>
-                )}
-                <div style={styles.cardContent}>
-                  <Title
-                    level={4}
-                    style={{
-                      ...styles.name,
-                      ...themedStyles.name,
-                      ...(genre.genreCoverUrl
-                        ? {
-                            color: '#FFF7EE',
-                            textShadow: '0 1px 3px rgba(0,0,0,0.55)',
-                          }
-                        : {}),
-                    }}
-                  >
-                    {genre.name}
-                  </Title>
-                  <div
-                    style={{
-                      ...styles.count,
-                      ...themedStyles.count,
-                      ...(genre.genreCoverUrl
-                        ? {
-                            color: '#FFEBD9',
-                            textShadow: '0 1px 3px rgba(0,0,0,0.55)',
-                          }
-                        : {}),
-                    }}
-                  >
-                    {genre.albumCount || 0} 张专辑
+                <div style={themedStyles.cardAccent} />
+                <div style={styles.cardInner}>
+                  <Text style={themedStyles.name}>{genre.name}</Text>
+                  <div style={styles.metaRow}>
+                    <Text style={themedStyles.count}>{(genre.albumCount || 0).toString().padStart(3, '0')} ALBUMS</Text>
+                    <Text style={themedStyles.action}>OPEN &gt;</Text>
                   </div>
                 </div>
               </Card>

@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { Row, Col, Card, Spin, message, List, Avatar, Rate, Button, Space } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { albumsApi } from '../api/albums';
-import { genresApi } from '../api/genres';
 import { reviewsApi } from '../api/reviews';
 import AlbumCard from '../components/AlbumCard';
 import { resolveAvatarUrl } from '../utils/avatar';
@@ -18,55 +17,6 @@ const shuffleArray = (arr) => {
   return copy;
 };
 
-const getGenreRefsFromAlbum = (album) => {
-  if (Array.isArray(album?.genres) && album.genres.length > 0) {
-    return album.genres
-      .map((genre) => {
-        if (typeof genre === 'number') {
-          return { id: genre, name: '' };
-        }
-        return { id: genre?.id, name: genre?.name || '' };
-      })
-      .filter((genre) => genre.id != null || genre.name);
-  }
-  if (Array.isArray(album?.genreIds) && album.genreIds.length > 0) {
-    return album.genreIds.map((id) => ({ id, name: '' }));
-  }
-  if (album?.genreId != null) {
-    return [{ id: album.genreId, name: album.genreName || '' }];
-  }
-  if (album?.genreName) {
-    return [{ id: null, name: album.genreName }];
-  }
-  return [];
-};
-
-const buildGenreCoverLookup = (albums) => {
-  const byId = new Map();
-  const byName = new Map();
-
-  albums.forEach((album) => {
-    const coverUrl = album?.coverUrl || null;
-    if (!coverUrl) {
-      return;
-    }
-
-    const refs = getGenreRefsFromAlbum(album);
-    refs.forEach((genreRef) => {
-      if (genreRef.id != null && !byId.has(genreRef.id)) {
-        byId.set(genreRef.id, coverUrl);
-      }
-      const normalizedName = (genreRef.name || '').trim().toLowerCase();
-      if (normalizedName && !byName.has(normalizedName)) {
-        byName.set(normalizedName, coverUrl);
-      }
-    });
-  });
-
-  return { byId, byName };
-};
-
-// 自定义样式
 const styles = {
   pageTitle: {
     fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
@@ -102,56 +52,6 @@ const styles = {
     color: '#5D4037',
     marginBottom: '20px',
     letterSpacing: '0.5px',
-  },
-  genreCard: {
-    textAlign: 'center',
-    background: 'linear-gradient(145deg, #FFFBF7 0%, #FFF2E6 100%)',
-    borderRadius: '12px',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    border: '1px solid #E5B992',
-    aspectRatio: '1 / 1',
-  },
-  genreCardWithCover: {
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  genreCardOverlay: {
-    position: 'absolute',
-    inset: 0,
-    background: 'linear-gradient(180deg, rgba(24, 17, 13, 0.35) 0%, rgba(24, 17, 13, 0.65) 100%)',
-  },
-  genreCardImage: {
-    position: 'absolute',
-    inset: 0,
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-  },
-  genreCardContent: {
-    position: 'relative',
-    zIndex: 1,
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    textAlign: 'center',
-    padding: '12px',
-  },
-  genreName: {
-    fontFamily: "'Cormorant Garamond', 'Noto Serif SC', Georgia, serif",
-    fontSize: 'clamp(17px, 2.2vw, 22px)',
-    fontWeight: 700,
-    color: '#4E342E',
-    lineHeight: 1.25,
-  },
-  genreCount: {
-    fontFamily: "'Cormorant Garamond', serif",
-    color: '#6D4C41',
-    fontSize: 'clamp(13px, 1.5vw, 16px)',
-    fontWeight: 600,
-    marginTop: '4px',
   },
   emptyText: {
     textAlign: 'center',
@@ -220,10 +120,10 @@ const Home = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [albums, setAlbums] = useState([]);
-  const [genres, setGenres] = useState([]);
   const [recentReviews, setRecentReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
   const resolveMediaUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http://') || url.startsWith('https://')) {
@@ -234,7 +134,7 @@ const Home = () => {
     }
     return url;
   };
-  const visibleGenres = genres.filter((genre) => (genre.albumCount ?? 0) > 0);
+
   const themedStyles = useMemo(() => {
     if (!isDark) {
       return styles;
@@ -255,13 +155,6 @@ const Home = () => {
       featureTitle: { ...styles.featureTitle, color: '#E5E7EB' },
       featureDesc: { ...styles.featureDesc, color: '#A3A3A3' },
       sectionTitle: { ...styles.sectionTitle, color: '#D1D5DB' },
-      genreCard: {
-        ...styles.genreCard,
-        background: 'linear-gradient(145deg, #171719 0%, #131316 100%)',
-        border: '1px solid #2F2F33',
-      },
-      genreName: { ...styles.genreName, color: '#E5E7EB' },
-      genreCount: { ...styles.genreCount, color: '#9CA3AF' },
       emptyText: { ...styles.emptyText, color: '#9CA3AF' },
       reviewCard: {
         ...styles.reviewCard,
@@ -280,47 +173,32 @@ const Home = () => {
   }, [isDark]);
 
   useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const [albumsRes, reviewsRes] = await Promise.all([
+          albumsApi.getAll(),
+          reviewsApi.getRecent(),
+        ]);
+        const allAlbums = albumsRes.data || [];
+        setAlbums(shuffleArray(allAlbums));
+        setRecentReviews(reviewsRes.data);
+      } catch {
+        message.error('加载数据失败');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadData();
   }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [albumsRes, genresRes, reviewsRes] = await Promise.all([
-        albumsApi.getAll(),
-        genresApi.getAll(),
-        reviewsApi.getRecent(),
-      ]);
-      const allAlbums = albumsRes.data || [];
-      const genresData = genresRes.data || [];
-      const { byId, byName } = buildGenreCoverLookup(allAlbums);
-      const genresWithCover = genresData.map((genre) => {
-        if (!genre?.id || (genre.albumCount ?? 0) <= 0) {
-          return genre;
-        }
-        const byGenreId = byId.get(genre.id) || null;
-        const byGenreName = byName.get((genre.name || '').trim().toLowerCase()) || null;
-        return {
-          ...genre,
-          genreCoverUrl: byGenreId || byGenreName || null,
-        };
-      });
-      setAlbums(shuffleArray(allAlbums));
-      setGenres(genresWithCover);
-      setRecentReviews(reviewsRes.data);
-    } catch {
-      message.error('加载数据失败');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffTime = Math.abs(now - date);
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) {
       const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
       if (diffHours === 0) {
@@ -328,9 +206,11 @@ const Home = () => {
         return `${diffMinutes} 分钟前`;
       }
       return `${diffHours} 小时前`;
-    } else if (diffDays === 1) {
+    }
+    if (diffDays === 1) {
       return '昨天';
-    } else if (diffDays < 7) {
+    }
+    if (diffDays < 7) {
       return `${diffDays} 天前`;
     }
     return date.toLocaleDateString();
@@ -362,9 +242,7 @@ const Home = () => {
         <>
           {albums.length === 0 ? (
             <Card style={{ borderRadius: '12px' }}>
-              <p style={themedStyles.emptyText}>
-                暂无专辑。
-              </p>
+              <p style={themedStyles.emptyText}>暂无专辑。</p>
             </Card>
           ) : (
             <Row gutter={[24, 24]}>
@@ -376,7 +254,6 @@ const Home = () => {
             </Row>
           )}
 
-          {/* Recent Reviews Section */}
           {recentReviews.length > 0 && (
             <div style={{ marginTop: '60px' }}>
               <h2 style={themedStyles.sectionTitle}>{isDark ? '最新评论' : '💬 最新评论'}</h2>
@@ -387,14 +264,14 @@ const Home = () => {
                   renderItem={(review) => (
                     <List.Item style={{ padding: '16px 0' }}>
                       <List.Item.Meta
-                        avatar={
-                          <Avatar 
-                            src={resolveAvatarUrl(review.userAvatar)} 
+                        avatar={(
+                          <Avatar
+                            src={resolveAvatarUrl(review.userAvatar)}
                             size={48}
                             style={{ border: isDark ? '2px solid #2F2F33' : '2px solid #E8D5C4' }}
                           />
-                        }
-                        title={
+                        )}
+                        title={(
                           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                             <span
                               style={{ ...themedStyles.reviewUsername, cursor: 'pointer' }}
@@ -402,19 +279,19 @@ const Home = () => {
                             >
                               {review.username}
                             </span>
-                            <Rate 
-                              disabled 
-                              value={review.rating} 
-                              allowHalf 
-                              style={{ fontSize: '14px', color: isDark ? '#9CA3AF' : '#D4A574' }} 
+                            <Rate
+                              disabled
+                              value={review.rating}
+                              allowHalf
+                              style={{ fontSize: '14px', color: isDark ? '#9CA3AF' : '#D4A574' }}
                             />
                             <span style={themedStyles.reviewDate}>{formatDate(review.createdAt)}</span>
                           </div>
-                        }
-                        description={
+                        )}
+                        description={(
                           <div>
                             <div style={styles.reviewAlbumRow}>
-                              <div 
+                              <div
                                 style={themedStyles.reviewAlbum}
                                 onClick={() => navigate(`/music/albums/${review.albumId}`)}
                                 title={`${review.albumTitle} - ${review.artistName}`}
@@ -429,79 +306,14 @@ const Home = () => {
                                 />
                               )}
                             </div>
-                            {review.content && (
-                              <p style={themedStyles.reviewContent}>{review.content}</p>
-                            )}
+                            {review.content && <p style={themedStyles.reviewContent}>{review.content}</p>}
                           </div>
-                        }
+                        )}
                       />
                     </List.Item>
                   )}
                 />
               </Card>
-            </div>
-          )}
-
-          {/* Genres Section */}
-          {visibleGenres.length > 0 && (
-            <div style={{ marginTop: '60px' }}>
-              <h2 style={themedStyles.sectionTitle}>{isDark ? '风格' : '🎸 风格'}</h2>
-              <Row gutter={[20, 20]}>
-                {visibleGenres.map((genre) => (
-                  <Col key={genre.id} xs={12} sm={8} md={6} lg={4}>
-                    <Card 
-                      hoverable
-                      onClick={() => navigate(`/music/genres/${genre.id}`)}
-                      style={{
-                        ...themedStyles.genreCard,
-                        cursor: 'pointer',
-                        ...(genre.genreCoverUrl
-                          ? {
-                              ...styles.genreCardWithCover,
-                            }
-                          : {}),
-                      }}
-                    >
-                      {genre.genreCoverUrl && (
-                        <>
-                          <img
-                            src={resolveMediaUrl(genre.genreCoverUrl)}
-                            alt={genre.name}
-                            style={styles.genreCardImage}
-                            loading="lazy"
-                            decoding="async"
-                          />
-                          <div style={styles.genreCardOverlay} />
-                        </>
-                      )}
-                      <div style={styles.genreCardContent}>
-                        <div
-                          style={{
-                            ...themedStyles.genreName,
-                            ...(genre.genreCoverUrl
-                              ? { color: '#FFF7EE', textShadow: '0 1px 3px rgba(0,0,0,0.55)' }
-                              : {}),
-                          }}
-                        >
-                          {genre.name}
-                        </div>
-                        {genre.albumCount > 0 && (
-                          <div
-                            style={{
-                              ...themedStyles.genreCount,
-                              ...(genre.genreCoverUrl
-                                ? { color: '#FFEBD9', textShadow: '0 1px 3px rgba(0,0,0,0.55)' }
-                                : {}),
-                            }}
-                          >
-                            {genre.albumCount} 张专辑
-                          </div>
-                        )}
-                      </div>
-                    </Card>
-                  </Col>
-                ))}
-              </Row>
             </div>
           )}
         </>
