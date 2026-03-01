@@ -99,6 +99,7 @@ def parse_args() -> argparse.Namespace:
         default="/opt/music-review/uploads",
         help="Backend upload root dir for local covers (default: /opt/music-review/uploads)",
     )
+    parser.add_argument("--cover-timeout", type=float, default=12.0, help="Cover download timeout seconds (default: 12)")
     parser.add_argument(
         "--localize-existing-only",
         action="store_true",
@@ -374,7 +375,12 @@ def ensure_cover_dir(upload_root: str) -> str:
     return cover_dir
 
 
-def download_cover_to_local(upload_root: str, remote_url: Optional[str], stable_key: str) -> Optional[str]:
+def download_cover_to_local(
+    upload_root: str,
+    remote_url: Optional[str],
+    stable_key: str,
+    timeout_sec: float,
+) -> Optional[str]:
     if not remote_url:
         return None
     cover_dir = ensure_cover_dir(upload_root)
@@ -383,7 +389,7 @@ def download_cover_to_local(upload_root: str, remote_url: Optional[str], stable_
         headers={"User-Agent": USER_AGENT, "Accept": "image/*,*/*;q=0.8"},
     )
     try:
-        with urllib.request.urlopen(req, timeout=40) as resp:
+        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
             content = resp.read()
             if not content:
                 return None
@@ -504,6 +510,7 @@ def insert_albums_for_artist(
                 upload_root=args.upload_dir,
                 remote_url=album.remote_cover_url,
                 stable_key=f"{artist.artist_id}:{normalize_title(album.title)}:{album.mb_release_group_id}",
+                timeout_sec=args.cover_timeout,
             )
 
         sql_parts = [
@@ -620,6 +627,7 @@ def localize_existing_cover_urls(args: argparse.Namespace) -> Tuple[int, int]:
                     upload_root=args.upload_dir,
                     remote_url=remote_url,
                     stable_key=f"album:{album_id}:{artist_id}:{normalize_title(title)}",
+                    timeout_sec=args.cover_timeout,
                 )
             if args.dry_run:
                 ok += 1
@@ -635,8 +643,8 @@ WHERE id = {album_id}
                 ok += 1
             else:
                 failed += 1
-            if idx % 20 == 0:
-                print(f"  progress: {idx}/{len(rows)}")
+            if idx % 5 == 0:
+                print(f"  progress: {idx}/{len(rows)} (ok={ok}, failed={failed})")
         except Exception:
             failed += 1
         time.sleep(max(0.05, args.sleep / 4))
