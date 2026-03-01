@@ -170,7 +170,46 @@ CREATE INDEX idx_blog_posts_user ON blog_posts(user_id);
 CREATE INDEX idx_blog_posts_album ON blog_posts(album_id);
 
 -- =====================================================
--- 11. 猜乐队自选题库
+-- 11. 博客回复表
+-- =====================================================
+CREATE TABLE blog_replies (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    blog_post_id BIGINT NOT NULL COMMENT '博客文章ID',
+    user_id BIGINT NOT NULL COMMENT '回复用户ID',
+    content TEXT NOT NULL COMMENT '回复内容',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '回复时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
+    FOREIGN KEY (blog_post_id) REFERENCES blog_posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) COMMENT '博客回复表';
+
+CREATE INDEX idx_blog_replies_post ON blog_replies(blog_post_id);
+
+-- =====================================================
+-- 12. 消息通知表
+-- =====================================================
+CREATE TABLE notifications (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL COMMENT '接收通知用户ID',
+    sender_user_id BIGINT COMMENT '发送者用户ID',
+    type VARCHAR(30) NOT NULL COMMENT '通知类型: BLOG_REPLY/ANNOUNCEMENT',
+    title VARCHAR(200) NOT NULL COMMENT '标题',
+    content TEXT NOT NULL COMMENT '通知内容',
+    related_blog_post_id BIGINT COMMENT '关联博客文章ID',
+    related_blog_reply_id BIGINT COMMENT '关联博客回复ID',
+    is_read BOOLEAN NOT NULL DEFAULT FALSE COMMENT '是否已读',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_user_id) REFERENCES users(id) ON DELETE SET NULL
+) COMMENT '消息通知表';
+
+CREATE INDEX idx_notifications_user ON notifications(user_id);
+CREATE INDEX idx_notifications_unread ON notifications(user_id, is_read);
+
+-- =====================================================
+-- 13. 猜乐队自选题库
 -- =====================================================
 CREATE TABLE question_banks (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,

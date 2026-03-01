@@ -21,6 +21,7 @@ const GenreDetail = lazy(() => import('./pages/GenreDetail'));
 const Years = lazy(() => import('./pages/Years'));
 const YearDetail = lazy(() => import('./pages/YearDetail'));
 const Blog = lazy(() => import('./pages/Blog'));
+const Messages = lazy(() => import('./pages/Messages'));
 const UserHome = lazy(() => import('./pages/UserHome'));
 const GuessBand = lazy(() => import('./pages/GuessBand'));
 const GuessBandBanks = lazy(() => import('./pages/GuessBandBanks'));
@@ -170,6 +171,7 @@ function AppContent() {
                 <Route path="/years" element={<Years />} />
                 <Route path="/years/:year" element={<YearDetail />} />
                 <Route path="/blog" element={<Blog />} />
+                <Route path="/messages" element={<Messages />} />
                 <Route path="*" element={<Navigate to="/music/home" replace />} />
               </Routes>
             </Suspense>

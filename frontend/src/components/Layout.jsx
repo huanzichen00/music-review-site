@@ -1,7 +1,9 @@
-import { Layout as AntLayout, Menu, Button, Dropdown, Avatar, Select, Space } from 'antd';
+import { useEffect, useState } from 'react';
+import { Layout as AntLayout, Menu, Button, Dropdown, Avatar, Badge, Select, Space } from 'antd';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   UserOutlined, 
+  BellOutlined,
   HeartOutlined,
   LogoutOutlined,
   LoginOutlined,
@@ -15,6 +17,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { resolveAvatarUrl } from '../utils/avatar';
+import { notificationsApi } from '../api/notifications';
 
 const { Header, Content, Footer } = AntLayout;
 
@@ -35,8 +38,19 @@ const Layout = ({ children }) => {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const [unreadCount, setUnreadCount] = useState(0);
   const isBlue = theme === 'blue';
   const isDark = theme === 'dark';
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setUnreadCount(0);
+      return;
+    }
+    notificationsApi.getUnreadCount()
+      .then((res) => setUnreadCount(res?.data?.unreadCount || 0))
+      .catch(() => setUnreadCount(0));
+  }, [isAuthenticated, location.pathname]);
 
   const handleLogout = () => {
     logout();
@@ -114,6 +128,16 @@ const Layout = ({ children }) => {
   ];
 
   const userMenuItems = [
+    {
+      key: 'messages',
+      icon: (
+        <Badge count={unreadCount} size="small" offset={[6, -2]}>
+          <BellOutlined />
+        </Badge>
+      ),
+      label: <span style={menuLinkStyle}>消息中心</span>,
+      onClick: () => navigate('/messages'),
+    },
     {
       key: 'favorites',
       icon: <HeartOutlined />,
