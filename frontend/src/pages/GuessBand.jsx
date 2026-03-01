@@ -208,6 +208,7 @@ const pickRandomBand = (bands, excludeBand = null) => {
 };
 
 const normalizeBand = (value) => value.trim().toLowerCase();
+const startsWithLatinLetter = (value) => /^[A-Za-z]/.test((value || '').trim());
 
 const compareCategory = (guessValue, targetValue, groupMap = null) => {
   if (guessValue === targetValue) {
@@ -300,7 +301,15 @@ const GuessBand = () => {
     return map;
   }, [indexedBands]);
   const sortedBands = useMemo(
-    () => indexedBands.slice().sort((a, b) => a.name.localeCompare(b.name)),
+    () =>
+      indexedBands.slice().sort((a, b) => {
+        const aIsLetter = startsWithLatinLetter(a.name);
+        const bIsLetter = startsWithLatinLetter(b.name);
+        if (aIsLetter !== bIsLetter) {
+          return aIsLetter ? -1 : 1;
+        }
+        return a.name.localeCompare(b.name);
+      }),
     [indexedBands]
   );
 
