@@ -3,9 +3,11 @@ package com.musicreview.service;
 import com.musicreview.dto.artist.ArtistRequest;
 import com.musicreview.dto.artist.ArtistResponse;
 import com.musicreview.entity.Artist;
+import com.musicreview.entity.Genre;
 import com.musicreview.entity.User;
 import com.musicreview.repository.AlbumRepository;
 import com.musicreview.repository.ArtistRepository;
+import com.musicreview.repository.GenreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,7 @@ public class ArtistService {
 
     private final ArtistRepository artistRepository;
     private final AlbumRepository albumRepository;
+    private final GenreRepository genreRepository;
     private final AuthService authService;
 
     /**
@@ -62,12 +65,15 @@ public class ArtistService {
      */
     @Transactional
     public ArtistResponse createArtist(ArtistRequest request) {
+        String normalizedGenre = normalizeGenre(request.getGenre());
+        ensureGenreExists(normalizedGenre);
+
         Artist artist = Artist.builder()
                 .name(request.getName())
                 .nameInitial(extractInitial(request.getName()))
                 .country(request.getCountry())
                 .formedYear(request.getFormedYear())
-                .genre(request.getGenre())
+                .genre(normalizedGenre)
                 .memberCount(request.getMemberCount())
                 .status(request.getStatus())
                 .description(request.getDescription())
@@ -86,11 +92,14 @@ public class ArtistService {
         Artist artist = artistRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Artist not found with id: " + id));
 
+        String normalizedGenre = normalizeGenre(request.getGenre());
+        ensureGenreExists(normalizedGenre);
+
         artist.setName(request.getName());
         artist.setNameInitial(extractInitial(request.getName()));
         artist.setCountry(request.getCountry());
         artist.setFormedYear(request.getFormedYear());
-        artist.setGenre(request.getGenre());
+        artist.setGenre(normalizedGenre);
         artist.setMemberCount(request.getMemberCount());
         artist.setStatus(request.getStatus());
         artist.setDescription(request.getDescription());
@@ -135,5 +144,23 @@ public class ArtistService {
             return String.valueOf(first);
         }
         return "#";
+    }
+
+    private String normalizeGenre(String genre) {
+        return genre == null ? null : genre.trim();
+    }
+
+    private void ensureGenreExists(String genreName) {
+        if (genreName == null || genreName.isEmpty()) {
+            return;
+        }
+        if (genreRepository.findByNameIgnoreCase(genreName).isPresent()) {
+            return;
+        }
+        Genre genre = Genre.builder()
+                .name(genreName)
+                .description("自动同步自 artists.genre")
+                .build();
+        genreRepository.save(genre);
     }
 }

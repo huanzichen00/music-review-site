@@ -117,7 +117,11 @@ const Genres = () => {
       setLoading(true);
       try {
         const response = await genresApi.getAll({ signal: controller.signal });
-        setGenres((response.data || []).sort((a, b) => (b.albumCount || 0) - (a.albumCount || 0)));
+        setGenres(
+          (response.data || []).sort((a, b) =>
+            (a?.name || '').localeCompare(b?.name || '', undefined, { sensitivity: 'base' })
+          )
+        );
       } catch (error) {
         if (isRequestCanceled(error)) {
           return;
