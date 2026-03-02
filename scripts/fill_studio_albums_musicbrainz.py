@@ -27,6 +27,7 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 MB_BASE = "https://musicbrainz.org/ws/2"
 USER_AGENT = "MusicReviewStudioSeeder/1.0 (music-review-site)"
+NETEASE_SEARCH = "https://music.163.com/api/search/get"
 
 # Project-local defaults (aligned with existing scripts in this repo)
 MYSQL_HOST = "127.0.0.1"
@@ -441,6 +442,62 @@ def search_itunes_cover_url(artist_name: str, album_title: str, timeout_sec: flo
     return None
 
 
+def search_netease_cover_url(artist_name: str, album_title: str, timeout_sec: float) -> Optional[str]:
+    query = urllib.parse.urlencode(
+        {
+            "s": f"{artist_name} {album_title}",
+            "type": 10,  # album
+            "offset": 0,
+            "total": "true",
+            "limit": 20,
+        }
+    )
+    url = f"{NETEASE_SEARCH}?{query}"
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": USER_AGENT,
+            "Accept": "application/json",
+            "Referer": "https://music.163.com/",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except Exception:
+        return None
+
+    expected_artist = normalize_text_key(artist_name)
+    expected_album = normalize_text_key(album_title)
+    albums = (data.get("result") or {}).get("albums") or []
+    best_url = None
+    best_score = -1
+    for row in albums:
+        title = normalize_text_key(str(row.get("name") or ""))
+        artist_obj = row.get("artist") or {}
+        artist = normalize_text_key(str(artist_obj.get("name") or ""))
+        pic = str(row.get("picUrl") or "").strip()
+        if not pic:
+            continue
+        score = 0
+        if expected_album and title == expected_album:
+            score += 8
+        elif expected_album and (expected_album in title or title in expected_album):
+            score += 5
+        if expected_artist and artist == expected_artist:
+            score += 7
+        elif expected_artist and (expected_artist in artist or artist in expected_artist):
+            score += 3
+        if score > best_score:
+            best_score = score
+            best_url = pic
+    if not best_url:
+        return None
+    if best_url.startswith("http://"):
+        best_url = "https://" + best_url[len("http://") :]
+    return best_url
+
+
 def download_cover_to_local(
     upload_root: str,
     remote_url: Optional[str],
@@ -450,8 +507,13 @@ def download_cover_to_local(
     album_title: str = "",
 ) -> Optional[str]:
     primary = (remote_url or "").strip()
-    fallback = search_itunes_cover_url(artist_name, album_title, timeout_sec) if artist_name or album_title else None
-    candidate_urls = [u for u in [primary, fallback] if u]
+    netease_fallback = (
+        search_netease_cover_url(artist_name, album_title, timeout_sec) if artist_name or album_title else None
+    )
+    itunes_fallback = (
+        search_itunes_cover_url(artist_name, album_title, timeout_sec) if artist_name or album_title else None
+    )
+    candidate_urls = [u for u in [netease_fallback, primary, itunes_fallback] if u]
     if not candidate_urls:
         return None
 
