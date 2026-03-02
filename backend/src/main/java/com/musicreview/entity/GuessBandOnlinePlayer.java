@@ -48,6 +48,10 @@ public class GuessBandOnlinePlayer {
     @Builder.Default
     private Boolean ready = false;
 
+    @Column(name = "score")
+    @Builder.Default
+    private Integer score = 0;
+
     @Column(name = "last_seen_at")
     private LocalDateTime lastSeenAt;
 
@@ -59,4 +63,3 @@ public class GuessBandOnlinePlayer {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }
-

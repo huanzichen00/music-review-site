@@ -33,6 +33,13 @@ public class GuessBandOnlineGuess {
     @JoinColumn(name = "guessed_artist_id", nullable = false)
     private Artist guessedArtist;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "target_artist_id")
+    private Artist targetArtist;
+
+    @Column(name = "round_index")
+    private Integer roundIndex;
+
     @Column(name = "is_correct", nullable = false)
     private Boolean correct;
 
@@ -40,4 +47,3 @@ public class GuessBandOnlineGuess {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 }
-

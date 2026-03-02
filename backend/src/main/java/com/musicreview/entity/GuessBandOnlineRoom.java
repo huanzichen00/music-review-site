@@ -53,6 +53,24 @@ public class GuessBandOnlineRoom {
     @Builder.Default
     private Integer maxAttempts = 10;
 
+    @Column(name = "total_rounds")
+    @Builder.Default
+    private Integer totalRounds = 1;
+
+    @Column(name = "current_round")
+    @Builder.Default
+    private Integer currentRound = 0;
+
+    @Column(name = "timed_mode")
+    @Builder.Default
+    private Boolean timedMode = false;
+
+    @Column(name = "round_time_limit_seconds")
+    private Integer roundTimeLimitSeconds;
+
+    @Column(name = "round_started_at")
+    private LocalDateTime roundStartedAt;
+
     @Column(name = "started_at")
     private LocalDateTime startedAt;
 
@@ -67,4 +85,3 @@ public class GuessBandOnlineRoom {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }
-

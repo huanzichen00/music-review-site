@@ -14,6 +14,7 @@ public class GuessBandOnlineRoomPlayerResponse {
     private String avatarUrl;
     private Boolean ready;
     private Integer guessCount;
+    private Integer score;
     private Boolean host;
 
     public static GuessBandOnlineRoomPlayerResponse fromEntity(
@@ -28,6 +29,7 @@ public class GuessBandOnlineRoomPlayerResponse {
                 .avatarUrl(player.getUser() != null ? player.getUser().getAvatarUrl() : null)
                 .ready(player.getReady())
                 .guessCount(guessCount)
+                .score(player.getScore())
                 .host(host)
                 .build();
     }

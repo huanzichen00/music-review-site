@@ -45,6 +45,7 @@ public class GuessBandOnlineRoomGuessResponse {
     );
 
     private Long id;
+    private Integer roundIndex;
     private String playerDisplayName;
     private Integer playerSeatIndex;
     private String artistName;
@@ -63,8 +64,9 @@ public class GuessBandOnlineRoomGuessResponse {
     private String statusState;
     private LocalDateTime createdAt;
 
-    public static GuessBandOnlineRoomGuessResponse fromEntity(GuessBandOnlineGuess guess, Artist targetArtist) {
+    public static GuessBandOnlineRoomGuessResponse fromEntity(GuessBandOnlineGuess guess) {
         Artist guessedArtist = guess.getGuessedArtist();
+        Artist targetArtist = guess.getTargetArtist();
         Integer targetYear = targetArtist != null ? targetArtist.getFormedYear() : null;
         Integer targetMembers = targetArtist != null ? targetArtist.getMemberCount() : null;
         String targetCountry = targetArtist != null ? targetArtist.getCountry() : null;
@@ -75,6 +77,7 @@ public class GuessBandOnlineRoomGuessResponse {
 
         return GuessBandOnlineRoomGuessResponse.builder()
                 .id(guess.getId())
+                .roundIndex(guess.getRoundIndex())
                 .playerDisplayName(guess.getPlayer().getDisplayName())
                 .playerSeatIndex(guess.getPlayer().getSeatIndex())
                 .artistName(guessedArtist.getName())

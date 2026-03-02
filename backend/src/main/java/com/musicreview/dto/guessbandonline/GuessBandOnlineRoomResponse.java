@@ -15,6 +15,11 @@ public class GuessBandOnlineRoomResponse {
     private String inviteToken;
     private GuessBandRoomStatus status;
     private Integer maxAttempts;
+    private Integer totalRounds;
+    private Integer currentRound;
+    private Boolean timedMode;
+    private Integer roundTimeLimitSeconds;
+    private LocalDateTime roundStartedAt;
     private Long questionBankId;
     private String questionBankName;
     private LocalDateTime startedAt;

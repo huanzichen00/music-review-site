@@ -6,11 +6,13 @@ import {
   Card,
   Col,
   Input,
+  InputNumber,
   List,
   Row,
   Select,
   Space,
   Spin,
+  Switch,
   Table,
   Tag,
   Typography,
@@ -38,6 +40,13 @@ const isPlayableArtist = (artist) =>
   );
 
 const tokenStorageKey = (roomCode) => `guess-band-online-token:${roomCode}`;
+
+const formatCountdown = (seconds) => {
+  const safeSeconds = Math.max(0, Number(seconds) || 0);
+  const min = Math.floor(safeSeconds / 60);
+  const sec = safeSeconds % 60;
+  return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+};
 
 const styles = {
   board: {
@@ -90,8 +99,12 @@ const GuessBandOnline = () => {
   const [joinDisplayName, setJoinDisplayName] = useState(user?.username || '');
   const [roomInput, setRoomInput] = useState('');
   const [bankOptions, setBankOptions] = useState([{ value: 'default', label: '默认题库' }]);
+  const [bankItemCountMap, setBankItemCountMap] = useState({});
   const [selectedBank, setSelectedBank] = useState('default');
   const [maxAttempts, setMaxAttempts] = useState(10);
+  const [totalRounds, setTotalRounds] = useState(3);
+  const [timedMode, setTimedMode] = useState(false);
+  const [roundTimeLimitSeconds, setRoundTimeLimitSeconds] = useState(60);
 
   const [artists, setArtists] = useState([]);
   const [records, setRecords] = useState([]);
@@ -100,16 +113,7 @@ const GuessBandOnline = () => {
   const [playerToken, setPlayerToken] = useState('');
   const [room, setRoom] = useState(null);
   const [guessArtistId, setGuessArtistId] = useState(null);
-
-  const meIsHost = useMemo(() => {
-    if (!room || !playerToken) return false;
-    const me = room.players?.find((p) => p.host && p.displayName);
-    const hasInvite = Boolean(room.inviteToken);
-    if (!hasInvite) {
-      return false;
-    }
-    return Boolean(me);
-  }, [room, playerToken]);
+  const [countdownTick, setCountdownTick] = useState(0);
 
   const inviteLink = useMemo(() => {
     if (!room?.inviteToken) {
@@ -127,6 +131,28 @@ const GuessBandOnline = () => {
     if (!room) return false;
     return room.status === 'IN_PROGRESS';
   }, [room]);
+
+  const currentBankBandCount = useMemo(() => {
+    if (!room) return null;
+    if (!room.questionBankId) {
+      return artists.length;
+    }
+    const count = bankItemCountMap[room.questionBankId];
+    return Number.isFinite(count) ? count : null;
+  }, [room, artists.length, bankItemCountMap]);
+
+  const remainingSeconds = useMemo(() => {
+    if (!room || room.status !== 'IN_PROGRESS' || !room.timedMode || !room.roundStartedAt || !room.roundTimeLimitSeconds) {
+      return null;
+    }
+    const started = new Date(room.roundStartedAt).getTime();
+    if (Number.isNaN(started)) {
+      return null;
+    }
+    const deadline = started + room.roundTimeLimitSeconds * 1000;
+    const remain = Math.ceil((deadline - Date.now()) / 1000);
+    return Math.max(0, remain);
+  }, [room, countdownTick]);
 
   const themedBoardStyles = useMemo(() => {
     if (isDark) {
@@ -230,6 +256,13 @@ const GuessBandOnline = () => {
           })),
         ];
         setBankOptions(nextOptions);
+        const nextCountMap = {};
+        [...mineBanks, ...filteredPublicBanks].forEach((bank) => {
+          if (bank?.id != null) {
+            nextCountMap[bank.id] = Number(bank.itemCount || 0);
+          }
+        });
+        setBankItemCountMap(nextCountMap);
       } catch (error) {
         message.error(error?.response?.data?.error || '加载联机数据失败');
       } finally {
@@ -259,6 +292,14 @@ const GuessBandOnline = () => {
 
     return () => clearInterval(timer);
   }, [roomCode, playerToken]);
+
+  useEffect(() => {
+    if (!room || room.status !== 'IN_PROGRESS' || !room.timedMode) return undefined;
+    const timer = setInterval(() => {
+      setCountdownTick((v) => v + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [room]);
 
   const mapBankValueToId = (value) => {
     if (!value || value === 'default') {
@@ -290,6 +331,29 @@ const GuessBandOnline = () => {
     }
   };
 
+  const copyText = async (text) => {
+    if (!text) return false;
+    if (navigator?.clipboard?.writeText && window?.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-9999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    let success = false;
+    try {
+      success = document.execCommand('copy');
+    } finally {
+      document.body.removeChild(textArea);
+    }
+    return success;
+  };
+
   const handleCreateRoom = async () => {
     if (!displayName.trim()) {
       message.warning('请输入你的显示名');
@@ -301,6 +365,9 @@ const GuessBandOnline = () => {
         displayName: displayName.trim(),
         questionBankId: mapBankValueToId(selectedBank),
         maxAttempts,
+        totalRounds,
+        timedMode,
+        roundTimeLimitSeconds: timedMode ? roundTimeLimitSeconds : null,
       });
       applyJoinResult(res);
       message.success('房间已创建');
@@ -400,8 +467,12 @@ const GuessBandOnline = () => {
   const copyRoomCode = async () => {
     if (!room?.roomCode) return;
     try {
-      await navigator.clipboard.writeText(room.roomCode);
-      message.success('房间号已复制');
+      const copied = await copyText(room.roomCode);
+      if (copied) {
+        message.success('房间号已复制');
+      } else {
+        message.info(`房间号：${room.roomCode}`);
+      }
     } catch {
       message.info(`房间号：${room.roomCode}`);
     }
@@ -410,8 +481,12 @@ const GuessBandOnline = () => {
   const copyInviteLink = async () => {
     if (!inviteLink) return;
     try {
-      await navigator.clipboard.writeText(inviteLink);
-      message.success('邀请链接已复制');
+      const copied = await copyText(inviteLink);
+      if (copied) {
+        message.success('邀请链接已复制');
+      } else {
+        message.info(inviteLink);
+      }
     } catch {
       message.info(inviteLink);
     }
@@ -455,14 +530,52 @@ const GuessBandOnline = () => {
                   placeholder="你的显示名"
                 />
                 <Select value={selectedBank} options={bankOptions} onChange={setSelectedBank} />
-                <Input
-                  type="number"
+                <InputNumber
                   value={maxAttempts}
                   min={1}
                   max={30}
-                  onChange={(e) => setMaxAttempts(Number(e.target.value || 10))}
-                  placeholder="最大尝试次数"
+                  precision={0}
+                  controls
+                  style={{ width: '100%' }}
+                  onChange={(value) => {
+                    if (value == null) return;
+                    setMaxAttempts(value);
+                  }}
+                  placeholder="每轮最大猜测次数"
                 />
+                <InputNumber
+                  value={totalRounds}
+                  min={1}
+                  max={10}
+                  precision={0}
+                  controls
+                  style={{ width: '100%' }}
+                  onChange={(value) => {
+                    if (value == null) return;
+                    setTotalRounds(value);
+                  }}
+                  placeholder="总轮数"
+                />
+                <Space align="center">
+                  <Switch checked={timedMode} onChange={setTimedMode} />
+                  <Text>启用每轮限时</Text>
+                </Space>
+                {timedMode ? (
+                  <InputNumber
+                    value={roundTimeLimitSeconds}
+                    min={10}
+                    max={300}
+                    precision={0}
+                    controls
+                    addonAfter="秒"
+                    style={{ width: '100%' }}
+                    onChange={(value) => {
+                      if (value == null) return;
+                      setRoundTimeLimitSeconds(value);
+                    }}
+                    placeholder="每轮时限（秒）"
+                  />
+                ) : null}
                 <Button type="primary" loading={creating} onClick={handleCreateRoom}>
                   创建并进入
                 </Button>
@@ -502,10 +615,23 @@ const GuessBandOnline = () => {
               <Space wrap>
                 <Tag color="processing">房间号：{room.roomCode}</Tag>
                 <Tag color="gold">题库：{room.questionBankName || '默认题库'}</Tag>
+                <Tag color={isDark ? 'default' : 'geekblue'}>
+                  当前题库乐队：{currentBankBandCount == null ? '--' : currentBankBandCount} 支
+                </Tag>
                 <Tag color={room.status === 'FINISHED' ? 'default' : room.status === 'IN_PROGRESS' ? 'success' : 'blue'}>
                   状态：{room.status}
                 </Tag>
+                <Tag color="purple">
+                  轮次：{room.currentRound || 0}/{room.totalRounds || 1}
+                </Tag>
                 <Tag>每人上限：{room.maxAttempts} 次</Tag>
+                {room.timedMode ? (
+                  <Tag color={remainingSeconds != null && remainingSeconds <= 10 ? 'red' : 'cyan'}>
+                    倒计时：{remainingSeconds == null ? '--:--' : formatCountdown(remainingSeconds)}
+                  </Tag>
+                ) : (
+                  <Tag>不限时</Tag>
+                )}
                 <Button size="small" icon={<CopyOutlined />} onClick={copyRoomCode}>
                   复制房间号
                 </Button>
@@ -525,6 +651,7 @@ const GuessBandOnline = () => {
                     <Space>
                       <Tag color={p.host ? 'purple' : 'geekblue'}>{p.host ? '房主' : '玩家'}</Tag>
                       <Text>{p.displayName}</Text>
+                      <Text type="secondary">得分 {p.score ?? 0}</Text>
                       <Text type="secondary">已猜 {p.guessCount}/{room.maxAttempts}</Text>
                     </Space>
                   </List.Item>
@@ -625,7 +752,9 @@ const GuessBandOnline = () => {
                                 </span>
                               </Space>
                             </td>
-                            <td style={themedBoardStyles.tdBase}>{guess.artistName}</td>
+                            <td style={themedBoardStyles.tdBase}>
+                              R{guess.roundIndex || '-'} · {guess.artistName}
+                            </td>
                             <td style={{ ...themedBoardStyles.tdBase, ...getCellStyleByTheme(guess.regionState) }}>
                               {guess.regionValue}
                             </td>

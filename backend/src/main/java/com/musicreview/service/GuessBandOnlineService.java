@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
 public class GuessBandOnlineService {
 
     private static final int DEFAULT_MAX_ATTEMPTS = 10;
+    private static final int DEFAULT_TOTAL_ROUNDS = 1;
+    private static final int DEFAULT_ROUND_TIME_LIMIT_SECONDS = 60;
     private static final int MAX_PLAYERS = 2;
 
     private final GuessBandOnlineRoomRepository roomRepository;
@@ -34,6 +36,11 @@ public class GuessBandOnlineService {
     public GuessBandOnlineJoinResponse createRoom(GuessBandOnlineCreateRoomRequest request) {
         String displayName = normalizeDisplayName(request.getDisplayName());
         int maxAttempts = request.getMaxAttempts() == null ? DEFAULT_MAX_ATTEMPTS : request.getMaxAttempts();
+        int totalRounds = request.getTotalRounds() == null ? DEFAULT_TOTAL_ROUNDS : request.getTotalRounds();
+        boolean timedMode = Boolean.TRUE.equals(request.getTimedMode());
+        Integer roundTimeLimitSeconds = timedMode
+                ? (request.getRoundTimeLimitSeconds() == null ? DEFAULT_ROUND_TIME_LIMIT_SECONDS : request.getRoundTimeLimitSeconds())
+                : null;
 
         User ownerUser = getCurrentUserOrNull();
         QuestionBank selectedBank = resolveQuestionBankForCreate(request.getQuestionBankId(), ownerUser);
@@ -50,6 +57,10 @@ public class GuessBandOnlineService {
                 .ownerUser(ownerUser)
                 .ownerPlayerToken(ownerPlayerToken)
                 .maxAttempts(maxAttempts)
+                .totalRounds(totalRounds)
+                .currentRound(0)
+                .timedMode(timedMode)
+                .roundTimeLimitSeconds(roundTimeLimitSeconds)
                 .build();
 
         GuessBandOnlineRoom savedRoom = roomRepository.save(room);
@@ -61,6 +72,7 @@ public class GuessBandOnlineService {
                 .displayName(displayName)
                 .seatIndex(1)
                 .ready(true)
+                .score(0)
                 .lastSeenAt(LocalDateTime.now())
                 .build();
         playerRepository.save(ownerPlayer);
@@ -101,6 +113,7 @@ public class GuessBandOnlineService {
                 .displayName(displayName)
                 .seatIndex(nextSeat)
                 .ready(true)
+                .score(0)
                 .lastSeenAt(LocalDateTime.now())
                 .build();
         playerRepository.save(player);
@@ -134,45 +147,51 @@ public class GuessBandOnlineService {
             throw new RuntimeException("No playable artists in selected question bank");
         }
 
-        Artist targetArtist = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
-        room.setTargetArtist(targetArtist);
         room.setStatus(GuessBandRoomStatus.IN_PROGRESS);
         room.setStartedAt(LocalDateTime.now());
         room.setFinishedAt(null);
+        room.setCurrentRound(0);
+        room.setTargetArtist(null);
+        room.setRoundStartedAt(null);
         roomRepository.save(room);
 
         for (GuessBandOnlinePlayer player : players) {
             player.setReady(true);
+            player.setScore(0);
             player.setLastSeenAt(LocalDateTime.now());
         }
         playerRepository.saveAll(players);
 
+        startRound(room, 1, candidates);
         return buildRoomResponse(room, request.getPlayerToken());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public GuessBandOnlineRoomResponse getRoomState(String roomCode, String playerToken) {
         GuessBandOnlineRoom room = findRoomByCode(roomCode);
         requirePlayer(room, playerToken);
+        maybeAdvanceRoundOnTimeout(room);
         return buildRoomResponse(room, playerToken);
     }
 
     @Transactional
     public GuessBandOnlineRoomResponse submitGuess(String roomCode, GuessBandOnlineGuessRequest request) {
         GuessBandOnlineRoom room = findRoomByCode(roomCode);
+        maybeAdvanceRoundOnTimeout(room);
+
         if (room.getStatus() != GuessBandRoomStatus.IN_PROGRESS) {
             throw new RuntimeException("Room is not in progress");
         }
-        if (room.getTargetArtist() == null) {
+        if (room.getTargetArtist() == null || room.getCurrentRound() == null || room.getCurrentRound() < 1) {
             throw new RuntimeException("Target artist is not ready");
         }
 
         GuessBandOnlinePlayer player = requirePlayer(room, request.getPlayerToken());
         player.setLastSeenAt(LocalDateTime.now());
 
-        int usedAttempts = guessRepository.countByRoomIdAndPlayerId(room.getId(), player.getId());
+        int usedAttempts = guessRepository.countByRoomIdAndPlayerIdAndRoundIndex(room.getId(), player.getId(), room.getCurrentRound());
         if (usedAttempts >= room.getMaxAttempts()) {
-            throw new RuntimeException("No attempts left for this player");
+            throw new RuntimeException("No attempts left for this round");
         }
 
         Artist guessedArtist = artistRepository.findById(request.getArtistId())
@@ -184,14 +203,19 @@ public class GuessBandOnlineService {
                 .room(room)
                 .player(player)
                 .guessedArtist(guessedArtist)
+                .targetArtist(room.getTargetArtist())
+                .roundIndex(room.getCurrentRound())
                 .correct(correct)
                 .build();
         guessRepository.save(guess);
 
+        List<GuessBandOnlinePlayer> players = playerRepository.findByRoomIdOrderBySeatIndexAsc(room.getId());
         if (correct) {
-            finishRoom(room, player.getDisplayName());
+            player.setScore((player.getScore() == null ? 0 : player.getScore()) + 1);
+            playerRepository.save(player);
+            advanceRoundOrFinish(room, players);
         } else {
-            maybeFinishIfAllAttemptsUsed(room);
+            maybeAdvanceIfAllAttemptsUsedCurrentRound(room, players);
         }
 
         return buildRoomResponse(room, request.getPlayerToken());
@@ -303,35 +327,131 @@ public class GuessBandOnlineService {
                 && artist.getStatus() != null;
     }
 
-    private void maybeFinishIfAllAttemptsUsed(GuessBandOnlineRoom room) {
-        List<GuessBandOnlinePlayer> players = playerRepository.findByRoomIdOrderBySeatIndexAsc(room.getId());
+    private void maybeAdvanceIfAllAttemptsUsedCurrentRound(GuessBandOnlineRoom room, List<GuessBandOnlinePlayer> players) {
+        Integer currentRound = room.getCurrentRound();
+        if (currentRound == null || currentRound < 1) {
+            return;
+        }
+
         boolean allUsed = players.stream()
-                .allMatch(player -> guessRepository.countByRoomIdAndPlayerId(room.getId(), player.getId()) >= room.getMaxAttempts());
+                .allMatch(player -> guessRepository.countByRoomIdAndPlayerIdAndRoundIndex(
+                        room.getId(),
+                        player.getId(),
+                        currentRound
+                ) >= room.getMaxAttempts());
 
         if (allUsed) {
-            finishRoom(room, null);
+            advanceRoundOrFinish(room, players);
         }
     }
 
-    private void finishRoom(GuessBandOnlineRoom room, String winnerDisplayName) {
+    private void maybeAdvanceRoundOnTimeout(GuessBandOnlineRoom room) {
+        if (room.getStatus() != GuessBandRoomStatus.IN_PROGRESS) {
+            return;
+        }
+        if (!Boolean.TRUE.equals(room.getTimedMode())) {
+            return;
+        }
+        if (room.getRoundStartedAt() == null || room.getRoundTimeLimitSeconds() == null) {
+            return;
+        }
+
+        LocalDateTime deadline = room.getRoundStartedAt().plusSeconds(room.getRoundTimeLimitSeconds());
+        if (LocalDateTime.now().isBefore(deadline)) {
+            return;
+        }
+
+        List<GuessBandOnlinePlayer> players = playerRepository.findByRoomIdOrderBySeatIndexAsc(room.getId());
+        advanceRoundOrFinish(room, players);
+    }
+
+    private void advanceRoundOrFinish(GuessBandOnlineRoom room, List<GuessBandOnlinePlayer> players) {
+        int currentRound = room.getCurrentRound() == null ? 0 : room.getCurrentRound();
+        int totalRounds = room.getTotalRounds() == null ? DEFAULT_TOTAL_ROUNDS : room.getTotalRounds();
+
+        if (currentRound >= totalRounds) {
+            finishRoom(room, players, determineWinnerDisplayName(players));
+            return;
+        }
+
+        List<Artist> candidates = loadCandidateArtists(room.getQuestionBank());
+        if (candidates.isEmpty()) {
+            finishRoom(room, players, determineWinnerDisplayName(players));
+            return;
+        }
+
+        startRound(room, currentRound + 1, candidates);
+    }
+
+    private void startRound(GuessBandOnlineRoom room, int roundIndex, List<Artist> candidates) {
+        if (candidates.isEmpty()) {
+            throw new RuntimeException("No playable artists in selected question bank");
+        }
+
+        Artist targetArtist = pickTargetArtist(room, candidates);
+        room.setCurrentRound(roundIndex);
+        room.setTargetArtist(targetArtist);
+        room.setRoundStartedAt(LocalDateTime.now());
+        roomRepository.save(room);
+    }
+
+    private Artist pickTargetArtist(GuessBandOnlineRoom room, List<Artist> candidates) {
+        Artist previousTarget = room.getTargetArtist();
+        List<Artist> selectable = candidates;
+        if (previousTarget != null && candidates.size() > 1) {
+            selectable = candidates.stream()
+                    .filter(artist -> !Objects.equals(artist.getId(), previousTarget.getId()))
+                    .collect(Collectors.toList());
+        }
+
+        return selectable.get(ThreadLocalRandom.current().nextInt(selectable.size()));
+    }
+
+    private String determineWinnerDisplayName(List<GuessBandOnlinePlayer> players) {
+        if (players == null || players.isEmpty()) {
+            return null;
+        }
+
+        int maxScore = players.stream()
+                .map(GuessBandOnlinePlayer::getScore)
+                .filter(Objects::nonNull)
+                .max(Integer::compareTo)
+                .orElse(0);
+
+        List<GuessBandOnlinePlayer> topPlayers = players.stream()
+                .filter(player -> Objects.equals(player.getScore(), maxScore))
+                .collect(Collectors.toList());
+
+        if (topPlayers.size() != 1) {
+            return null;
+        }
+        return topPlayers.get(0).getDisplayName();
+    }
+
+    private void finishRoom(GuessBandOnlineRoom room, List<GuessBandOnlinePlayer> players, String winnerDisplayName) {
         if (room.getStatus() == GuessBandRoomStatus.FINISHED) {
             return;
         }
 
+        List<GuessBandOnlinePlayer> safePlayers = players == null
+                ? playerRepository.findByRoomIdOrderBySeatIndexAsc(room.getId())
+                : players;
+
         room.setStatus(GuessBandRoomStatus.FINISHED);
         room.setFinishedAt(LocalDateTime.now());
+        room.setTargetArtist(null);
+        room.setRoundStartedAt(null);
         roomRepository.save(room);
 
-        List<GuessBandOnlinePlayer> players = playerRepository.findByRoomIdOrderBySeatIndexAsc(room.getId());
         int totalGuesses = guessRepository.countByRoomId(room.getId());
 
-        String hostDisplayName = players.stream()
+        String hostDisplayName = safePlayers.stream()
                 .filter(player -> Objects.equals(player.getPlayerToken(), room.getOwnerPlayerToken()))
                 .map(GuessBandOnlinePlayer::getDisplayName)
                 .findFirst()
                 .orElse("Host");
 
-        String guestDisplayName = players.stream()
+        String guestDisplayName = safePlayers.stream()
                 .filter(player -> !Objects.equals(player.getPlayerToken(), room.getOwnerPlayerToken()))
                 .map(GuessBandOnlinePlayer::getDisplayName)
                 .findFirst()
@@ -353,30 +473,34 @@ public class GuessBandOnlineService {
     private GuessBandOnlineRoomResponse buildRoomResponse(GuessBandOnlineRoom room, String playerToken) {
         List<GuessBandOnlinePlayer> players = playerRepository.findByRoomIdOrderBySeatIndexAsc(room.getId());
         Map<Long, Integer> guessCountByPlayer = new HashMap<>();
+        Integer currentRound = room.getCurrentRound();
         for (GuessBandOnlinePlayer player : players) {
-            int count = guessRepository.countByRoomIdAndPlayerId(room.getId(), player.getId());
+            int count;
+            if (room.getStatus() == GuessBandRoomStatus.IN_PROGRESS && currentRound != null && currentRound > 0) {
+                count = guessRepository.countByRoomIdAndPlayerIdAndRoundIndex(room.getId(), player.getId(), currentRound);
+            } else {
+                count = guessRepository.countByRoomIdAndPlayerId(room.getId(), player.getId());
+            }
             guessCountByPlayer.put(player.getId(), count);
         }
 
         List<GuessBandOnlineGuess> guesses = guessRepository.findByRoomIdOrderByCreatedAtAsc(room.getId());
-
-        String winnerDisplayName = guesses.stream()
-                .filter(GuessBandOnlineGuess::getCorrect)
-                .map(GuessBandOnlineGuess::getPlayer)
-                .map(GuessBandOnlinePlayer::getDisplayName)
-                .findFirst()
-                .orElse(null);
 
         return GuessBandOnlineRoomResponse.builder()
                 .roomCode(room.getRoomCode())
                 .inviteToken(Objects.equals(room.getOwnerPlayerToken(), playerToken) ? room.getInviteToken() : null)
                 .status(room.getStatus())
                 .maxAttempts(room.getMaxAttempts())
+                .totalRounds(room.getTotalRounds())
+                .currentRound(room.getCurrentRound())
+                .timedMode(room.getTimedMode())
+                .roundTimeLimitSeconds(room.getRoundTimeLimitSeconds())
+                .roundStartedAt(room.getRoundStartedAt())
                 .questionBankId(room.getQuestionBank() != null ? room.getQuestionBank().getId() : null)
                 .questionBankName(room.getQuestionBank() != null ? room.getQuestionBank().getName() : "默认题库")
                 .startedAt(room.getStartedAt())
                 .finishedAt(room.getFinishedAt())
-                .winnerDisplayName(winnerDisplayName)
+                .winnerDisplayName(room.getStatus() == GuessBandRoomStatus.FINISHED ? determineWinnerDisplayName(players) : null)
                 .players(players.stream()
                         .map(player -> GuessBandOnlineRoomPlayerResponse.fromEntity(
                                 player,
@@ -385,7 +509,7 @@ public class GuessBandOnlineService {
                         ))
                         .collect(Collectors.toList()))
                 .guesses(guesses.stream()
-                        .map(guess -> GuessBandOnlineRoomGuessResponse.fromEntity(guess, room.getTargetArtist()))
+                        .map(GuessBandOnlineRoomGuessResponse::fromEntity)
                         .collect(Collectors.toList()))
                 .build();
     }

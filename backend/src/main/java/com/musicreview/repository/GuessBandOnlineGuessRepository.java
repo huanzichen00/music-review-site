@@ -14,4 +14,8 @@ public interface GuessBandOnlineGuessRepository extends JpaRepository<GuessBandO
     int countByRoomId(Long roomId);
 
     int countByRoomIdAndPlayerId(Long roomId, Long playerId);
+
+    int countByRoomIdAndPlayerIdAndRoundIndex(Long roomId, Long playerId, Integer roundIndex);
+
+    int countByRoomIdAndRoundIndex(Long roomId, Integer roundIndex);
 }
