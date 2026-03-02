@@ -483,14 +483,17 @@ const GuessBandBanks = () => {
                     height: 520,
                     ...(isDark ? { background: '#171719', color: '#E5E7EB', borderColor: '#2F2F33' } : {}),
                   }}
+                  footer={(listProps) =>
+                    listProps?.direction === 'right' ? (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 10px' }}>
+                        <Button type="primary" icon={<SaveOutlined />} onClick={handleSaveItems} loading={savingItems}>
+                          保存题目
+                        </Button>
+                      </div>
+                    ) : null
+                  }
                   oneWay
                 />
-              </div>
-
-              <div style={{ marginTop: 12 }}>
-                <Button type="primary" icon={<SaveOutlined />} onClick={handleSaveItems} loading={savingItems}>
-                  保存题目
-                </Button>
               </div>
             </>
           )}
