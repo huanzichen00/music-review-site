@@ -11,6 +11,7 @@ public class GuessBandOnlineRoomPlayerResponse {
     private Long id;
     private Integer seatIndex;
     private String displayName;
+    private String avatarUrl;
     private Boolean ready;
     private Integer guessCount;
     private Boolean host;
@@ -24,6 +25,7 @@ public class GuessBandOnlineRoomPlayerResponse {
                 .id(player.getId())
                 .seatIndex(player.getSeatIndex())
                 .displayName(player.getDisplayName())
+                .avatarUrl(player.getUser() != null ? player.getUser().getAvatarUrl() : null)
                 .ready(player.getReady())
                 .guessCount(guessCount)
                 .host(host)

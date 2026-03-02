@@ -385,7 +385,7 @@ public class GuessBandOnlineService {
                         ))
                         .collect(Collectors.toList()))
                 .guesses(guesses.stream()
-                        .map(GuessBandOnlineRoomGuessResponse::fromEntity)
+                        .map(guess -> GuessBandOnlineRoomGuessResponse.fromEntity(guess, room.getTargetArtist()))
                         .collect(Collectors.toList()))
                 .build();
     }

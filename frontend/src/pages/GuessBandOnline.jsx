@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  Avatar,
   Button,
   Card,
   Col,
@@ -22,6 +23,7 @@ import { questionBanksApi } from '../api/questionBanks';
 import { artistsApi } from '../api/artists';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { resolveAvatarUrl } from '../utils/avatar';
 
 const { Title, Text } = Typography;
 
@@ -36,6 +38,41 @@ const isPlayableArtist = (artist) =>
   );
 
 const tokenStorageKey = (roomCode) => `guess-band-online-token:${roomCode}`;
+
+const styles = {
+  board: {
+    marginTop: 10,
+    background: 'linear-gradient(180deg, #2A1425 0%, #31192D 100%)',
+    borderRadius: 14,
+    padding: 10,
+    border: '1px solid #57314D',
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'separate',
+    borderSpacing: '6px',
+    tableLayout: 'fixed',
+  },
+  th: {
+    background: '#4B3544',
+    color: '#F5ECF1',
+    padding: '12px 8px',
+    textAlign: 'center',
+    fontWeight: 700,
+    fontSize: 13,
+    borderRadius: 8,
+    letterSpacing: '0.4px',
+  },
+  tdBase: {
+    padding: '12px 8px',
+    textAlign: 'center',
+    borderRadius: 8,
+    color: '#F7F1F5',
+    fontWeight: 600,
+    fontSize: 13,
+    background: '#2B1627',
+  },
+};
 
 const GuessBandOnline = () => {
   const { isAuthenticated, user } = useAuth();
@@ -90,6 +127,54 @@ const GuessBandOnline = () => {
     if (!room) return false;
     return room.status === 'IN_PROGRESS';
   }, [room]);
+
+  const themedBoardStyles = useMemo(() => {
+    if (isDark) {
+      return {
+        board: {
+          ...styles.board,
+          background: 'linear-gradient(180deg, #0F0F10 0%, #141416 100%)',
+          border: '1px solid #2F2F33',
+        },
+        th: { ...styles.th, background: '#2A2A2D', color: '#E5E7EB' },
+        tdBase: { ...styles.tdBase, background: '#18181B', color: '#E5E7EB' },
+        table: styles.table,
+      };
+    }
+    if (isBlue) {
+      return {
+        board: {
+          ...styles.board,
+          background: 'linear-gradient(180deg, #10243F 0%, #142B4A 100%)',
+          border: '1px solid #2A4F82',
+        },
+        th: { ...styles.th, background: '#2B4C78', color: '#EAF1FF' },
+        tdBase: { ...styles.tdBase, background: '#122742', color: '#EDF3FF' },
+        table: styles.table,
+      };
+    }
+    return styles;
+  }, [isBlue, isDark]);
+
+  const getCellStyleByTheme = (state) => {
+    if (state === 'exact') {
+      return { background: isDark ? '#3F3F46' : isBlue ? '#245DAD' : '#2F5B42' };
+    }
+    if (state === 'close') {
+      return { background: isDark ? '#52525B' : isBlue ? '#3D79BF' : '#7A5A35' };
+    }
+    return { background: isDark ? '#18181B' : isBlue ? '#122742' : '#2B1627' };
+  };
+
+  const playersBySeat = useMemo(() => {
+    const nextMap = new Map();
+    (room?.players || []).forEach((player) => {
+      if (player.seatIndex != null) {
+        nextMap.set(player.seatIndex, player);
+      }
+    });
+    return nextMap;
+  }, [room?.players]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -332,25 +417,6 @@ const GuessBandOnline = () => {
     }
   };
 
-  const guessColumns = [
-    {
-      title: '玩家',
-      dataIndex: 'playerDisplayName',
-      key: 'playerDisplayName',
-    },
-    {
-      title: '已猜乐队',
-      dataIndex: 'artistName',
-      key: 'artistName',
-    },
-    {
-      title: '结果',
-      dataIndex: 'correct',
-      key: 'correct',
-      render: (value) => (value ? <Tag color="success">正确</Tag> : <Tag color="error">错误</Tag>),
-    },
-  ];
-
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: 60 }}>
@@ -509,13 +575,79 @@ const GuessBandOnline = () => {
                 />
               ) : null}
 
-              <Table
-                rowKey="id"
-                columns={guessColumns}
-                dataSource={room.guesses || []}
-                pagination={{ pageSize: 10 }}
-                size="small"
-              />
+              <div style={themedBoardStyles.board}>
+                <table style={themedBoardStyles.table}>
+                  <thead>
+                    <tr>
+                      <th style={{ ...themedBoardStyles.th, width: '17%' }}>PLAYER</th>
+                      <th style={{ ...themedBoardStyles.th, width: '21%' }}>BAND</th>
+                      <th style={{ ...themedBoardStyles.th, width: '12%' }}>REGION</th>
+                      <th style={{ ...themedBoardStyles.th, width: '16%' }}>GENRE</th>
+                      <th style={{ ...themedBoardStyles.th, width: '10%' }}>YEAR</th>
+                      <th style={{ ...themedBoardStyles.th, width: '10%' }}>MEM</th>
+                      <th style={{ ...themedBoardStyles.th, width: '14%' }}>STATUS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(room.guesses || []).length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={7}
+                          style={{
+                            ...themedBoardStyles.tdBase,
+                            padding: '20px 10px',
+                            color: isDark ? '#9CA3AF' : isBlue ? '#AFC4E1' : '#D2BCC8',
+                          }}
+                        >
+                          还没有历史猜测，开始第一轮吧
+                        </td>
+                      </tr>
+                    ) : (
+                      (room.guesses || []).slice().reverse().map((guess) => {
+                        const player = playersBySeat.get(guess.playerSeatIndex);
+                        return (
+                          <tr key={guess.id}>
+                            <td style={{ ...themedBoardStyles.tdBase, textAlign: 'left' }}>
+                              <Space size={8} align="center" style={{ width: '100%' }}>
+                                <Avatar
+                                  size={26}
+                                  src={resolveAvatarUrl(player?.avatarUrl)}
+                                  alt={player?.displayName || guess.playerDisplayName}
+                                />
+                                <span
+                                  style={{
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {player?.displayName || guess.playerDisplayName}
+                                </span>
+                              </Space>
+                            </td>
+                            <td style={themedBoardStyles.tdBase}>{guess.artistName}</td>
+                            <td style={{ ...themedBoardStyles.tdBase, ...getCellStyleByTheme(guess.regionState) }}>
+                              {guess.regionValue}
+                            </td>
+                            <td style={{ ...themedBoardStyles.tdBase, ...getCellStyleByTheme(guess.genreState) }}>
+                              {guess.genreValue}
+                            </td>
+                            <td style={{ ...themedBoardStyles.tdBase, ...getCellStyleByTheme(guess.yearState) }}>
+                              {guess.yearValue} {guess.yearArrow || ''}
+                            </td>
+                            <td style={{ ...themedBoardStyles.tdBase, ...getCellStyleByTheme(guess.membersState) }}>
+                              {guess.membersValue} {guess.membersArrow || ''}
+                            </td>
+                            <td style={{ ...themedBoardStyles.tdBase, ...getCellStyleByTheme(guess.statusState) }}>
+                              {guess.statusValue}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </Space>
           </Card>
         ) : null}
