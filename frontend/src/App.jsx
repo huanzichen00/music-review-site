@@ -25,6 +25,7 @@ const Messages = lazy(() => import('./pages/Messages'));
 const UserHome = lazy(() => import('./pages/UserHome'));
 const GuessBand = lazy(() => import('./pages/GuessBand'));
 const GuessBandBanks = lazy(() => import('./pages/GuessBandBanks'));
+const GuessBandOnline = lazy(() => import('./pages/GuessBandOnline'));
 
 const warmTheme = {
   token: {
@@ -150,11 +151,13 @@ function AppContent() {
                 <Route path="/music/years/:year" element={<YearDetail />} />
                 <Route path="/music/guess-band" element={<GuessBand />} />
                 <Route path="/music/guess-band/banks" element={<GuessBandBanks />} />
+                <Route path="/music/guess-band/online" element={<GuessBandOnline />} />
                 <Route path="/music/albums/:id" element={<AlbumDetail />} />
                 <Route path="/music/albums/:id/edit" element={<EditAlbum />} />
                 <Route path="/music/add-album" element={<AddAlbum />} />
                 <Route path="/guess-band" element={<GuessBand />} />
                 <Route path="/guess-band/banks" element={<GuessBandBanks />} />
+                <Route path="/guess-band/online" element={<GuessBandOnline />} />
                 <Route path="/albums" element={<Albums />} />
                 <Route path="/albums/:id" element={<AlbumDetail />} />
                 <Route path="/albums/:id/edit" element={<EditAlbum />} />

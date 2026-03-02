@@ -839,6 +839,17 @@ const GuessBand = () => {
             >
               查看所有年份
             </Button>
+            <Button
+              type="primary"
+              size="large"
+              icon={<TrophyOutlined />}
+              href="/music/guess-band/online"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={themedStyles.banksLinkButton}
+            >
+              联机模式
+            </Button>
             {isAuthenticated ? (
               <Button
                 type="primary"

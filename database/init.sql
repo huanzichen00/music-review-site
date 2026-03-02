@@ -241,6 +241,86 @@ CREATE INDEX idx_question_bank_items_bank ON question_bank_items(question_bank_i
 CREATE INDEX idx_question_bank_items_artist ON question_bank_items(artist_id);
 
 -- =====================================================
+-- 14. 猜乐队联机房间与比赛记录
+-- =====================================================
+CREATE TABLE guess_band_online_rooms (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    room_code VARCHAR(16) NOT NULL UNIQUE COMMENT '房间号',
+    invite_token VARCHAR(64) NOT NULL UNIQUE COMMENT '邀请令牌',
+    status VARCHAR(20) NOT NULL DEFAULT 'WAITING' COMMENT '状态: WAITING/IN_PROGRESS/FINISHED',
+    question_bank_id BIGINT COMMENT '题库ID，可为空(默认题库)',
+    target_artist_id BIGINT COMMENT '本局目标乐队',
+    owner_user_id BIGINT COMMENT '房主用户ID，可为空(游客)',
+    owner_player_token VARCHAR(64) NOT NULL COMMENT '房主玩家令牌',
+    max_attempts INT NOT NULL DEFAULT 10 COMMENT '每名玩家最大尝试次数',
+    started_at DATETIME COMMENT '开始时间',
+    finished_at DATETIME COMMENT '结束时间',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
+    FOREIGN KEY (question_bank_id) REFERENCES question_banks(id) ON DELETE SET NULL,
+    FOREIGN KEY (target_artist_id) REFERENCES artists(id) ON DELETE SET NULL,
+    FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL
+) COMMENT '猜乐队联机房间表';
+
+CREATE INDEX idx_guess_band_online_rooms_status ON guess_band_online_rooms(status);
+CREATE INDEX idx_guess_band_online_rooms_created_at ON guess_band_online_rooms(created_at);
+
+CREATE TABLE guess_band_online_players (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    room_id BIGINT NOT NULL COMMENT '房间ID',
+    player_token VARCHAR(64) NOT NULL COMMENT '玩家令牌',
+    user_id BIGINT COMMENT '关联用户ID，可为空(游客)',
+    display_name VARCHAR(80) NOT NULL COMMENT '显示名',
+    seat_index INT NOT NULL COMMENT '席位顺序',
+    is_ready BOOLEAN NOT NULL DEFAULT FALSE COMMENT '是否准备',
+    last_seen_at DATETIME COMMENT '最后活跃时间',
+    joined_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '加入时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
+    UNIQUE KEY uk_guess_band_room_player_token (room_id, player_token),
+    FOREIGN KEY (room_id) REFERENCES guess_band_online_rooms(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) COMMENT '猜乐队联机房间玩家表';
+
+CREATE INDEX idx_guess_band_online_players_room ON guess_band_online_players(room_id);
+CREATE INDEX idx_guess_band_online_players_user ON guess_band_online_players(user_id);
+
+CREATE TABLE guess_band_online_guesses (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    room_id BIGINT NOT NULL COMMENT '房间ID',
+    player_id BIGINT NOT NULL COMMENT '玩家ID',
+    guessed_artist_id BIGINT NOT NULL COMMENT '猜测乐队ID',
+    is_correct BOOLEAN NOT NULL COMMENT '是否猜中',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+
+    FOREIGN KEY (room_id) REFERENCES guess_band_online_rooms(id) ON DELETE CASCADE,
+    FOREIGN KEY (player_id) REFERENCES guess_band_online_players(id) ON DELETE CASCADE,
+    FOREIGN KEY (guessed_artist_id) REFERENCES artists(id) ON DELETE CASCADE
+) COMMENT '猜乐队联机猜测记录表';
+
+CREATE INDEX idx_guess_band_online_guesses_room ON guess_band_online_guesses(room_id);
+CREATE INDEX idx_guess_band_online_guesses_player ON guess_band_online_guesses(player_id);
+CREATE INDEX idx_guess_band_online_guesses_created_at ON guess_band_online_guesses(created_at);
+
+CREATE TABLE guess_band_online_match_records (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    room_code VARCHAR(16) NOT NULL COMMENT '房间号',
+    question_bank_id BIGINT COMMENT '题库ID',
+    host_display_name VARCHAR(80) NOT NULL COMMENT '房主显示名',
+    guest_display_name VARCHAR(80) NOT NULL COMMENT '客方显示名',
+    winner_display_name VARCHAR(80) COMMENT '获胜方显示名，空表示平局',
+    total_guesses INT NOT NULL DEFAULT 0 COMMENT '总猜测次数',
+    started_at DATETIME COMMENT '开始时间',
+    finished_at DATETIME COMMENT '结束时间',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+
+    FOREIGN KEY (question_bank_id) REFERENCES question_banks(id) ON DELETE SET NULL
+) COMMENT '猜乐队联机比赛记录表';
+
+CREATE INDEX idx_guess_band_online_records_created_at ON guess_band_online_match_records(created_at);
+
+-- =====================================================
 -- 初始数据: 流派
 -- =====================================================
 INSERT INTO genres (name, description) VALUES
