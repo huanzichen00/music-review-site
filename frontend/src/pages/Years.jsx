@@ -259,7 +259,19 @@ const Years = () => {
 
   return (
     <div>
-      <h1 style={themedStyles.pageTitle}>{isDark ? '浏览年份' : '🗓 浏览年份'}</h1>
+      <h1 style={themedStyles.pageTitle}>
+        {isDark ? '浏览年份' : '🗓 浏览年份'}
+        <span
+          style={{
+            marginLeft: 8,
+            fontSize: 14,
+            fontWeight: 400,
+            color: isDark ? '#9CA3AF' : '#6B7280',
+          }}
+        >
+          （点击年份可查看详细信息）
+        </span>
+      </h1>
       {loading ? (
         <div style={{ textAlign: 'center', padding: 60 }}>
           <Spin size="large" />

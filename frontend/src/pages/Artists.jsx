@@ -264,7 +264,19 @@ const Artists = () => {
 
   return (
     <div>
-      <Title level={2}>艺术家</Title>
+      <Title level={2}>
+        浏览乐队
+        <span
+          style={{
+            marginLeft: 8,
+            fontSize: 14,
+            fontWeight: 400,
+            color: isDark ? '#9CA3AF' : '#6B7280',
+          }}
+        >
+          （点击乐队名可查看详细信息）
+        </span>
+      </Title>
       
       <Card loading={loading}>
         <Row className="artists-filters" gutter={[12, 12]} style={{ marginBottom: 14 }}>
