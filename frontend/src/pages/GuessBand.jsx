@@ -844,8 +844,6 @@ const GuessBand = () => {
               size="large"
               icon={<TrophyOutlined />}
               href="/music/guess-band/online"
-              target="_blank"
-              rel="noopener noreferrer"
               style={themedStyles.banksLinkButton}
             >
               联机模式
@@ -855,8 +853,6 @@ const GuessBand = () => {
                 type="primary"
                 size="large"
                 href="/music/guess-band/banks"
-                target="_blank"
-                rel="noopener noreferrer"
                 style={themedStyles.banksLinkButton}
               >
                 管理自选题库
