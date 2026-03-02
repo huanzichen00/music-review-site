@@ -122,6 +122,13 @@ def sql_quote(value: Optional[object]) -> str:
     return f"'{s}'"
 
 
+def clamp_text(value: Optional[str], max_len: int) -> str:
+    text = (value or "").strip()
+    if len(text) <= max_len:
+        return text
+    return text[:max_len]
+
+
 def title_initial(title: str) -> str:
     if not title:
         return "#"
@@ -565,15 +572,16 @@ def insert_albums_for_artist(
 ) -> int:
     inserted = 0
     for album in candidates:
+        safe_album_title = clamp_text(album.title, 200)
         local_cover_url = None
         if not args.dry_run:
             local_cover_url = download_cover_to_local(
                 upload_root=args.upload_dir,
                 remote_url=album.remote_cover_url,
-                stable_key=f"{artist.artist_id}:{normalize_title(album.title)}:{album.mb_release_group_id}",
+                stable_key=f"{artist.artist_id}:{normalize_title(safe_album_title)}:{album.mb_release_group_id}",
                 timeout_sec=args.cover_timeout,
                 artist_name=artist.name,
-                album_title=album.title,
+                album_title=safe_album_title,
             )
 
         sql_parts = [
@@ -583,20 +591,20 @@ def insert_albums_for_artist(
             (
                 "INSERT INTO albums (title, title_initial, artist_id, release_year, cover_url, description, created_by) "
                 "SELECT "
-                f"{sql_quote(album.title)}, {sql_quote(title_initial(album.title))}, {artist.artist_id}, "
+                f"{sql_quote(safe_album_title)}, {sql_quote(title_initial(safe_album_title))}, {artist.artist_id}, "
                 f"{sql_quote(album.year)}, {sql_quote(local_cover_url)}, {sql_quote(album.description)}, NULL "
                 "FROM DUAL "
                 "WHERE NOT EXISTS ("
                 "SELECT 1 FROM albums "
                 f"WHERE artist_id = {artist.artist_id} "
-                f"AND LOWER(TRIM(title)) = LOWER(TRIM({sql_quote(album.title)}))"
+                f"AND LOWER(TRIM(title)) = LOWER(TRIM({sql_quote(safe_album_title)}))"
                 ");"
             ),
             (
                 "SET @album_id := ("
                 "SELECT id FROM albums "
                 f"WHERE artist_id = {artist.artist_id} "
-                f"AND LOWER(TRIM(title)) = LOWER(TRIM({sql_quote(album.title)})) "
+                f"AND LOWER(TRIM(title)) = LOWER(TRIM({sql_quote(safe_album_title)})) "
                 "ORDER BY id ASC LIMIT 1"
                 ");"
             ),
@@ -620,16 +628,17 @@ def insert_albums_for_artist(
         ]
 
         for track_no, title, duration in album.tracks:
+            safe_track_title = clamp_text(title, 200)
             sql_parts.append(
                 "INSERT INTO tracks (album_id, track_number, title, duration) "
                 "SELECT "
-                f"@album_id, {int(track_no)}, {sql_quote(title)}, {sql_quote(duration)} "
+                f"@album_id, {int(track_no)}, {sql_quote(safe_track_title)}, {sql_quote(duration)} "
                 "FROM DUAL "
                 "WHERE @album_id IS NOT NULL "
                 "AND NOT EXISTS ("
                 "SELECT 1 FROM tracks t "
                 "WHERE t.album_id = @album_id "
-                f"AND LOWER(TRIM(t.title)) = LOWER(TRIM({sql_quote(title)}))"
+                f"AND LOWER(TRIM(t.title)) = LOWER(TRIM({sql_quote(safe_track_title)}))"
                 ");"
             )
 
