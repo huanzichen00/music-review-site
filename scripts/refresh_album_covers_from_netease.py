@@ -99,6 +99,11 @@ def is_already_netease_local(url: str) -> bool:
     return bool(url) and "_126." in url and url.startswith(f"{PUBLIC_PREFIX}/")
 
 
+def is_already_netease_remote(url: str) -> bool:
+    u = (url or "").strip().lower()
+    return u.startswith("http") and ("music.126.net" in u or "music.126." in u)
+
+
 def netease_album_search(artist: str, album: str, timeout: float = 30.0) -> List[Dict]:
     params = urllib.parse.urlencode(
         {
@@ -197,6 +202,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Replace album covers with NetEase (126) covers when possible.")
     parser.add_argument("--limit", type=int, default=0, help="Max albums to process (0 = all)")
     parser.add_argument("--sleep", type=float, default=0.12, help="Sleep seconds between albums")
+    parser.add_argument(
+        "--write-mode",
+        choices=["local", "remote-url"],
+        default="local",
+        help="Cover write mode: local file URL or direct NetEase remote URL",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Only print planned changes")
     args = parser.parse_args()
 
@@ -214,7 +225,10 @@ def main() -> int:
         artist = str(row["artist"])
         cover_url = str(row.get("cover_url") or "")
 
-        if is_already_netease_local(cover_url):
+        if args.write_mode == "local" and is_already_netease_local(cover_url):
+            skipped += 1
+            continue
+        if args.write_mode == "remote-url" and is_already_netease_remote(cover_url):
             skipped += 1
             continue
 
@@ -227,12 +241,16 @@ def main() -> int:
                 if args.dry_run:
                     changed += 1
                 else:
-                    local = download_to_local(album_id, url)
-                    if local:
-                        update_cover(album_id, local)
+                    if args.write_mode == "remote-url":
+                        update_cover(album_id, url)
                         changed += 1
                     else:
-                        failed += 1
+                        local = download_to_local(album_id, url)
+                        if local:
+                            update_cover(album_id, local)
+                            changed += 1
+                        else:
+                            failed += 1
             if idx % 50 == 0:
                 print(f"progress {idx}/{len(albums)} changed={changed} no_match={no_match} failed={failed}")
         except Exception:
@@ -244,10 +262,9 @@ def main() -> int:
     print(f"Changed: {changed}")
     print(f"No match: {no_match}")
     print(f"Failed: {failed}")
-    print(f"Skipped(already_126): {skipped}")
+    print(f"Skipped(already_126_{args.write_mode}): {skipped}")
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
