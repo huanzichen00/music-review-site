@@ -3,6 +3,8 @@ package com.musicreview.service;
 import com.musicreview.dto.genre.GenreRequest;
 import com.musicreview.dto.genre.GenreResponse;
 import com.musicreview.entity.Genre;
+import com.musicreview.entity.User;
+import com.musicreview.repository.AlbumRepository;
 import com.musicreview.repository.GenreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,8 @@ import java.util.stream.Collectors;
 public class GenreService {
 
     private final GenreRepository genreRepository;
+    private final AlbumRepository albumRepository;
+    private final AuthService authService;
 
     /**
      * Get all genres
@@ -54,6 +58,27 @@ public class GenreService {
 
         Genre saved = genreRepository.save(genre);
         return GenreResponse.fromEntity(saved, 0);
+    }
+
+    /**
+     * Delete a genre (only allowed for user "Huan" and only if genre has no albums)
+     */
+    @Transactional
+    public void deleteGenre(Long id) {
+        User currentUser = authService.getCurrentUser();
+        if (!"Huan".equals(currentUser.getUsername())) {
+            throw new RuntimeException("Only user 'Huan' can delete genres");
+        }
+
+        Genre genre = genreRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Genre not found with id: " + id));
+
+        int albumCount = albumRepository.findByGenreId(id).size();
+        if (albumCount > 0) {
+            throw new RuntimeException("Cannot delete genre: Genre has " + albumCount + " album(s). Please remove genre from albums first.");
+        }
+
+        genreRepository.delete(genre);
     }
 
     private int getAlbumCount(Genre genre) {

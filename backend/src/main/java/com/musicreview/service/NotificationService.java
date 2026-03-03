@@ -61,12 +61,17 @@ public class NotificationService {
             return;
         }
 
+        String replyContent = reply.getContent() == null ? "" : reply.getContent().trim();
+        if (replyContent.length() > 500) {
+            replyContent = replyContent.substring(0, 500) + "...";
+        }
+
         Notification notification = Notification.builder()
                 .user(postOwner)
                 .senderUser(sender)
                 .type(NotificationType.BLOG_REPLY)
-                .title("你的博客收到新回复")
-                .content(sender.getUsername() + " 回复了你的文章《" + blogPost.getTitle() + "》")
+                .title(sender.getUsername() + " 回复了你的文章《" + blogPost.getTitle() + "》")
+                .content(replyContent.isBlank() ? "(空回复)" : replyContent)
                 .relatedBlogPostId(blogPost.getId())
                 .relatedBlogReplyId(reply.getId())
                 .isRead(false)
@@ -95,4 +100,3 @@ public class NotificationService {
         notificationRepository.saveAll(notifications);
     }
 }
-

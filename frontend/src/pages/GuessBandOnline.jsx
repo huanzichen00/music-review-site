@@ -540,7 +540,7 @@ const GuessBandOnline = () => {
                   max={30}
                   precision={0}
                   controls
-                  addonAfter="次/轮"
+                  addonAfter="次"
                   style={{ width: '100%' }}
                   onChange={(value) => {
                     if (value == null) return;

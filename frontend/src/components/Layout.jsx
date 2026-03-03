@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Layout as AntLayout, Menu, Button, Dropdown, Avatar, Badge, Select, Space } from 'antd';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -42,7 +42,7 @@ const Layout = ({ children }) => {
   const isBlue = theme === 'blue';
   const isDark = theme === 'dark';
 
-  useEffect(() => {
+  const refreshUnreadCount = useCallback(() => {
     if (!isAuthenticated) {
       setUnreadCount(0);
       return;
@@ -50,7 +50,17 @@ const Layout = ({ children }) => {
     notificationsApi.getUnreadCount()
       .then((res) => setUnreadCount(res?.data?.unreadCount || 0))
       .catch(() => setUnreadCount(0));
-  }, [isAuthenticated, location.pathname]);
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    refreshUnreadCount();
+  }, [refreshUnreadCount, location.pathname]);
+
+  useEffect(() => {
+    const handleNotificationUpdated = () => refreshUnreadCount();
+    window.addEventListener('notifications-updated', handleNotificationUpdated);
+    return () => window.removeEventListener('notifications-updated', handleNotificationUpdated);
+  }, [refreshUnreadCount]);
 
   const handleLogout = () => {
     logout();

@@ -21,7 +21,17 @@ const Messages = () => {
     setLoading(true);
     try {
       const res = await notificationsApi.getMine();
-      setNotifications(res.data || []);
+      const list = res.data || [];
+      setNotifications(list);
+      if (list.some((item) => !item.isRead)) {
+        try {
+          await notificationsApi.markAllRead();
+          setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
+          window.dispatchEvent(new Event('notifications-updated'));
+        } catch {
+          // keep list readable even if auto mark read fails
+        }
+      }
     } catch (error) {
       message.error(error.response?.data?.error || '加载消息失败');
     } finally {
@@ -39,27 +49,6 @@ const Messages = () => {
   }, [authLoading, isAuthenticated, loadData, navigate]);
 
   const unreadCount = notifications.filter((item) => !item.isRead).length;
-
-  const handleMarkRead = async (id) => {
-    try {
-      await notificationsApi.markRead(id);
-      setNotifications((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, isRead: true } : item))
-      );
-    } catch (error) {
-      message.error(error.response?.data?.error || '标记已读失败');
-    }
-  };
-
-  const handleMarkAllRead = async () => {
-    try {
-      await notificationsApi.markAllRead();
-      setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
-      message.success('已全部标记已读');
-    } catch (error) {
-      message.error(error.response?.data?.error || '操作失败');
-    }
-  };
 
   const handleAnnouncement = async (values) => {
     setSaving(true);
@@ -120,11 +109,6 @@ const Messages = () => {
 
       <Card
         title="我的消息"
-        extra={
-          <Button onClick={handleMarkAllRead} disabled={unreadCount === 0}>
-            全部标记已读
-          </Button>
-        }
       >
         {notifications.length === 0 ? (
           <Empty description="暂无消息" />
@@ -132,15 +116,7 @@ const Messages = () => {
           <List
             dataSource={notifications}
             renderItem={(item) => (
-              <List.Item
-                actions={[
-                  !item.isRead ? (
-                    <Button key="read" type="link" onClick={() => handleMarkRead(item.id)}>
-                      标记已读
-                    </Button>
-                  ) : null,
-                ].filter(Boolean)}
-              >
+              <List.Item>
                 <List.Item.Meta
                   title={(
                     <Space wrap>
@@ -153,7 +129,7 @@ const Messages = () => {
                   )}
                   description={(
                     <div>
-                      <Text>{item.content}</Text>
+                      <Text style={{ whiteSpace: 'pre-wrap' }}>{item.content}</Text>
                       <div style={{ marginTop: 6 }}>
                         <Text type="secondary">
                           {item.senderUsername ? `来自 ${item.senderUsername} · ` : ''}
@@ -187,4 +163,3 @@ const Messages = () => {
 };
 
 export default Messages;
-

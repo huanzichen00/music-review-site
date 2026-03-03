@@ -53,4 +53,18 @@ public class GenreController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    /**
+     * Delete a genre
+     * DELETE /api/genres/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteGenre(@PathVariable Long id) {
+        try {
+            genreService.deleteGenre(id);
+            return ResponseEntity.ok(Map.of("message", "Genre deleted successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

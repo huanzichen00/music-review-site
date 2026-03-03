@@ -18,4 +18,9 @@ export const genresApi = {
     invalidateApiCache(GENRES_ALL_CACHE_KEY);
     return res;
   },
+  delete: async (id) => {
+    const res = await api.delete(`/genres/${id}`);
+    invalidateApiCache(GENRES_ALL_CACHE_KEY);
+    return res;
+  },
 };

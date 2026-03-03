@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Card, Col, Empty, Pagination, Row, Spin, Tag, Typography, message } from 'antd';
+import { Button, Card, Col, Empty, Pagination, Popconfirm, Row, Spin, Tag, Typography, message } from 'antd';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { genresApi } from '../api/genres';
 import { albumsApi } from '../api/albums';
 import { artistsApi } from '../api/artists';
 import AlbumCard from '../components/AlbumCard';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { isRequestCanceled } from '../utils/http';
 
 const { Title, Text, Paragraph } = Typography;
@@ -45,6 +47,7 @@ const splitGenres = (value) =>
 const GenreDetail = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const { user } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
   const [genre, setGenre] = useState(null);
@@ -55,6 +58,7 @@ const GenreDetail = () => {
   const [albumPage, setAlbumPage] = useState(1);
   const BAND_PAGE_SIZE = 24;
   const ALBUM_PAGE_SIZE = 24;
+  const canManage = user?.username === 'Huan';
   const themedStyles = useMemo(() => {
     if (!isDark) {
       return styles;
@@ -167,7 +171,30 @@ const GenreDetail = () => {
 
   return (
     <div>
-      <h1 style={themedStyles.title}>{isDark ? genre.name : `🎼 ${genre.name}`}</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        <h1 style={{ ...themedStyles.title, marginBottom: 0 }}>{isDark ? genre.name : `🎼 ${genre.name}`}</h1>
+        {canManage ? (
+          <Popconfirm
+            title="删除风格"
+            description={`确定删除风格“${genre.name}”吗？`}
+            icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
+            onConfirm={async () => {
+              try {
+                await genresApi.delete(genre.id);
+                message.success('风格删除成功');
+                navigate('/music/genres');
+              } catch (error) {
+                message.error(error?.response?.data?.error || '删除风格失败');
+              }
+            }}
+            okText="确定"
+            cancelText="取消"
+            okButtonProps={{ danger: true }}
+          >
+            <Button danger>删除风格</Button>
+          </Popconfirm>
+        ) : null}
+      </div>
       <Paragraph style={{ color: isDark ? '#9CA3AF' : '#5D4037' }}>{genre.description || '暂无风格描述'}</Paragraph>
       <Tag color={isDark ? 'default' : 'gold'}>{albums.length} 张专辑</Tag>
       <Tag color={isDark ? 'default' : 'processing'}>{bands.length} 支乐队</Tag>
