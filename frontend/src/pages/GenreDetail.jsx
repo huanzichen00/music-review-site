@@ -40,7 +40,7 @@ const normalizeGenre = (value) =>
 
 const splitGenres = (value) =>
   String(value || '')
-    .split(/[\/|,&，、;；]+/)
+    .split(/[/|,&，、;；]+/)
     .map((part) => normalizeGenre(part))
     .filter(Boolean);
 

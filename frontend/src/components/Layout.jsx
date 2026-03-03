@@ -53,7 +53,9 @@ const Layout = ({ children }) => {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    refreshUnreadCount();
+    Promise.resolve().then(() => {
+      refreshUnreadCount();
+    });
   }, [refreshUnreadCount, location.pathname]);
 
   useEffect(() => {

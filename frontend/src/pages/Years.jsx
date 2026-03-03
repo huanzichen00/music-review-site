@@ -29,7 +29,6 @@ const Years = () => {
   const [years, setYears] = useState([]);
   const [albumCountByYear, setAlbumCountByYear] = useState(new Map());
   const [formedBandCountByYear, setFormedBandCountByYear] = useState(new Map());
-  const [yearCoverByYear, setYearCoverByYear] = useState(new Map());
   const [yearKeyword, setYearKeyword] = useState('');
   const [minAlbumCount, setMinAlbumCount] = useState(undefined);
   const [minFormedBandCount, setMinFormedBandCount] = useState(undefined);
@@ -70,7 +69,6 @@ const Years = () => {
       setYears(summary.years || []);
       setAlbumCountByYear(new Map(Object.entries(summary.albumCountByYear || {}).map(([k, v]) => [Number(k), v])));
       setFormedBandCountByYear(new Map(Object.entries(summary.formedBandCountByYear || {}).map(([k, v]) => [Number(k), v])));
-      setYearCoverByYear(new Map(Object.entries(summary.yearCoverByYear || {}).map(([k, v]) => [Number(k), v])));
       setAlbumNameIndexByYear(
         new Map(Object.entries(summary.albumNameIndexByYear || {}).map(([k, v]) => [Number(k), v]))
       );
@@ -100,16 +98,12 @@ const Years = () => {
         const sortedYears = (yearsRes.data || []).slice().sort((a, b) => b - a);
         const allAlbums = albumsRes.data || [];
         const albumCountByYearObj = {};
-        const yearCoverByYearObj = {};
         const albumNamesByYear = {};
         const albumNameSet = new Set();
         allAlbums.forEach((album) => {
           if (!album?.releaseYear) return;
           const year = Number(album.releaseYear);
           albumCountByYearObj[year] = (albumCountByYearObj[year] || 0) + 1;
-          if (!yearCoverByYearObj[year] && album.coverUrl) {
-            yearCoverByYearObj[year] = album.coverUrl;
-          }
           if (!albumNamesByYear[year]) {
             albumNamesByYear[year] = [];
           }
@@ -149,7 +143,6 @@ const Years = () => {
           years: sortedYears,
           albumCountByYear: albumCountByYearObj,
           formedBandCountByYear: formedBandCountByYearObj,
-          yearCoverByYear: yearCoverByYearObj,
           albumNameIndexByYear: albumNameIndexByYearObj,
           bandNameIndexByYear: bandNameIndexByYearObj,
           albumNameOptions: albumNameOptionsList,
