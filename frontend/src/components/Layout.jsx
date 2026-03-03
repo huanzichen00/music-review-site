@@ -205,8 +205,8 @@ const Layout = ({ children }) => {
             display: 'inline-flex',
             flexDirection: 'column',
           }}>
-            <span>Blog</span>
-            <span>For Everyone</span>
+            <span>Music</span>
+            <span>Review</span>
           </Link>
           <Menu
             mode="horizontal"
