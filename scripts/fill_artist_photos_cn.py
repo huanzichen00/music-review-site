@@ -10,15 +10,16 @@ import urllib.request
 from pathlib import Path
 
 
-MYSQL_HOST = "127.0.0.1"
-MYSQL_PORT = "3306"
-MYSQL_USER = "root"
-MYSQL_PASS = "Huanzc304"
-MYSQL_DB = "music_review"
+MYSQL_HOST = os.getenv("MYSQL_HOST", "127.0.0.1")
+MYSQL_PORT = os.getenv("MYSQL_PORT", "3306")
+MYSQL_USER = os.getenv("MYSQL_USER", "root")
+MYSQL_PASS = os.getenv("MYSQL_PASS", "Huanzc304")
+MYSQL_DB = os.getenv("MYSQL_DB", "music_review")
 
 NETEASE_SEARCH = "https://music.163.com/api/search/get"
 UPLOAD_DIR = Path("/opt/music-review/uploads/avatars")
 PUBLIC_URL_PREFIX = "/api/files/avatars"
+HTTP_TIMEOUT = float(os.getenv("HTTP_TIMEOUT", "12"))
 
 
 def sql_quote(value):
@@ -64,7 +65,7 @@ def http_json(url):
             "User-Agent": "Mozilla/5.0",
         },
     )
-    with urllib.request.urlopen(req, timeout=30) as resp:
+    with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 
@@ -111,6 +112,20 @@ def pick_best_artist(name, candidates):
     return best
 
 
+def match_quality(target_name, candidate):
+    target = normalize_text(target_name)
+    cname = candidate.get("name") or ""
+    c_alias = " ".join(candidate.get("alias") or [])
+    cnorm = normalize_text(cname)
+    anorm = normalize_text(c_alias)
+
+    if target and (cnorm == target or anorm == target):
+        return "exact"
+    if target and ((target in cnorm or cnorm in target) or (anorm and (target in anorm or anorm in target))):
+        return "partial"
+    return "weak"
+
+
 def file_extension_from_url(url):
     path = urllib.parse.urlparse(url).path.lower()
     if path.endswith(".png"):
@@ -140,7 +155,7 @@ def download_image(url, artist_id):
             "User-Agent": "Mozilla/5.0",
         },
     )
-    with urllib.request.urlopen(req, timeout=30) as resp:
+    with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT) as resp:
         data = resp.read()
     if not data:
         return None
@@ -219,13 +234,18 @@ def main():
                 skipped.append((artist["name"], "no high-confidence match"))
                 continue
 
+            quality = match_quality(artist["name"], best)
+            if quality == "weak":
+                skipped.append((artist["name"], f"weak match -> {best.get('name', '')}"))
+                continue
+
             pic_url = (best.get("picUrl") or "").strip()
             if not pic_url:
                 skipped.append((artist["name"], "matched but no picUrl"))
                 continue
 
             if args.dry_run:
-                print(f"[DRY] {artist['name']} -> {pic_url}")
+                print(f"[DRY][{quality}] {artist['name']} -> {best.get('name', '')} -> {pic_url}")
                 ok += 1
                 continue
 
@@ -237,7 +257,7 @@ def main():
             local_url = f"{PUBLIC_URL_PREFIX}/{filename}"
             update_artist_photo(artist["id"], local_url)
             ok += 1
-            print(f"[OK] {artist['name']} -> {local_url}")
+            print(f"[OK][{quality}] {artist['name']} -> {best.get('name', '')} -> {local_url}")
         except Exception as exc:
             failed.append((artist["name"], str(exc)))
         finally:
