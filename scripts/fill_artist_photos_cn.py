@@ -149,8 +149,13 @@ def download_image(url, artist_id):
     return filename
 
 
-def get_artists(limit=None, only_missing=True):
-    where_sql = "WHERE a.photo_url IS NULL OR TRIM(a.photo_url)=''" if only_missing else ""
+def get_artists(limit=None, only_missing=True, only_local=False):
+    if only_local:
+        where_sql = "WHERE a.photo_url LIKE '/api/files/avatars/%' AND TRIM(a.photo_url)<>''"
+    elif only_missing:
+        where_sql = "WHERE a.photo_url IS NULL OR TRIM(a.photo_url)=''"
+    else:
+        where_sql = ""
     limit_sql = f"LIMIT {int(limit)}" if limit else ""
     q = f"""
     USE {MYSQL_DB};
@@ -186,11 +191,20 @@ def main():
     )
     parser.add_argument("--limit", type=int, default=0, help="Max artists to process (0 means all).")
     parser.add_argument("--overwrite", action="store_true", help="Overwrite artists that already have photo_url.")
+    parser.add_argument(
+        "--only-local",
+        action="store_true",
+        help="Only process artists whose current photo_url is local (/api/files/avatars/...).",
+    )
     parser.add_argument("--sleep", type=float, default=0.35, help="Sleep seconds between requests.")
     parser.add_argument("--dry-run", action="store_true", help="Only print matches, do not download or update DB.")
     args = parser.parse_args()
 
-    artists = get_artists(limit=args.limit if args.limit > 0 else None, only_missing=not args.overwrite)
+    artists = get_artists(
+        limit=args.limit if args.limit > 0 else None,
+        only_missing=(not args.overwrite and not args.only_local),
+        only_local=args.only_local,
+    )
     print(f"Artists to process: {len(artists)}")
 
     ok = 0
