@@ -1,0 +1,22 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Music Review icon alt 2">
+  <defs>
+    <radialGradient id="vinyl2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(9 8) rotate(42) scale(19 19)">
+      <stop offset="0" stop-color="#3B3F4D"/>
+      <stop offset="1" stop-color="#171A23"/>
+    </radialGradient>
+    <linearGradient id="ring2" x1="5" y1="5" x2="19" y2="19" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2EDBFF"/>
+      <stop offset="0.5" stop-color="#6E68FF"/>
+      <stop offset="1" stop-color="#FF4FA3"/>
+    </linearGradient>
+    <linearGradient id="play2" x1="10" y1="8" x2="16" y2="16" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE774"/>
+      <stop offset="1" stop-color="#FFC53D"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="12" cy="12" r="10" fill="url(#vinyl2)"/>
+  <circle cx="12" cy="12" r="7.2" stroke="url(#ring2)" stroke-width="1.8"/>
+  <circle cx="12" cy="12" r="1.4" fill="#E8ECFF"/>
+  <path d="M10.4 8.8L16.2 12L10.4 15.2V8.8Z" fill="url(#play2)"/>
+</svg>

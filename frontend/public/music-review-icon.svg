@@ -1,0 +1,17 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Music Review icon">
+  <defs>
+    <linearGradient id="mrSpark" x1="4" y1="3" x2="18" y2="20" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#35D4FF"/>
+      <stop offset="0.55" stop-color="#6E5CFF"/>
+      <stop offset="1" stop-color="#FF4FA3"/>
+    </linearGradient>
+    <linearGradient id="mrPlay" x1="9" y1="6" x2="17" y2="18" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE56B"/>
+      <stop offset="1" stop-color="#FFC233"/>
+    </linearGradient>
+  </defs>
+
+  <path d="M6.2 3.8L11.5 11.9L7 20L3 10.8L6.2 3.8Z" fill="url(#mrSpark)"/>
+  <path d="M9.1 6.1L18.6 6.1L13 18L9.1 6.1Z" fill="url(#mrPlay)"/>
+  <path d="M10 4.2L11.3 7.9L14.9 7.9L12 10.1L13.1 13.5L10 11.3L6.9 13.5L8 10.1L5.1 7.9L8.7 7.9L10 4.2Z" fill="#FFFFFF" fill-opacity="0.18"/>
+</svg>
