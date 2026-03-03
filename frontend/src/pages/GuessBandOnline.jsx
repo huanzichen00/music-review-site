@@ -18,7 +18,14 @@ import {
   Typography,
   message,
 } from 'antd';
-import { CopyOutlined, LinkOutlined, PlayCircleOutlined, SendOutlined } from '@ant-design/icons';
+import {
+  CaretDownFilled,
+  CaretUpFilled,
+  CopyOutlined,
+  LinkOutlined,
+  PlayCircleOutlined,
+  SendOutlined,
+} from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
 import { guessBandOnlineApi } from '../api/guessBandOnline';
 import { questionBanksApi } from '../api/questionBanks';
@@ -63,25 +70,147 @@ const styles = {
     tableLayout: 'fixed',
   },
   th: {
-    background: '#4B3544',
-    color: '#F5ECF1',
+    background: '#F7F8FA',
+    color: '#5A6472',
     padding: '12px 8px',
     textAlign: 'center',
     fontWeight: 700,
     fontSize: 13,
-    borderRadius: 8,
+    borderRadius: 12,
+    border: '1px solid #D9DEE6',
     letterSpacing: '0.4px',
   },
   tdBase: {
     padding: '12px 8px',
     textAlign: 'center',
-    borderRadius: 8,
+    borderRadius: 12,
     color: '#F7F1F5',
     fontWeight: 600,
     fontSize: 13,
     background: '#2B1627',
   },
 };
+
+const createDemoRoom = () => ({
+  roomCode: 'DEMO01',
+  inviteToken: 'demo-invite-token',
+  status: 'IN_PROGRESS',
+  maxAttempts: 10,
+  totalRounds: 3,
+  currentRound: 2,
+  timedMode: true,
+  roundTimeLimitSeconds: 90,
+  roundStartedAt: new Date(Date.now() - 18 * 1000).toISOString(),
+  questionBankId: null,
+  questionBankName: '默认题库',
+  winnerDisplayName: null,
+  players: [
+    {
+      id: 1,
+      seatIndex: 1,
+      displayName: 'Nebula',
+      avatarUrl: null,
+      host: true,
+      score: 1,
+      guessCount: 5,
+    },
+    {
+      id: 2,
+      seatIndex: 2,
+      displayName: 'Aurora',
+      avatarUrl: null,
+      host: false,
+      score: 0,
+      guessCount: 4,
+    },
+  ],
+  guesses: [
+    {
+      id: 1001,
+      playerDisplayName: 'Nebula',
+      playerSeatIndex: 1,
+      roundIndex: 1,
+      artistName: 'The Strokes',
+      regionValue: 'US',
+      regionState: 'close',
+      genreValue: 'Indie Rock',
+      genreState: 'exact',
+      yearValue: 2001,
+      yearState: 'close',
+      yearArrow: '↑',
+      membersValue: 5,
+      membersState: 'exact',
+      membersArrow: '',
+      statusValue: 'Active',
+      statusState: 'exact',
+    },
+    {
+      id: 1002,
+      playerDisplayName: 'Aurora',
+      playerSeatIndex: 2,
+      roundIndex: 1,
+      artistName: 'Oasis',
+      regionValue: 'UK',
+      regionState: 'miss',
+      genreValue: 'Britpop',
+      genreState: 'close',
+      yearValue: 1994,
+      yearState: 'miss',
+      yearArrow: '↑',
+      membersValue: 5,
+      membersState: 'exact',
+      membersArrow: '',
+      statusValue: 'Disbanded',
+      statusState: 'miss',
+    },
+    {
+      id: 1003,
+      playerDisplayName: 'Nebula',
+      playerSeatIndex: 1,
+      roundIndex: 2,
+      artistName: 'Muse',
+      regionValue: 'UK',
+      regionState: 'miss',
+      genreValue: 'Alternative Rock',
+      genreState: 'close',
+      yearValue: 1999,
+      yearState: 'close',
+      yearArrow: '↑',
+      membersValue: 3,
+      membersState: 'miss',
+      membersArrow: '↓',
+      statusValue: 'Active',
+      statusState: 'exact',
+    },
+    {
+      id: 1004,
+      playerDisplayName: 'Aurora',
+      playerSeatIndex: 2,
+      roundIndex: 2,
+      artistName: 'Coldplay',
+      regionValue: 'UK',
+      regionState: 'miss',
+      genreValue: 'Pop Rock',
+      genreState: 'close',
+      yearValue: 2000,
+      yearState: 'exact',
+      yearArrow: '',
+      membersValue: 4,
+      membersState: 'exact',
+      membersArrow: '',
+      statusValue: 'Active',
+      statusState: 'exact',
+    },
+  ],
+});
+
+const DEMO_ARTISTS = [
+  { id: 1, name: 'The Strokes' },
+  { id: 2, name: 'Oasis' },
+  { id: 3, name: 'Muse' },
+  { id: 4, name: 'Coldplay' },
+  { id: 5, name: 'Radiohead' },
+];
 
 const GuessBandOnline = () => {
   const { isAuthenticated, user } = useAuth();
@@ -162,7 +291,12 @@ const GuessBandOnline = () => {
           background: 'linear-gradient(180deg, #0F0F10 0%, #141416 100%)',
           border: '1px solid #2F2F33',
         },
-        th: { ...styles.th, background: '#2A2A2D', color: '#E5E7EB' },
+        th: {
+          ...styles.th,
+          background: '#23262D',
+          color: '#D6DBE4',
+          border: '1px solid #3C424F',
+        },
         tdBase: { ...styles.tdBase, background: '#18181B', color: '#E5E7EB' },
         table: styles.table,
       };
@@ -174,7 +308,12 @@ const GuessBandOnline = () => {
           background: 'linear-gradient(180deg, #10243F 0%, #142B4A 100%)',
           border: '1px solid #2A4F82',
         },
-        th: { ...styles.th, background: '#2B4C78', color: '#EAF1FF' },
+        th: {
+          ...styles.th,
+          background: '#F4F7FC',
+          color: '#51607A',
+          border: '1px solid #C9D2E3',
+        },
         tdBase: { ...styles.tdBase, background: '#122742', color: '#EDF3FF' },
         table: styles.table,
       };
@@ -184,12 +323,32 @@ const GuessBandOnline = () => {
 
   const getCellStyleByTheme = (state) => {
     if (state === 'exact') {
-      return { background: isDark ? '#3F3F46' : isBlue ? '#245DAD' : '#2F5B42' };
+      return { background: isDark ? '#2C6660' : isBlue ? '#2A8F87' : '#1F8A70' };
     }
     if (state === 'close') {
       return { background: isDark ? '#52525B' : isBlue ? '#3D79BF' : '#7A5A35' };
     }
     return { background: isDark ? '#18181B' : isBlue ? '#122742' : '#2B1627' };
+  };
+
+  const renderTrendArrow = (arrow) => {
+    if (!arrow) return null;
+    const isUp = arrow === '↑';
+    return (
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 18,
+          height: 18,
+          borderRadius: 999,
+          background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.2)',
+        }}
+      >
+        {isUp ? <CaretUpFilled style={{ fontSize: 10 }} /> : <CaretDownFilled style={{ fontSize: 10 }} />}
+      </span>
+    );
   };
 
   const playersBySeat = useMemo(() => {
@@ -492,6 +651,16 @@ const GuessBandOnline = () => {
     }
   };
 
+  const handleLoadDemoData = () => {
+    const demoRoom = createDemoRoom();
+    setRoom(demoRoom);
+    setRoomCode(demoRoom.roomCode);
+    setPlayerToken('demo-player-token');
+    setArtists(DEMO_ARTISTS);
+    setGuessArtistId(null);
+    message.success('已加载演示数据（仅本地预览）');
+  };
+
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: 60 }}>
@@ -618,6 +787,10 @@ const GuessBandOnline = () => {
             </Card>
           </Col>
         </Row>
+
+        <div style={{ marginTop: 12 }}>
+          <Button onClick={handleLoadDemoData}>加载演示数据（本地预览）</Button>
+        </div>
 
         {room ? (
           <Card size="small" title="当前房间" style={{ marginTop: 16, borderRadius: 10 }}>
@@ -772,10 +945,16 @@ const GuessBandOnline = () => {
                               {guess.genreValue}
                             </td>
                             <td style={{ ...themedBoardStyles.tdBase, ...getCellStyleByTheme(guess.yearState) }}>
-                              {guess.yearValue} {guess.yearArrow || ''}
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                {guess.yearValue}
+                                {renderTrendArrow(guess.yearArrow)}
+                              </span>
                             </td>
                             <td style={{ ...themedBoardStyles.tdBase, ...getCellStyleByTheme(guess.membersState) }}>
-                              {guess.membersValue} {guess.membersArrow || ''}
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                {guess.membersValue}
+                                {renderTrendArrow(guess.membersArrow)}
+                              </span>
                             </td>
                             <td style={{ ...themedBoardStyles.tdBase, ...getCellStyleByTheme(guess.statusState) }}>
                               {guess.statusValue}

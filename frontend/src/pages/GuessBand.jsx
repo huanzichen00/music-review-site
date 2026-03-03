@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, AutoComplete, Button, Card, Input, InputNumber, Select, Space, Spin, Tag, Typography, message } from 'antd';
-import { TrophyOutlined, ReloadOutlined, RocketOutlined, AppstoreOutlined, TagsOutlined, CalendarOutlined } from '@ant-design/icons';
+import {
+  TrophyOutlined,
+  ReloadOutlined,
+  RocketOutlined,
+  AppstoreOutlined,
+  TagsOutlined,
+  CalendarOutlined,
+  CaretUpFilled,
+  CaretDownFilled,
+} from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
 import { artistsApi } from '../api/artists';
 import { questionBanksApi } from '../api/questionBanks';
@@ -128,19 +137,20 @@ const styles = {
     tableLayout: 'fixed',
   },
   th: {
-    background: '#4B3544',
-    color: '#F5ECF1',
+    background: '#F7F8FA',
+    color: '#5A6472',
     padding: '12px 8px',
     textAlign: 'center',
     fontWeight: 700,
     fontSize: 13,
-    borderRadius: 8,
+    borderRadius: 12,
+    border: '1px solid #D9DEE6',
     letterSpacing: '0.4px',
   },
   tdBase: {
     padding: '12px 8px',
     textAlign: 'center',
-    borderRadius: 8,
+    borderRadius: 12,
     color: '#F7F1F5',
     fontWeight: 600,
     fontSize: 13,
@@ -148,13 +158,13 @@ const styles = {
   },
   answerCard: {
     marginTop: 16,
-    borderRadius: 12,
+    borderRadius: 18,
     border: '1px solid #CBD5E1',
     background: 'linear-gradient(180deg, #F8FAFC 0%, #EFF6FF 100%)',
   },
   highlightTip: {
     marginTop: 14,
-    borderRadius: 12,
+    borderRadius: 18,
     border: '1px solid #CBD5E1',
     background: 'linear-gradient(90deg, #F8FAFC 0%, #F1F5F9 100%)',
     color: '#334155',
@@ -362,7 +372,12 @@ const GuessBand = () => {
           background: 'linear-gradient(180deg, #0F0F10 0%, #141416 100%)',
           border: '1px solid #2F2F33',
         },
-        th: { ...styles.th, background: '#2A2A2D', color: '#E5E7EB' },
+        th: {
+          ...styles.th,
+          background: '#23262D',
+          color: '#D6DBE4',
+          border: '1px solid #3C424F',
+        },
         tdBase: { ...styles.tdBase, background: '#18181B', color: '#E5E7EB' },
         answerCard: {
           ...styles.answerCard,
@@ -427,7 +442,12 @@ const GuessBand = () => {
         background: 'linear-gradient(180deg, #10243F 0%, #142B4A 100%)',
         border: '1px solid #2A4F82',
       },
-      th: { ...styles.th, background: '#2B4C78', color: '#EAF1FF' },
+      th: {
+        ...styles.th,
+        background: '#F4F7FC',
+        color: '#51607A',
+        border: '1px solid #C9D2E3',
+      },
       tdBase: { ...styles.tdBase, background: '#122742', color: '#EDF3FF' },
       answerCard: {
         ...styles.answerCard,
@@ -445,12 +465,32 @@ const GuessBand = () => {
 
   const getCellStyleByTheme = (state) => {
     if (state === 'exact') {
-      return { background: isDark ? '#3F3F46' : isBlue ? '#245DAD' : '#2F5B42' };
+      return { background: isDark ? '#2C6660' : isBlue ? '#2A8F87' : '#1F8A70' };
     }
     if (state === 'close') {
       return { background: isDark ? '#52525B' : isBlue ? '#3D79BF' : '#7A5A35' };
     }
     return { background: isDark ? '#18181B' : isBlue ? '#122742' : '#2B1627' };
+  };
+
+  const renderTrendArrow = (arrow) => {
+    if (!arrow) return null;
+    const isUp = arrow === '↑';
+    return (
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 18,
+          height: 18,
+          borderRadius: 999,
+          background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.2)',
+        }}
+      >
+        {isUp ? <CaretUpFilled style={{ fontSize: 10 }} /> : <CaretDownFilled style={{ fontSize: 10 }} />}
+      </span>
+    );
   };
 
   useEffect(() => {
@@ -922,7 +962,7 @@ const GuessBand = () => {
         {roundOver ? (
           <Card style={themedStyles.answerCard}>
             <Space>
-              <TrophyOutlined style={{ color: '#4CAF50' }} />
+              <TrophyOutlined style={{ color: '#1F8A70' }} />
               <Text strong>
                 {solved ? '猜中了！' : '本轮结束！'} 答案：{targetBand.name} | {targetBand.region} | {targetBand.genre} | {targetBand.yearFormed} |
                 {' '}{targetBand.members}人 | {targetBand.status}
@@ -957,10 +997,16 @@ const GuessBand = () => {
                     <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.region.state) }}>{attempt.region.value}</td>
                     <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.genre.state) }}>{attempt.genre.value}</td>
                     <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.year.state) }}>
-                      {attempt.year.value} {attempt.year.arrow}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        {attempt.year.value}
+                        {renderTrendArrow(attempt.year.arrow)}
+                      </span>
                     </td>
                     <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.members.state) }}>
-                      {attempt.members.value} {attempt.members.arrow}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        {attempt.members.value}
+                        {renderTrendArrow(attempt.members.arrow)}
+                      </span>
                     </td>
                     <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.status.state) }}>{attempt.status.value}</td>
                   </tr>
