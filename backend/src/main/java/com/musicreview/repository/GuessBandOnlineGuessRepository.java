@@ -1,6 +1,7 @@
 package com.musicreview.repository;
 
 import com.musicreview.entity.GuessBandOnlineGuess;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,6 +11,9 @@ import java.util.List;
 public interface GuessBandOnlineGuessRepository extends JpaRepository<GuessBandOnlineGuess, Long> {
 
     List<GuessBandOnlineGuess> findByRoomIdOrderByCreatedAtAsc(Long roomId);
+
+    @EntityGraph(attributePaths = {"player", "guessedArtist", "targetArtist"})
+    List<GuessBandOnlineGuess> findTop80ByRoomIdOrderByCreatedAtDesc(Long roomId);
 
     int countByRoomId(Long roomId);
 

@@ -484,7 +484,8 @@ public class GuessBandOnlineService {
             guessCountByPlayer.put(player.getId(), count);
         }
 
-        List<GuessBandOnlineGuess> guesses = guessRepository.findByRoomIdOrderByCreatedAtAsc(room.getId());
+        List<GuessBandOnlineGuess> guesses = guessRepository.findTop80ByRoomIdOrderByCreatedAtDesc(room.getId());
+        Collections.reverse(guesses);
 
         return GuessBandOnlineRoomResponse.builder()
                 .roomCode(room.getRoomCode())
