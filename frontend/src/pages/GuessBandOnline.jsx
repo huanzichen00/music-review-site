@@ -530,12 +530,17 @@ const GuessBandOnline = () => {
                   placeholder="你的显示名"
                 />
                 <Select value={selectedBank} options={bankOptions} onChange={setSelectedBank} />
+                <div>
+                  <Text strong>每轮最大猜测次数</Text>
+                  <Text type="secondary" style={{ display: 'block' }}>每位玩家在单轮里最多可猜几次</Text>
+                </div>
                 <InputNumber
                   value={maxAttempts}
                   min={1}
                   max={30}
                   precision={0}
                   controls
+                  addonAfter="次/轮"
                   style={{ width: '100%' }}
                   onChange={(value) => {
                     if (value == null) return;
@@ -543,12 +548,17 @@ const GuessBandOnline = () => {
                   }}
                   placeholder="每轮最大猜测次数"
                 />
+                <div>
+                  <Text strong>总轮次</Text>
+                  <Text type="secondary" style={{ display: 'block' }}>整场对局共进行多少轮</Text>
+                </div>
                 <InputNumber
                   value={totalRounds}
                   min={1}
                   max={10}
                   precision={0}
                   controls
+                  addonAfter="轮"
                   style={{ width: '100%' }}
                   onChange={(value) => {
                     if (value == null) return;
