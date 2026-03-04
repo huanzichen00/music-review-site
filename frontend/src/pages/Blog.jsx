@@ -195,7 +195,7 @@ const Blog = () => {
   }
 
   return (
-    <div style={{ maxWidth: 980, margin: '0 auto' }}>
+    <div className="blog-page" style={{ maxWidth: 980, margin: '0 auto' }}>
       <Space align="center" style={{ marginBottom: 12 }}>
         <Title
           level={2}
