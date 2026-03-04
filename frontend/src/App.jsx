@@ -139,7 +139,7 @@ function AppContent() {
           <Layout>
             <Suspense fallback={<div style={{ textAlign: 'center', padding: 60 }}><Spin size="large" /></div>}>
               <Routes>
-                <Route path="/" element={<Navigate to="/music/home" replace />} />
+                <Route path="/" element={<Home />} />
                 <Route path="/music" element={<Navigate to="/music/home" replace />} />
                 <Route path="/music/home" element={<Home />} />
                 <Route path="/music/albums" element={<Albums />} />

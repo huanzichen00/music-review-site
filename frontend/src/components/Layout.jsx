@@ -1,25 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Layout as AntLayout, Menu, Button, Dropdown, Avatar, Badge, Select, Space } from 'antd';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  UserOutlined, 
-  BellOutlined,
-  HeartOutlined,
-  LogoutOutlined,
-  LoginOutlined,
-  AppstoreOutlined,
-  HomeOutlined,
-  BookOutlined,
-  CustomerServiceOutlined,
-  TagsOutlined,
-  CalendarOutlined
-} from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { resolveAvatarUrl } from '../utils/avatar';
-import { artistsApi } from '../api/artists';
-import { notificationsApi } from '../api/notifications';
-import { questionBanksApi } from '../api/questionBanks';
 
 const { Header, Content, Footer } = AntLayout;
 
@@ -34,6 +18,12 @@ const menuItemStyle = {
   fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
   fontSize: '20px',
 };
+const menuGlyphStyle = {
+  fontSize: 14,
+  fontWeight: 700,
+  lineHeight: 1,
+};
+const glyph = (text) => <span style={menuGlyphStyle}>{text}</span>;
 
 const routePrefetchers = {
   '/music/guess-band': () => import('../pages/GuessBand'),
@@ -77,11 +67,19 @@ const markGuessBandRouteStart = () => {
   }
 };
 
-const warmGuessBandApiCache = (isAuthenticated) => {
-  artistsApi.getAllCached({ page: 0, size: 200, ttlMs: 30_000 }).catch(() => {});
-  questionBanksApi.getPublicCached({ force: true }).catch(() => {});
-  if (isAuthenticated) {
-    questionBanksApi.getMineCached({ force: true }).catch(() => {});
+const warmGuessBandApiCache = async (isAuthenticated) => {
+  try {
+    const [{ artistsApi }, { questionBanksApi }] = await Promise.all([
+      import('../api/artists'),
+      import('../api/questionBanks'),
+    ]);
+    artistsApi.getAllCached({ page: 0, size: 200, ttlMs: 30_000 }).catch(() => {});
+    questionBanksApi.getPublicCached({ force: true }).catch(() => {});
+    if (isAuthenticated) {
+      questionBanksApi.getMineCached({ force: true }).catch(() => {});
+    }
+  } catch {
+    // ignore warm-up failures
   }
 };
 
@@ -129,7 +127,8 @@ const Layout = ({ children }) => {
       setUnreadCount(0);
       return;
     }
-    notificationsApi.getUnreadCount()
+    import('../api/notifications')
+      .then(({ notificationsApi }) => notificationsApi.getUnreadCount())
       .then((res) => setUnreadCount(res?.data?.unreadCount || 0))
       .catch(() => setUnreadCount(0));
   }, [isAuthenticated]);
@@ -245,13 +244,13 @@ const Layout = ({ children }) => {
   const menuItems = [
     {
       key: '/music',
-      icon: <AppstoreOutlined style={{ fontSize: '18px' }} />,
+      icon: glyph('音'),
       label: <Link to="/music/home" style={menuLinkStyle}>音乐</Link>,
       style: menuItemStyle,
     },
     {
       key: '/music/guess-band',
-      icon: <CustomerServiceOutlined style={{ fontSize: '18px' }} />,
+      icon: glyph('猜'),
       label: (
         <Link
           to="/music/guess-band"
@@ -273,7 +272,7 @@ const Layout = ({ children }) => {
     },
     {
       key: '/blog',
-      icon: <BookOutlined style={{ fontSize: '18px' }} />,
+      icon: glyph('博'),
       label: <Link to="/blog" style={menuLinkStyle}>博客</Link>,
       style: menuItemStyle,
     },
@@ -284,7 +283,7 @@ const Layout = ({ children }) => {
       key: 'messages',
       icon: (
         <Badge count={unreadCount} size="small" offset={[6, -2]}>
-          <BellOutlined />
+          {glyph('信')}
         </Badge>
       ),
       label: <span style={menuLinkStyle}>消息中心</span>,
@@ -292,13 +291,13 @@ const Layout = ({ children }) => {
     },
     {
       key: 'favorites',
-      icon: <HeartOutlined />,
+      icon: glyph('藏'),
       label: <span style={menuLinkStyle}>我的收藏</span>,
       onClick: () => navigate('/favorites'),
     },
     {
       key: 'profile',
-      icon: <UserOutlined />,
+      icon: glyph('我'),
       label: <span style={menuLinkStyle}>个人资料</span>,
       onClick: () => navigate('/profile'),
     },
@@ -307,7 +306,7 @@ const Layout = ({ children }) => {
     },
     {
       key: 'logout',
-      icon: <LogoutOutlined />,
+      icon: glyph('退'),
       label: <span style={menuLinkStyle}>退出登录</span>,
       onClick: handleLogout,
     },
@@ -396,11 +395,14 @@ const Layout = ({ children }) => {
                 <Avatar 
                   src={resolveAvatarUrl(user?.avatarUrl)} 
                   size={44}
+                  alt={user?.username || 'user avatar'}
                   style={{ 
                     marginRight: 8,
                     border: isDark ? '2px solid #4B5563' : isBlue ? '2px solid #CFE2FF' : '2px solid #FFE4B5',
                   }} 
-                />
+                >
+                  {user?.username?.slice(0, 1)?.toUpperCase() || 'U'}
+                </Avatar>
                 <span style={{ 
                   color: isDark ? '#E5E7EB' : isBlue ? '#EEF4FF' : '#FFF8E7',
                   fontWeight: 500,
@@ -415,7 +417,7 @@ const Layout = ({ children }) => {
             <div className="app-auth-actions">
               <Button 
                 type="text" 
-                icon={<LoginOutlined />}
+                icon={glyph('登')}
                 onClick={() => navigate('/login')}
                 style={{ 
                   color: isDark ? '#D1D5DB' : isBlue ? '#EEF4FF' : '#FFF8E7',
@@ -471,42 +473,42 @@ const Layout = ({ children }) => {
         >
           <Button
             type={selectedMusicSubKey === '/music/home' ? 'primary' : 'default'}
-            icon={<HomeOutlined />}
+            icon={glyph('首')}
             onClick={() => navigate('/music/home')}
           >
             首页
           </Button>
           <Button
             type={selectedMusicSubKey === '/music/albums' ? 'primary' : 'default'}
-            icon={<AppstoreOutlined />}
+            icon={glyph('专')}
             onClick={() => navigate('/music/albums')}
           >
             专辑
           </Button>
           <Button
             type={selectedMusicSubKey === '/music/artists' ? 'primary' : 'default'}
-            icon={<UserOutlined />}
+            icon={glyph('队')}
             onClick={() => navigate('/music/artists')}
           >
             乐队
           </Button>
           <Button
             type={selectedMusicSubKey === '/music/genres' ? 'primary' : 'default'}
-            icon={<TagsOutlined />}
+            icon={glyph('风')}
             onClick={() => navigate('/music/genres')}
           >
             风格
           </Button>
           <Button
             type={selectedMusicSubKey === '/music/years' ? 'primary' : 'default'}
-            icon={<CalendarOutlined />}
+            icon={glyph('年')}
             onClick={() => navigate('/music/years')}
           >
             年份
           </Button>
           <Button
             type={selectedMusicSubKey === '/music/guess-band' ? 'primary' : 'default'}
-            icon={<CustomerServiceOutlined />}
+            icon={glyph('猜')}
             onClick={() => {
               markGuessBandRouteStart();
               navigate('/music/guess-band');
@@ -516,7 +518,7 @@ const Layout = ({ children }) => {
           </Button>
           <Button
             type={selectedMusicSubKey === '/music/add-album' ? 'primary' : 'default'}
-            icon={<AppstoreOutlined />}
+            icon={glyph('加')}
             onClick={() => navigate('/music/add-album')}
           >
             添加专辑

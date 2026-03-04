@@ -6,16 +6,18 @@ const SmartAlbumCover = ({
   coverUrl,
   alt,
   variant = 'thumb',
+  sourcePreference = 'local-first',
   width,
   height,
   style,
   onClick,
   loading = 'lazy',
+  fetchPriority = 'auto',
   ...imgProps
 }) => {
   const candidates = useMemo(
-    () => getAlbumCoverCandidates({ albumId, coverUrl, variant }),
-    [albumId, coverUrl, variant]
+    () => getAlbumCoverCandidates({ albumId, coverUrl, variant, sourcePreference }),
+    [albumId, coverUrl, variant, sourcePreference]
   );
   const [candidateIndex, setCandidateIndex] = useState(0);
 
@@ -39,6 +41,7 @@ const SmartAlbumCover = ({
       src={src}
       alt={alt}
       loading={loading}
+      fetchPriority={fetchPriority}
       decoding="async"
       width={width}
       height={height}

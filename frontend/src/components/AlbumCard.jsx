@@ -59,7 +59,7 @@ const styles = {
   },
 };
 
-const AlbumCard = ({ album }) => {
+const AlbumCard = ({ album, priority = 'auto' }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const navigate = useNavigate();
@@ -101,9 +101,12 @@ const AlbumCard = ({ album }) => {
               coverUrl={album.coverUrl}
               alt={album.title}
               variant="thumb"
+              sourcePreference={priority === 'high' ? 'remote-first' : 'local-first'}
               width={220}
               height={220}
               style={styles.coverImage}
+              loading={priority === 'high' ? 'eager' : 'lazy'}
+              fetchPriority={priority}
               onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
               onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
             />

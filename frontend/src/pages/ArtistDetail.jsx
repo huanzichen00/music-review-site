@@ -81,7 +81,7 @@ const ArtistDetail = () => {
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [albumPage, setAlbumPage] = useState(1);
-  const ALBUM_PAGE_SIZE = 24;
+  const ALBUM_PAGE_SIZE = 12;
   const resolveMediaUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http://') || url.startsWith('https://')) {

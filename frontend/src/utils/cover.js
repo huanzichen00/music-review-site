@@ -16,10 +16,10 @@ export const resolveMediaUrl = (url) => {
   return url;
 };
 
-const isNeteaseCoverUrl = (url) =>
+export const isNeteaseCoverUrl = (url) =>
   /:\/\/(?:p\d+|music)\.music\.126\.net\//i.test(String(url || ''));
 
-const withNeteaseParam = (url, maxEdge) => {
+export const withNeteaseParam = (url, maxEdge) => {
   if (!url || !isNeteaseCoverUrl(url)) {
     return url;
   }
@@ -27,22 +27,30 @@ const withNeteaseParam = (url, maxEdge) => {
   return `${url}${sep}param=${maxEdge}y${maxEdge}`;
 };
 
-export const getAlbumCoverCandidates = ({ albumId, coverUrl, variant = 'thumb' }) => {
+export const getOptimizedCoverUrl = ({ coverUrl, variant = 'thumb' }) => {
   const edge = variant === 'detail' ? 600 : 300;
-  const candidates = [];
-
-  if (albumId != null && albumId !== '') {
-    candidates.push(resolveMediaUrl(`/covers/${albumId}_${edge}.webp`));
-  }
-
   const original = resolveMediaUrl(coverUrl);
-  if (original) {
-    const optimized = withNeteaseParam(original, edge);
-    if (optimized) {
-      candidates.push(optimized);
-    }
-    candidates.push(original);
+  if (!original) {
+    return '';
+  }
+  return withNeteaseParam(original, edge);
+};
+
+export const getAlbumCoverCandidates = ({
+  albumId,
+  coverUrl,
+  variant = 'thumb',
+  sourcePreference = 'local-first',
+}) => {
+  const edge = variant === 'detail' ? 600 : 300;
+  const local = albumId != null && albumId !== '' ? resolveMediaUrl(`/covers/${albumId}_${edge}.webp`) : '';
+  const original = resolveMediaUrl(coverUrl);
+  const optimized = withNeteaseParam(original, edge);
+  const remoteCandidates = [optimized, original].filter(Boolean);
+
+  if (sourcePreference === 'remote-first') {
+    return [...new Set([...remoteCandidates, local].filter(Boolean))];
   }
 
-  return [...new Set(candidates.filter(Boolean))];
+  return [...new Set([local, ...remoteCandidates].filter(Boolean))];
 };

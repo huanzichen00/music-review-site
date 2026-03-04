@@ -172,3 +172,110 @@ sudo rm -rf /var/www/music-review/covers
 ```bash
 git checkout -- scripts/deploy_nginx.sh
 ```
+
+## 7) Precision LCP/TBT optimization pass (2026-03-04, round 2)
+
+### A. LCP element identification (production sampling)
+
+Method:
+- `PerformanceObserver` + `performance.getEntriesByType('largest-contentful-paint')`
+- Playwright mobile emulation sampled on:
+  - `https://guessband.cn/`
+  - `https://guessband.cn/music/guess-band`
+
+Observed LCP:
+- `/`:
+  - type: `IMG`
+  - src: `https://p*.music.126.net/...jpg?param=300y300`
+  - sampled `startTime`: ~1.9-2.2s
+- `/music/guess-band`:
+  - type: `DIV` text block
+  - text summary: “猜乐队支持默认题库、你的自选题库和分享题库...”
+  - sampled `startTime`: ~1.1-1.3s
+
+Conclusion:
+- Home LCP is still cover image (remote 126.net small image).
+- Guess-Band LCP is text, not image.
+
+### B. LCP-targeted changes delivered
+
+- Added dev-only LCP logger:
+  - file: `frontend/src/utils/lcpDebug.js` (new)
+  - wired in: `frontend/src/main.jsx`
+  - logs: `tagName/src/text/startTime/loadTime/route`
+- Home first-screen cover prioritization:
+  - first 1-2 cards use `loading="eager"` + `fetchPriority="high"`
+  - first card adds `<link rel="preload" as="image">` (high priority)
+  - first card uses remote-first candidate to avoid local-miss fallback delay
+- Kept non-first-screen images lazy.
+- Ensured small image path usage:
+  - local uses `_300.webp` (`thumb`) / `_600.webp` (`detail`)
+  - NetEase keeps forced `?param=300y300|600y600`
+
+Files:
+- `frontend/src/components/SmartAlbumCover.jsx`
+- `frontend/src/components/AlbumCard.jsx`
+- `frontend/src/utils/cover.js`
+- `frontend/src/pages/Home.jsx`
+- `frontend/src/utils/lcpDebug.js` (new)
+- `frontend/src/main.jsx`
+
+### C. TBT-focused minimal changes
+
+- Removed full-page blocking spinner on Guess-Band first paint:
+  - page shell/text renders immediately; controls stay disabled while data loads
+- Moved non-critical Layout API modules to dynamic import:
+  - `notificationsApi`, `artistsApi`, `questionBanksApi`
+- Reduced immediate list pressure:
+  - `ArtistDetail` cards per page: `24 -> 12`
+- Home data payload cut:
+  - albums fetch size: `500 -> 60`
+- Removed production-only heavy console metrics output (DEV-only logs now).
+
+Files:
+- `frontend/src/pages/GuessBand.jsx`
+- `frontend/src/components/Layout.jsx`
+- `frontend/src/pages/ArtistDetail.jsx`
+- `frontend/src/pages/Home.jsx`
+- `frontend/src/App.jsx` (`/` direct render Home, remove redirect hop)
+
+### D. Lighthouse Mobile before/after (3-run median)
+
+Environment:
+- command: Lighthouse mobile (`simulate`) on production URL
+- browser: Playwright Chromium via `CHROME_PATH`
+
+Before:
+- `/`: LCP **11796ms**, TBT **1765ms**, INP **N/A (no interaction sample)**
+- `/music/guess-band`: LCP **8271ms**, TBT **2052ms**, INP **N/A**
+
+After:
+- `/`: LCP **12194ms**, TBT **1576ms**, INP **N/A**
+- `/music/guess-band`: LCP **8662ms**, TBT **1292ms**, INP **N/A**
+
+Result vs target:
+- `TBT` improved significantly on Guess-Band, slight gain on Home.
+- `LCP` did not reach `<4s` in this Lighthouse setup.
+- In-page real LCP observer sampling remains ~1-2s, indicating Lighthouse simulated bottleneck is still dominated by critical JS execution + throttling model.
+
+### E. Network evidence (key resources)
+
+Home LCP image sample:
+- URL: `https://p2.music.126.net/...jpg?param=300y300`
+- `cache-control: max-age=31536000`
+- `cf-cache-status`: N/A (third-party domain, not served by our Cloudflare zone)
+
+Site asset/cache:
+- `https://guessband.cn/assets/index-D7rXm_FV.js`
+  - `cache-control: public, max-age=31536000, immutable`
+  - first request `cf-cache-status: MISS`, subsequent request `HIT`
+- `https://guessband.cn/covers/10_300.webp`
+  - `cf-cache-status: HIT`
+
+### F. Rollback for this round
+
+```bash
+cd /var/www/music-review-site
+git revert --no-edit HEAD
+bash scripts/deploy_nginx.sh deploy_frontend
+```

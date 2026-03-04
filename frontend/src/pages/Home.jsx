@@ -6,10 +6,12 @@ import { reviewsApi } from '../api/reviews';
 import AlbumCard from '../components/AlbumCard';
 import SmartAlbumCover from '../components/SmartAlbumCover';
 import { resolveAvatarUrl } from '../utils/avatar';
+import { getOptimizedCoverUrl } from '../utils/cover';
 import { useTheme } from '../context/ThemeContext';
 import { isRequestCanceled } from '../utils/http';
 
 const HOME_ALBUM_LIMIT = 12;
+const HOME_ALBUM_FETCH_SIZE = 60;
 const pickRandomAlbums = (arr, limit) => {
   if (!Array.isArray(arr)) {
     return [];
@@ -176,7 +178,7 @@ const Home = () => {
       setLoading(true);
       try {
         const [albumsRes, reviewsRes] = await Promise.all([
-          albumsApi.getAll({ signal: controller.signal, page: 0, size: 500 }),
+          albumsApi.getAll({ signal: controller.signal, page: 0, size: HOME_ALBUM_FETCH_SIZE }),
           reviewsApi.getRecent({ signal: controller.signal, page: 0, size: 20 }),
         ]);
         const albumsData = albumsRes?.data;
@@ -202,6 +204,26 @@ const Home = () => {
     loadData();
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    const firstAlbum = albums[0];
+    if (!firstAlbum?.coverUrl || typeof document === 'undefined') {
+      return undefined;
+    }
+    const href = getOptimizedCoverUrl({ coverUrl: firstAlbum.coverUrl, variant: 'thumb' });
+    if (!href) {
+      return undefined;
+    }
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = href;
+    link.setAttribute('fetchpriority', 'high');
+    document.head.appendChild(link);
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, [albums]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -256,9 +278,9 @@ const Home = () => {
             </Card>
           ) : (
             <Row gutter={[24, 24]}>
-              {albums.map((album) => (
+              {albums.map((album, index) => (
                 <Col key={album.id} xs={12} sm={8} md={6} lg={4}>
-                  <AlbumCard album={album} />
+                  <AlbumCard album={album} priority={index === 0 ? 'high' : index === 1 ? 'high' : 'auto'} />
                 </Col>
               ))}
             </Row>

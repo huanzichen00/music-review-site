@@ -294,6 +294,18 @@ const safeMark = (name) => {
   }
 };
 
+const debugLog = (...args) => {
+  if (import.meta.env.DEV) {
+    console.log(...args);
+  }
+};
+
+const debugTable = (value) => {
+  if (import.meta.env.DEV) {
+    console.table(value);
+  }
+};
+
 const GuessBand = () => {
   const location = useLocation();
   const { isAuthenticated, user } = useAuth();
@@ -575,7 +587,7 @@ const GuessBand = () => {
           const s = typeof performance !== 'undefined' ? performance.now() : Date.now();
           const res = await artistsApi.getAllCached({ signal: controller.signal, page: 0, size: 200, ttlMs: 30_000 });
           const e = typeof performance !== 'undefined' ? performance.now() : Date.now();
-          console.log('artists_ms', Number((e - s).toFixed(2)));
+          debugLog('artists_ms', Number((e - s).toFixed(2)));
           return res;
         })();
 
@@ -583,7 +595,7 @@ const GuessBand = () => {
           const s = typeof performance !== 'undefined' ? performance.now() : Date.now();
           const res = await questionBanksApi.getPublicCached({ signal: controller.signal });
           const e = typeof performance !== 'undefined' ? performance.now() : Date.now();
-          console.log('qb_public_ms', Number((e - s).toFixed(2)));
+          debugLog('qb_public_ms', Number((e - s).toFixed(2)));
           return res;
         })();
 
@@ -593,7 +605,7 @@ const GuessBand = () => {
             ? await questionBanksApi.getMineCached({ signal: controller.signal })
             : { data: [] };
           const e = typeof performance !== 'undefined' ? performance.now() : Date.now();
-          console.log('qb_mine_ms', Number((e - s).toFixed(2)));
+          debugLog('qb_mine_ms', Number((e - s).toFixed(2)));
           return res;
         })();
 
@@ -603,7 +615,7 @@ const GuessBand = () => {
           minePromise,
         ]);
         const t1 = typeof performance !== 'undefined' ? performance.now() : Date.now();
-        console.log('api_total_ms', Number((t1 - t0).toFixed(2)));
+        debugLog('api_total_ms', Number((t1 - t0).toFixed(2)));
         safeMark('gb_api_done');
         if (typeof window !== 'undefined') {
           const metrics = window.__gb_metrics || {};
@@ -745,7 +757,7 @@ const GuessBand = () => {
     const latestListBuild = listBuildMs.length ? listBuildMs[listBuildMs.length - 1] : null;
     const maxListBuild = listBuildMs.length ? Math.max(...listBuildMs) : null;
 
-    console.table({
+    debugTable({
       route_to_chunk_ms: routeToChunk == null ? 'n/a' : Number(routeToChunk.toFixed(2)),
       chunk_to_api_done_ms: chunkToApiDone == null ? 'n/a' : Number(chunkToApiDone.toFixed(2)),
       api_to_commit_ms: apiToCommit == null ? 'n/a' : Number(apiToCommit.toFixed(2)),
@@ -945,14 +957,6 @@ const GuessBand = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: 60 }}>
-        <Spin size="large" />
-      </div>
-    );
-  }
-
   return (
     <div className="guess-band-page" style={themedStyles.wrapper}>
       <div className="guess-band-layout-row" style={themedStyles.layoutRow}>
@@ -965,6 +969,7 @@ const GuessBand = () => {
             value={countryInput}
             onChange={(event) => setCountryInput(event.target.value)}
             allowClear
+            disabled={loading}
           />
           <div style={{ marginTop: 14 }}>
             <Text strong style={{ color: isDark ? '#E5E7EB' : isBlue ? '#274B7A' : '#334155' }}>当前题库乐队</Text>
@@ -1021,7 +1026,8 @@ const GuessBand = () => {
               value={currentBankKey}
               options={bankOptions}
               onChange={handleBankChange}
-              loading={bankSwitching}
+              loading={loading || bankSwitching}
+              disabled={loading || bankSwitching}
               style={{ minWidth: 240 }}
             />
           </Space>
@@ -1035,6 +1041,11 @@ const GuessBand = () => {
             <Text style={themedStyles.subtitle}>
               支持默认题库、你的自选题库和分享题库。每轮最多猜 {maxAttempts} 次，猜中或用尽机会后可开始下一题。
             </Text>
+            {loading ? (
+              <div style={{ marginTop: 10 }}>
+                <Spin size="small" /> <Text style={themedStyles.sideSubtitle}>正在加载题库数据...</Text>
+              </div>
+            ) : null}
           </div>
           <Space className="guess-band-links-row" size={10} wrap>
             <Button
@@ -1100,7 +1111,7 @@ const GuessBand = () => {
           />
         ) : null}
 
-        {bands.length === 0 ? (
+        {!loading && bands.length === 0 ? (
           <Alert
             style={{ marginTop: 16 }}
             type="warning"
@@ -1123,7 +1134,7 @@ const GuessBand = () => {
             filterOption={(inputValue, option) =>
               option?.value?.toLowerCase().includes(inputValue.toLowerCase())
             }
-            disabled={roundOver || bankSwitching}
+            disabled={loading || roundOver || bankSwitching}
           >
             <Input
               className="guess-band-real-input"
@@ -1144,10 +1155,10 @@ const GuessBand = () => {
               }}
             />
           </AutoComplete>
-          <Button type="primary" size="large" icon={<RocketOutlined />} onClick={() => submitGuess()} disabled={roundOver || bankSwitching}>
+          <Button type="primary" size="large" icon={<RocketOutlined />} onClick={() => submitGuess()} disabled={loading || roundOver || bankSwitching}>
             提交猜测
           </Button>
-          <Button size="large" icon={<ReloadOutlined />} onClick={restartRound} disabled={!bands.length || bankSwitching}>
+          <Button size="large" icon={<ReloadOutlined />} onClick={restartRound} disabled={loading || !bands.length || bankSwitching}>
             {roundOver ? '下一题' : '换一题'}
           </Button>
         </div>
