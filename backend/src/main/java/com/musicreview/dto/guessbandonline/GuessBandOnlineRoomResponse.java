@@ -25,6 +25,8 @@ public class GuessBandOnlineRoomResponse {
     private LocalDateTime startedAt;
     private LocalDateTime finishedAt;
     private String winnerDisplayName;
+    private Boolean awaitingNextRound;
+    private GuessBandOnlineRoundAnswerResponse roundAnswer;
     private List<GuessBandOnlineRoomPlayerResponse> players;
     private List<GuessBandOnlineRoomGuessResponse> guesses;
 }

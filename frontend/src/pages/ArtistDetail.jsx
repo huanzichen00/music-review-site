@@ -1,13 +1,22 @@
 import { useEffect, useState } from 'react';
-import { Card, Col, Empty, Pagination, Row, Spin, Tag, Typography, message } from 'antd';
-import { useParams } from 'react-router-dom';
+import { Button, Card, Col, Empty, Pagination, Popconfirm, Row, Spin, Tag, Typography, message } from 'antd';
+import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { useNavigate, useParams } from 'react-router-dom';
 import { artistsApi } from '../api/artists';
 import { albumsApi } from '../api/albums';
 import AlbumCard from '../components/AlbumCard';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { isRequestCanceled } from '../utils/http';
 
 const { Title, Paragraph, Text } = Typography;
+
+const unwrapListData = (data) => {
+  if (Array.isArray(data?.content)) {
+    return data.content;
+  }
+  return Array.isArray(data) ? data : [];
+};
 
 const styles = {
   pageTitle: {
@@ -64,6 +73,9 @@ const styles = {
 const ArtistDetail = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const { user } = useAuth();
+  const canDelete = user?.username === 'Huan';
+  const navigate = useNavigate();
   const { id } = useParams();
   const [artist, setArtist] = useState(null);
   const [albums, setAlbums] = useState([]);
@@ -113,10 +125,10 @@ const ArtistDetail = () => {
       try {
         const [artistRes, albumsRes] = await Promise.all([
           artistsApi.getById(id, { signal: controller.signal }),
-          albumsApi.getByArtist(id, { signal: controller.signal }),
+          albumsApi.getByArtist(id, { signal: controller.signal, params: { page: 0, size: 500 } }),
         ]);
         setArtist(artistRes.data || null);
-        setAlbums(albumsRes.data || []);
+        setAlbums(unwrapListData(albumsRes.data));
         setAlbumPage(1);
       } catch (error) {
         if (isRequestCanceled(error)) {
@@ -130,6 +142,17 @@ const ArtistDetail = () => {
     loadData();
     return () => controller.abort();
   }, [id]);
+
+  const handleDeleteArtist = async () => {
+    if (!artist?.id) return;
+    try {
+      await artistsApi.delete(artist.id);
+      message.success('乐队删除成功');
+      navigate('/music/artists');
+    } catch (error) {
+      message.error(error?.response?.data?.error || '删除乐队失败');
+    }
+  };
 
   if (loading) {
     return (
@@ -194,6 +217,23 @@ const ArtistDetail = () => {
             ) : (
               <Text type="secondary">暂无乐队简介</Text>
             )}
+            {canDelete ? (
+              <div style={{ marginTop: 12 }}>
+                <Popconfirm
+                  title="删除乐队"
+                  description={`确定要删除乐队 "${artist.name}" 吗？`}
+                  icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
+                  onConfirm={handleDeleteArtist}
+                  okText="确定"
+                  cancelText="取消"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button danger icon={<DeleteOutlined />}>
+                    删除乐队
+                  </Button>
+                </Popconfirm>
+              </div>
+            ) : null}
           </div>
         </div>
       </Card>

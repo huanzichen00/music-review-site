@@ -38,6 +38,10 @@ public class GuessBandOnlineRoom {
     @JoinColumn(name = "question_bank_id")
     private QuestionBank questionBank;
 
+    @Lob
+    @Column(name = "candidate_artist_ids", columnDefinition = "TEXT")
+    private String candidateArtistIds;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "target_artist_id")
     private Artist targetArtist;

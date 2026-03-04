@@ -46,6 +46,13 @@ const isPlayableArtist = (artist) =>
       artist?.status
   );
 
+const unwrapListData = (data) => {
+  if (Array.isArray(data?.content)) {
+    return data.content;
+  }
+  return Array.isArray(data) ? data : [];
+};
+
 const tokenStorageKey = (roomCode) => `guess-band-online-token:${roomCode}`;
 
 const formatCountdown = (seconds) => {
@@ -55,13 +62,26 @@ const formatCountdown = (seconds) => {
   return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 };
 
+const resolveArtistPhotoUrl = (url) => {
+  if (!url) {
+    return '';
+  }
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  if (url.startsWith('/')) {
+    return new URL(url, window.location.origin).toString();
+  }
+  return url;
+};
+
 const styles = {
   board: {
     marginTop: 10,
-    background: 'linear-gradient(180deg, #2A1425 0%, #31192D 100%)',
+    background: 'linear-gradient(180deg, #4A2C40 0%, #59364C 100%)',
     borderRadius: 14,
     padding: 10,
-    border: '1px solid #57314D',
+    border: '1px solid #6E4A5F',
   },
   table: {
     width: '100%',
@@ -87,130 +107,9 @@ const styles = {
     color: '#F7F1F5',
     fontWeight: 600,
     fontSize: 13,
-    background: '#2B1627',
+    background: '#5A3A4E',
   },
 };
-
-const createDemoRoom = () => ({
-  roomCode: 'DEMO01',
-  inviteToken: 'demo-invite-token',
-  status: 'IN_PROGRESS',
-  maxAttempts: 10,
-  totalRounds: 3,
-  currentRound: 2,
-  timedMode: true,
-  roundTimeLimitSeconds: 90,
-  roundStartedAt: new Date(Date.now() - 18 * 1000).toISOString(),
-  questionBankId: null,
-  questionBankName: '默认题库',
-  winnerDisplayName: null,
-  players: [
-    {
-      id: 1,
-      seatIndex: 1,
-      displayName: 'Nebula',
-      avatarUrl: null,
-      host: true,
-      score: 1,
-      guessCount: 5,
-    },
-    {
-      id: 2,
-      seatIndex: 2,
-      displayName: 'Aurora',
-      avatarUrl: null,
-      host: false,
-      score: 0,
-      guessCount: 4,
-    },
-  ],
-  guesses: [
-    {
-      id: 1001,
-      playerDisplayName: 'Nebula',
-      playerSeatIndex: 1,
-      roundIndex: 1,
-      artistName: 'The Strokes',
-      regionValue: 'US',
-      regionState: 'close',
-      genreValue: 'Indie Rock',
-      genreState: 'exact',
-      yearValue: 2001,
-      yearState: 'close',
-      yearArrow: '↑',
-      membersValue: 5,
-      membersState: 'exact',
-      membersArrow: '',
-      statusValue: 'Active',
-      statusState: 'exact',
-    },
-    {
-      id: 1002,
-      playerDisplayName: 'Aurora',
-      playerSeatIndex: 2,
-      roundIndex: 1,
-      artistName: 'Oasis',
-      regionValue: 'UK',
-      regionState: 'miss',
-      genreValue: 'Britpop',
-      genreState: 'close',
-      yearValue: 1994,
-      yearState: 'miss',
-      yearArrow: '↑',
-      membersValue: 5,
-      membersState: 'exact',
-      membersArrow: '',
-      statusValue: 'Disbanded',
-      statusState: 'miss',
-    },
-    {
-      id: 1003,
-      playerDisplayName: 'Nebula',
-      playerSeatIndex: 1,
-      roundIndex: 2,
-      artistName: 'Muse',
-      regionValue: 'UK',
-      regionState: 'miss',
-      genreValue: 'Alternative Rock',
-      genreState: 'close',
-      yearValue: 1999,
-      yearState: 'close',
-      yearArrow: '↑',
-      membersValue: 3,
-      membersState: 'miss',
-      membersArrow: '↓',
-      statusValue: 'Active',
-      statusState: 'exact',
-    },
-    {
-      id: 1004,
-      playerDisplayName: 'Aurora',
-      playerSeatIndex: 2,
-      roundIndex: 2,
-      artistName: 'Coldplay',
-      regionValue: 'UK',
-      regionState: 'miss',
-      genreValue: 'Pop Rock',
-      genreState: 'close',
-      yearValue: 2000,
-      yearState: 'exact',
-      yearArrow: '',
-      membersValue: 4,
-      membersState: 'exact',
-      membersArrow: '',
-      statusValue: 'Active',
-      statusState: 'exact',
-    },
-  ],
-});
-
-const DEMO_ARTISTS = [
-  { id: 1, name: 'The Strokes' },
-  { id: 2, name: 'Oasis' },
-  { id: 3, name: 'Muse' },
-  { id: 4, name: 'Coldplay' },
-  { id: 5, name: 'Radiohead' },
-];
 
 const GuessBandOnline = () => {
   const { isAuthenticated, user } = useAuth();
@@ -258,7 +157,17 @@ const GuessBandOnline = () => {
 
   const canGuess = useMemo(() => {
     if (!room) return false;
-    return room.status === 'IN_PROGRESS';
+    return room.status === 'IN_PROGRESS' && !room.awaitingNextRound;
+  }, [room]);
+
+  const canGoNextRound = useMemo(() => {
+    if (!room) return false;
+    return room.status === 'IN_PROGRESS' && room.awaitingNextRound;
+  }, [room]);
+
+  const canRematch = useMemo(() => {
+    if (!room) return false;
+    return room.status === 'FINISHED';
   }, [room]);
 
   const currentBankBandCount = useMemo(() => {
@@ -328,7 +237,7 @@ const GuessBandOnline = () => {
     if (state === 'close') {
       return { background: isDark ? '#52525B' : isBlue ? '#3D79BF' : '#7A5A35' };
     }
-    return { background: isDark ? '#18181B' : isBlue ? '#122742' : '#2B1627' };
+    return { background: isDark ? '#18181B' : isBlue ? '#122742' : '#5A3A4E' };
   };
 
   const renderTrendArrow = (arrow) => {
@@ -360,6 +269,14 @@ const GuessBandOnline = () => {
     });
     return nextMap;
   }, [room?.players]);
+  const currentRoundGuesses = useMemo(() => {
+    const guesses = room?.guesses || [];
+    const currentRound = room?.currentRound;
+    if (!currentRound) {
+      return guesses;
+    }
+    return guesses.filter((guess) => (guess?.roundIndex || currentRound) === currentRound);
+  }, [room?.currentRound, room?.guesses]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -382,14 +299,14 @@ const GuessBandOnline = () => {
       setLoading(true);
       try {
         const [artistsRes, recordsRes, publicBanksRes, mineBanksRes] = await Promise.all([
-          artistsApi.getAll(),
+          artistsApi.getAll({ page: 0, size: 200 }),
           guessBandOnlineApi.getRecords(),
           questionBanksApi.getPublic(),
           isAuthenticated ? questionBanksApi.getMine() : Promise.resolve({ data: [] }),
         ]);
         if (!mounted) return;
 
-        const playableArtists = (artistsRes.data || []).filter(isPlayableArtist);
+        const playableArtists = unwrapListData(artistsRes.data).filter(isPlayableArtist);
         setArtists(playableArtists);
         setRecords(recordsRes.data || []);
 
@@ -623,6 +540,33 @@ const GuessBandOnline = () => {
     }
   };
 
+  const handleNextRound = async () => {
+    if (!roomCode || !playerToken) return;
+    try {
+      setActionLoading(true);
+      const res = await guessBandOnlineApi.nextRound(roomCode, playerToken);
+      setRoom(res.data);
+    } catch (error) {
+      message.error(error?.response?.data?.error || '进入下一轮失败');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRematch = async () => {
+    if (!roomCode || !playerToken) return;
+    try {
+      setActionLoading(true);
+      const res = await guessBandOnlineApi.rematch(roomCode, playerToken);
+      setRoom(res.data);
+      message.success('新一局已开始');
+    } catch (error) {
+      message.error(error?.response?.data?.error || '再来一盘失败');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const copyRoomCode = async () => {
     if (!room?.roomCode) return;
     try {
@@ -651,16 +595,6 @@ const GuessBandOnline = () => {
     }
   };
 
-  const handleLoadDemoData = () => {
-    const demoRoom = createDemoRoom();
-    setRoom(demoRoom);
-    setRoomCode(demoRoom.roomCode);
-    setPlayerToken('demo-player-token');
-    setArtists(DEMO_ARTISTS);
-    setGuessArtistId(null);
-    message.success('已加载演示数据（仅本地预览）');
-  };
-
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: 60 }}>
@@ -680,8 +614,8 @@ const GuessBandOnline = () => {
   };
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-      <Card style={panelStyle}>
+    <div className="guess-band-online-page" style={{ maxWidth: 1280, margin: '0 auto' }}>
+      <Card className="guess-band-online-main-card" style={panelStyle}>
         <Title level={2} style={{ marginTop: 0, color: isDark ? '#E5E7EB' : isBlue ? '#274B7A' : '#5D4037' }}>
           猜乐队联机（双人私房）
         </Title>
@@ -689,7 +623,7 @@ const GuessBandOnline = () => {
           游客可玩。房主创建后分享房间号或邀请链接，双方可看到对方已猜乐队与正确/错误状态。
         </Text>
 
-        <Row gutter={16} style={{ marginTop: 16 }}>
+        <Row className="guess-band-online-entry-row" gutter={16} style={{ marginTop: 16 }}>
           <Col xs={24} lg={12}>
             <Card size="small" title="创建房间" style={{ borderRadius: 10 }}>
               <Space direction="vertical" style={{ width: '100%' }}>
@@ -775,7 +709,7 @@ const GuessBandOnline = () => {
                   onChange={(e) => setRoomInput(e.target.value)}
                   placeholder="房间号 / 邀请令牌 / 邀请链接"
                 />
-                <Space wrap>
+                <Space className="guess-band-online-join-actions" wrap>
                   <Button type="primary" loading={joining} onClick={handleJoinRoom} icon={<LinkOutlined />}>
                     加入
                   </Button>
@@ -787,10 +721,6 @@ const GuessBandOnline = () => {
             </Card>
           </Col>
         </Row>
-
-        <div style={{ marginTop: 12 }}>
-          <Button onClick={handleLoadDemoData}>加载演示数据（本地预览）</Button>
-        </div>
 
         {room ? (
           <Card size="small" title="当前房间" style={{ marginTop: 16, borderRadius: 10 }}>
@@ -848,7 +778,7 @@ const GuessBandOnline = () => {
                   onClick={handleStart}
                   loading={actionLoading}
                 >
-                  开始对局
+                  手动开始（自动开局兜底）
                 </Button>
               ) : null}
 
@@ -885,7 +815,72 @@ const GuessBandOnline = () => {
                 />
               ) : null}
 
-              <div style={themedBoardStyles.board}>
+              {canGoNextRound ? (
+                <Alert
+                  type="info"
+                  showIcon
+                  message="本轮已结束，请点击“进入下一轮”继续。"
+                />
+              ) : null}
+
+              {room.roundAnswer ? (
+                <Card
+                  size="small"
+                  title={canRematch ? '本局最后一轮正确答案' : '本轮正确答案'}
+                  style={{ borderRadius: 10 }}
+                >
+                  <Space size={16} align="start" wrap>
+                    {room.roundAnswer.artistPhotoUrl ? (
+                      <img
+                        src={resolveArtistPhotoUrl(room.roundAnswer.artistPhotoUrl)}
+                        alt={room.roundAnswer.artistName}
+                        style={{
+                          width: 120,
+                          height: 120,
+                          borderRadius: 10,
+                          objectFit: 'cover',
+                          border: isDark ? '1px solid #2F2F33' : '1px solid #E5E7EB',
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: 120,
+                          height: 120,
+                          borderRadius: 10,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: isDark ? '#17171A' : '#F3F4F6',
+                          color: isDark ? '#A3A3A3' : '#6B7280',
+                        }}
+                      >
+                        暂无图片
+                      </div>
+                    )}
+                    <Space direction="vertical" size={2}>
+                      <Text strong style={{ fontSize: 16 }}>
+                        {room.roundAnswer.artistName}
+                      </Text>
+                    </Space>
+                  </Space>
+                </Card>
+              ) : null}
+
+              {canGoNextRound ? (
+                <Button type="primary" onClick={handleNextRound} loading={actionLoading}>
+                  进入下一轮
+                </Button>
+              ) : null}
+
+              {canRematch ? (
+                <Button type="primary" onClick={handleRematch} loading={actionLoading}>
+                  再来一盘
+                </Button>
+              ) : null}
+
+              <div className="guess-band-online-board" style={themedBoardStyles.board}>
+                <div className="guess-band-online-table-scroll">
                 <table style={themedBoardStyles.table}>
                   <thead>
                     <tr>
@@ -899,7 +894,7 @@ const GuessBandOnline = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {(room.guesses || []).length === 0 ? (
+                    {currentRoundGuesses.length === 0 ? (
                       <tr>
                         <td
                           colSpan={7}
@@ -909,11 +904,11 @@ const GuessBandOnline = () => {
                             color: isDark ? '#9CA3AF' : isBlue ? '#AFC4E1' : '#D2BCC8',
                           }}
                         >
-                          还没有历史猜测，开始第一轮吧
+                          本轮还没有猜测记录
                         </td>
                       </tr>
                     ) : (
-                      (room.guesses || []).slice().reverse().map((guess) => {
+                      currentRoundGuesses.slice().reverse().map((guess) => {
                         const player = playersBySeat.get(guess.playerSeatIndex);
                         return (
                           <tr key={guess.id}>
@@ -935,9 +930,7 @@ const GuessBandOnline = () => {
                                 </span>
                               </Space>
                             </td>
-                            <td style={themedBoardStyles.tdBase}>
-                              R{guess.roundIndex || '-'} · {guess.artistName}
-                            </td>
+                            <td style={themedBoardStyles.tdBase}>{guess.artistName}</td>
                             <td style={{ ...themedBoardStyles.tdBase, ...getCellStyleByTheme(guess.regionState) }}>
                               {guess.regionValue}
                             </td>
@@ -965,6 +958,7 @@ const GuessBandOnline = () => {
                     )}
                   </tbody>
                 </table>
+                </div>
               </div>
             </Space>
           </Card>

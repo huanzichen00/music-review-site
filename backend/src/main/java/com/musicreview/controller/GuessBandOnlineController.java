@@ -70,6 +70,30 @@ public class GuessBandOnlineController {
         }
     }
 
+    @PostMapping("/rooms/{roomCode}/next-round")
+    public ResponseEntity<?> nextRound(
+            @PathVariable String roomCode,
+            @Valid @RequestBody GuessBandOnlineStartRequest request
+    ) {
+        try {
+            return ResponseEntity.ok(guessBandOnlineService.nextRound(roomCode, request));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/rooms/{roomCode}/rematch")
+    public ResponseEntity<?> rematch(
+            @PathVariable String roomCode,
+            @Valid @RequestBody GuessBandOnlineStartRequest request
+    ) {
+        try {
+            return ResponseEntity.ok(guessBandOnlineService.rematch(roomCode, request));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/records")
     public ResponseEntity<?> getRecentRecords() {
         try {

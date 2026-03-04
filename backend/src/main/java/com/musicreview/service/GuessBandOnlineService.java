@@ -5,6 +5,7 @@ import com.musicreview.entity.*;
 import com.musicreview.entity.enums.GuessBandRoomStatus;
 import com.musicreview.entity.enums.QuestionBankVisibility;
 import com.musicreview.repository.*;
+import com.musicreview.repository.projection.PlayerGuessCountProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,6 +55,7 @@ public class GuessBandOnlineService {
                 .inviteToken(inviteToken)
                 .status(GuessBandRoomStatus.WAITING)
                 .questionBank(selectedBank)
+                .candidateArtistIds(serializeArtistIds(loadCandidateArtists(selectedBank)))
                 .ownerUser(ownerUser)
                 .ownerPlayerToken(ownerPlayerToken)
                 .maxAttempts(maxAttempts)
@@ -118,6 +120,11 @@ public class GuessBandOnlineService {
                 .build();
         playerRepository.save(player);
 
+        List<GuessBandOnlinePlayer> updatedPlayers = playerRepository.findByRoomIdOrderBySeatIndexAsc(room.getId());
+        if (room.getStatus() == GuessBandRoomStatus.WAITING && updatedPlayers.size() == MAX_PLAYERS) {
+            startRoomInternal(room, updatedPlayers);
+        }
+
         GuessBandOnlineRoomResponse roomResponse = buildRoomResponse(room, playerToken);
         return GuessBandOnlineJoinResponse.builder()
                 .playerToken(playerToken)
@@ -142,27 +149,55 @@ public class GuessBandOnlineService {
             throw new RuntimeException("Room needs 2 players to start");
         }
 
-        List<Artist> candidates = loadCandidateArtists(room.getQuestionBank());
+        startRoomInternal(room, players);
+        return buildRoomResponse(room, request.getPlayerToken());
+    }
+
+    @Transactional
+    public GuessBandOnlineRoomResponse nextRound(String roomCode, GuessBandOnlineStartRequest request) {
+        GuessBandOnlineRoom room = findRoomByCode(roomCode);
+        requirePlayer(room, request.getPlayerToken());
+
+        if (room.getStatus() != GuessBandRoomStatus.IN_PROGRESS) {
+            throw new RuntimeException("Room is not in progress");
+        }
+        if (!isAwaitingNextRound(room)) {
+            throw new RuntimeException("Current round is not ready for next round");
+        }
+
+        List<GuessBandOnlinePlayer> players = playerRepository.findByRoomIdOrderBySeatIndexAsc(room.getId());
+        int currentRound = room.getCurrentRound() == null ? 0 : room.getCurrentRound();
+        int totalRounds = room.getTotalRounds() == null ? DEFAULT_TOTAL_ROUNDS : room.getTotalRounds();
+        if (currentRound >= totalRounds) {
+            finishRoom(room, players, determineWinnerDisplayName(players));
+            return buildRoomResponse(room, request.getPlayerToken());
+        }
+
+        List<Artist> candidates = loadRoomCandidates(room);
         if (candidates.isEmpty()) {
-            throw new RuntimeException("No playable artists in selected question bank");
+            finishRoom(room, players, determineWinnerDisplayName(players));
+            return buildRoomResponse(room, request.getPlayerToken());
         }
 
-        room.setStatus(GuessBandRoomStatus.IN_PROGRESS);
-        room.setStartedAt(LocalDateTime.now());
-        room.setFinishedAt(null);
-        room.setCurrentRound(0);
-        room.setTargetArtist(null);
-        room.setRoundStartedAt(null);
-        roomRepository.save(room);
+        startRound(room, currentRound + 1, candidates);
+        return buildRoomResponse(room, request.getPlayerToken());
+    }
 
-        for (GuessBandOnlinePlayer player : players) {
-            player.setReady(true);
-            player.setScore(0);
-            player.setLastSeenAt(LocalDateTime.now());
+    @Transactional
+    public GuessBandOnlineRoomResponse rematch(String roomCode, GuessBandOnlineStartRequest request) {
+        GuessBandOnlineRoom room = findRoomByCode(roomCode);
+        requirePlayer(room, request.getPlayerToken());
+        if (room.getStatus() != GuessBandRoomStatus.FINISHED) {
+            throw new RuntimeException("Room is not finished yet");
         }
-        playerRepository.saveAll(players);
 
-        startRound(room, 1, candidates);
+        List<GuessBandOnlinePlayer> players = playerRepository.findByRoomIdOrderBySeatIndexAsc(room.getId());
+        if (players.size() != MAX_PLAYERS) {
+            throw new RuntimeException("Room needs 2 players to rematch");
+        }
+
+        guessRepository.deleteByRoomId(room.getId());
+        startRoomInternal(room, players);
         return buildRoomResponse(room, request.getPlayerToken());
     }
 
@@ -184,6 +219,9 @@ public class GuessBandOnlineService {
         }
         if (room.getTargetArtist() == null || room.getCurrentRound() == null || room.getCurrentRound() < 1) {
             throw new RuntimeException("Target artist is not ready");
+        }
+        if (isAwaitingNextRound(room)) {
+            throw new RuntimeException("Round already ended, click next round");
         }
 
         GuessBandOnlinePlayer player = requirePlayer(room, request.getPlayerToken());
@@ -213,9 +251,9 @@ public class GuessBandOnlineService {
         if (correct) {
             player.setScore((player.getScore() == null ? 0 : player.getScore()) + 1);
             playerRepository.save(player);
-            advanceRoundOrFinish(room, players);
+            resolveRoundOrFinish(room, players);
         } else {
-            maybeAdvanceIfAllAttemptsUsedCurrentRound(room, players);
+            maybeResolveIfAllAttemptsUsedCurrentRound(room, players);
         }
 
         return buildRoomResponse(room, request.getPlayerToken());
@@ -307,15 +345,37 @@ public class GuessBandOnlineService {
 
     private List<Artist> loadCandidateArtists(QuestionBank questionBank) {
         if (questionBank != null) {
-            return questionBank.getItems().stream()
-                    .map(QuestionBankItem::getArtist)
-                    .filter(this::isPlayableArtist)
-                    .collect(Collectors.toList());
+            return artistRepository.findPlayableArtistsByQuestionBankId(questionBank.getId());
         }
 
-        return artistRepository.findAll().stream()
-                .filter(this::isPlayableArtist)
-                .collect(Collectors.toList());
+        return artistRepository.findPlayableArtists();
+    }
+
+    private List<Artist> loadRoomCandidates(GuessBandOnlineRoom room) {
+        List<Long> snapshotIds = parseArtistIds(room.getCandidateArtistIds());
+        if (!snapshotIds.isEmpty()) {
+            Map<Long, Artist> artistMap = artistRepository.findAllById(snapshotIds).stream()
+                    .filter(this::isPlayableArtist)
+                    .collect(Collectors.toMap(Artist::getId, a -> a, (left, right) -> left, LinkedHashMap::new));
+
+            List<Artist> snapshotArtists = new ArrayList<>();
+            for (Long artistId : snapshotIds) {
+                Artist artist = artistMap.get(artistId);
+                if (artist != null) {
+                    snapshotArtists.add(artist);
+                }
+            }
+            if (!snapshotArtists.isEmpty()) {
+                return snapshotArtists;
+            }
+        }
+
+        List<Artist> fallback = loadCandidateArtists(room.getQuestionBank());
+        if (!fallback.isEmpty()) {
+            room.setCandidateArtistIds(serializeArtistIds(fallback));
+            roomRepository.save(room);
+        }
+        return fallback;
     }
 
     private boolean isPlayableArtist(Artist artist) {
@@ -327,21 +387,18 @@ public class GuessBandOnlineService {
                 && artist.getStatus() != null;
     }
 
-    private void maybeAdvanceIfAllAttemptsUsedCurrentRound(GuessBandOnlineRoom room, List<GuessBandOnlinePlayer> players) {
+    private void maybeResolveIfAllAttemptsUsedCurrentRound(GuessBandOnlineRoom room, List<GuessBandOnlinePlayer> players) {
         Integer currentRound = room.getCurrentRound();
         if (currentRound == null || currentRound < 1) {
             return;
         }
 
+        Map<Long, Integer> usedCountByPlayer = groupedCountByPlayer(room.getId(), currentRound);
         boolean allUsed = players.stream()
-                .allMatch(player -> guessRepository.countByRoomIdAndPlayerIdAndRoundIndex(
-                        room.getId(),
-                        player.getId(),
-                        currentRound
-                ) >= room.getMaxAttempts());
+                .allMatch(player -> usedCountByPlayer.getOrDefault(player.getId(), 0) >= room.getMaxAttempts());
 
         if (allUsed) {
-            advanceRoundOrFinish(room, players);
+            resolveRoundOrFinish(room, players);
         }
     }
 
@@ -362,10 +419,10 @@ public class GuessBandOnlineService {
         }
 
         List<GuessBandOnlinePlayer> players = playerRepository.findByRoomIdOrderBySeatIndexAsc(room.getId());
-        advanceRoundOrFinish(room, players);
+        resolveRoundOrFinish(room, players);
     }
 
-    private void advanceRoundOrFinish(GuessBandOnlineRoom room, List<GuessBandOnlinePlayer> players) {
+    private void resolveRoundOrFinish(GuessBandOnlineRoom room, List<GuessBandOnlinePlayer> players) {
         int currentRound = room.getCurrentRound() == null ? 0 : room.getCurrentRound();
         int totalRounds = room.getTotalRounds() == null ? DEFAULT_TOTAL_ROUNDS : room.getTotalRounds();
 
@@ -373,14 +430,8 @@ public class GuessBandOnlineService {
             finishRoom(room, players, determineWinnerDisplayName(players));
             return;
         }
-
-        List<Artist> candidates = loadCandidateArtists(room.getQuestionBank());
-        if (candidates.isEmpty()) {
-            finishRoom(room, players, determineWinnerDisplayName(players));
-            return;
-        }
-
-        startRound(room, currentRound + 1, candidates);
+        room.setRoundStartedAt(null);
+        roomRepository.save(room);
     }
 
     private void startRound(GuessBandOnlineRoom room, int roundIndex, List<Artist> candidates) {
@@ -439,7 +490,6 @@ public class GuessBandOnlineService {
 
         room.setStatus(GuessBandRoomStatus.FINISHED);
         room.setFinishedAt(LocalDateTime.now());
-        room.setTargetArtist(null);
         room.setRoundStartedAt(null);
         roomRepository.save(room);
 
@@ -472,20 +522,20 @@ public class GuessBandOnlineService {
 
     private GuessBandOnlineRoomResponse buildRoomResponse(GuessBandOnlineRoom room, String playerToken) {
         List<GuessBandOnlinePlayer> players = playerRepository.findByRoomIdOrderBySeatIndexAsc(room.getId());
-        Map<Long, Integer> guessCountByPlayer = new HashMap<>();
+        Map<Long, Integer> guessCountByPlayer = room.getStatus() == GuessBandRoomStatus.IN_PROGRESS
+                && room.getCurrentRound() != null
+                && room.getCurrentRound() > 0
+                ? groupedCountByPlayer(room.getId(), room.getCurrentRound())
+                : groupedCountByPlayer(room.getId(), null);
         Integer currentRound = room.getCurrentRound();
-        for (GuessBandOnlinePlayer player : players) {
-            int count;
-            if (room.getStatus() == GuessBandRoomStatus.IN_PROGRESS && currentRound != null && currentRound > 0) {
-                count = guessRepository.countByRoomIdAndPlayerIdAndRoundIndex(room.getId(), player.getId(), currentRound);
-            } else {
-                count = guessRepository.countByRoomIdAndPlayerId(room.getId(), player.getId());
-            }
-            guessCountByPlayer.put(player.getId(), count);
-        }
 
         List<GuessBandOnlineGuess> guesses = guessRepository.findTop80ByRoomIdOrderByCreatedAtDesc(room.getId());
         Collections.reverse(guesses);
+
+        boolean awaitingNextRound = isAwaitingNextRound(room);
+        GuessBandOnlineRoundAnswerResponse roundAnswer = shouldExposeRoundAnswer(room)
+                ? GuessBandOnlineRoundAnswerResponse.fromArtist(room.getTargetArtist())
+                : null;
 
         return GuessBandOnlineRoomResponse.builder()
                 .roomCode(room.getRoomCode())
@@ -502,6 +552,8 @@ public class GuessBandOnlineService {
                 .startedAt(room.getStartedAt())
                 .finishedAt(room.getFinishedAt())
                 .winnerDisplayName(room.getStatus() == GuessBandRoomStatus.FINISHED ? determineWinnerDisplayName(players) : null)
+                .awaitingNextRound(awaitingNextRound)
+                .roundAnswer(roundAnswer)
                 .players(players.stream()
                         .map(player -> GuessBandOnlineRoomPlayerResponse.fromEntity(
                                 player,
@@ -513,6 +565,92 @@ public class GuessBandOnlineService {
                         .map(GuessBandOnlineRoomGuessResponse::fromEntity)
                         .collect(Collectors.toList()))
                 .build();
+    }
+
+    private void startRoomInternal(GuessBandOnlineRoom room, List<GuessBandOnlinePlayer> players) {
+        List<Artist> candidates = loadRoomCandidates(room);
+        if (candidates.isEmpty()) {
+            throw new RuntimeException("No playable artists in selected question bank");
+        }
+
+        room.setStatus(GuessBandRoomStatus.IN_PROGRESS);
+        room.setStartedAt(LocalDateTime.now());
+        room.setFinishedAt(null);
+        room.setCurrentRound(0);
+        room.setTargetArtist(null);
+        room.setRoundStartedAt(null);
+        roomRepository.save(room);
+
+        for (GuessBandOnlinePlayer player : players) {
+            player.setReady(true);
+            player.setScore(0);
+            player.setLastSeenAt(LocalDateTime.now());
+        }
+        playerRepository.saveAll(players);
+
+        startRound(room, 1, candidates);
+    }
+
+    private String serializeArtistIds(List<Artist> artists) {
+        if (artists == null || artists.isEmpty()) {
+            return null;
+        }
+        LinkedHashSet<Long> ids = artists.stream()
+                .map(Artist::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (ids.isEmpty()) {
+            return null;
+        }
+        return ids.stream().map(String::valueOf).collect(Collectors.joining(","));
+    }
+
+    private List<Long> parseArtistIds(String csv) {
+        if (csv == null || csv.isBlank()) {
+            return List.of();
+        }
+        LinkedHashSet<Long> ids = new LinkedHashSet<>();
+        for (String part : csv.split(",")) {
+            String raw = part.trim();
+            if (raw.isEmpty()) {
+                continue;
+            }
+            try {
+                ids.add(Long.parseLong(raw));
+            } catch (NumberFormatException ignored) {
+                // Skip invalid token and keep parsing remaining IDs.
+            }
+        }
+        return new ArrayList<>(ids);
+    }
+
+    private boolean isAwaitingNextRound(GuessBandOnlineRoom room) {
+        return room.getStatus() == GuessBandRoomStatus.IN_PROGRESS
+                && room.getCurrentRound() != null
+                && room.getCurrentRound() > 0
+                && room.getTargetArtist() != null
+                && room.getRoundStartedAt() == null;
+    }
+
+    private boolean shouldExposeRoundAnswer(GuessBandOnlineRoom room) {
+        if (room.getTargetArtist() == null) {
+            return false;
+        }
+        if (room.getStatus() == GuessBandRoomStatus.FINISHED) {
+            return true;
+        }
+        return isAwaitingNextRound(room);
+    }
+
+    private Map<Long, Integer> groupedCountByPlayer(Long roomId, Integer roundIndex) {
+        List<PlayerGuessCountProjection> rows = roundIndex == null
+                ? guessRepository.countByRoomIdGroupByPlayer(roomId)
+                : guessRepository.countByRoomIdAndRoundGroupByPlayer(roomId, roundIndex);
+        Map<Long, Integer> result = new HashMap<>();
+        for (PlayerGuessCountProjection row : rows) {
+            result.put(row.getPlayerId(), (int) row.getGuessCount());
+        }
+        return result;
     }
 
     private String normalizeDisplayName(String displayName) {
