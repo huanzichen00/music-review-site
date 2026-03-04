@@ -1,6 +1,7 @@
 import { Card, Rate, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import SmartAlbumCover from './SmartAlbumCover';
 
 // 自定义样式
 const styles = {
@@ -62,10 +63,6 @@ const AlbumCard = ({ album }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const navigate = useNavigate();
-  const resolveCoverUrl = (url) => {
-    if (!url) return '';
-    return url.startsWith('/api') ? new URL(url, window.location.origin).toString() : url;
-  };
   const themedStyles = isDark
     ? {
         card: {
@@ -99,12 +96,14 @@ const AlbumCard = ({ album }) => {
       cover={
         <div style={themedStyles.coverContainer}>
           {album.coverUrl ? (
-            <img 
-              alt={album.title} 
-              src={resolveCoverUrl(album.coverUrl)} 
+            <SmartAlbumCover
+              albumId={album.id}
+              coverUrl={album.coverUrl}
+              alt={album.title}
+              variant="thumb"
+              width={220}
+              height={220}
               style={styles.coverImage}
-              loading="lazy"
-              decoding="async"
               onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
               onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
             />

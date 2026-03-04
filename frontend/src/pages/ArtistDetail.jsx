@@ -182,6 +182,8 @@ const ArtistDetail = () => {
                 style={styles.photo}
                 loading="lazy"
                 decoding="async"
+                width={640}
+                height={640}
               />
             ) : (
               <div

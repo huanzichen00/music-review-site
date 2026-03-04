@@ -24,6 +24,7 @@ import { blogPostsApi } from '../api/blogPosts';
 import { blogRepliesApi } from '../api/blogReplies';
 import { useTheme } from '../context/ThemeContext';
 import { resolveAvatarUrl } from '../utils/avatar';
+import SmartAlbumCover from '../components/SmartAlbumCover';
 import { unwrapListData } from '../utils/apiData';
 
 const { Title, Text } = Typography;
@@ -343,9 +344,13 @@ const Blog = () => {
                         </Text>
                         {post.albumCoverUrl && (
                           <div style={{ marginTop: 10 }}>
-                            <img
-                              src={resolveMediaUrl(post.albumCoverUrl)}
+                            <SmartAlbumCover
+                              albumId={post.albumId}
+                              coverUrl={post.albumCoverUrl}
                               alt={post.albumTitle || 'album cover'}
+                              variant="thumb"
+                              width={56}
+                              height={56}
                               style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'cover', border: '1px solid #E8D5C4' }}
                               onClick={() => post.albumId && navigate(`/music/albums/${post.albumId}`)}
                             />

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { albumsApi } from '../api/albums';
 import { reviewsApi } from '../api/reviews';
 import AlbumCard from '../components/AlbumCard';
+import SmartAlbumCover from '../components/SmartAlbumCover';
 import { resolveAvatarUrl } from '../utils/avatar';
 import { useTheme } from '../context/ThemeContext';
 import { isRequestCanceled } from '../utils/http';
@@ -130,17 +131,6 @@ const Home = () => {
   const [recentReviews, setRecentReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
-  const resolveMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    if (url.startsWith('/api') || url.startsWith('/')) {
-      return new URL(url, window.location.origin).toString();
-    }
-    return url;
-  };
 
   const themedStyles = useMemo(() => {
     if (!isDark) {
@@ -319,10 +309,20 @@ const Home = () => {
                                 {review.albumTitle} - {review.artistName}
                               </div>
                               {review.albumCoverUrl && (
-                                <Avatar
-                                  src={resolveMediaUrl(review.albumCoverUrl)}
-                                  size={26}
-                                  style={themedStyles.reviewAlbumCover}
+                                <SmartAlbumCover
+                                  albumId={review.albumId}
+                                  coverUrl={review.albumCoverUrl}
+                                  alt={review.albumTitle || 'album cover'}
+                                  variant="thumb"
+                                  width={26}
+                                  height={26}
+                                  style={{
+                                    width: 26,
+                                    height: 26,
+                                    borderRadius: '50%',
+                                    objectFit: 'cover',
+                                    ...themedStyles.reviewAlbumCover,
+                                  }}
                                 />
                               )}
                             </div>

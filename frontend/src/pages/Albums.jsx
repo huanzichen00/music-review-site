@@ -50,7 +50,7 @@ const Albums = () => {
   const [loading, setLoading] = useState(true);
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 24;
+  const PAGE_SIZE = 12;
 
   useEffect(() => {
     const controller = new AbortController();

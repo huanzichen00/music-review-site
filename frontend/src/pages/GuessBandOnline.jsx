@@ -875,6 +875,10 @@ const GuessBandOnline = () => {
                       <img
                         src={resolveArtistPhotoUrl(room.roundAnswer.artistPhotoUrl)}
                         alt={room.roundAnswer.artistName}
+                        loading="lazy"
+                        decoding="async"
+                        width={120}
+                        height={120}
                         style={{
                           width: 120,
                           height: 120,

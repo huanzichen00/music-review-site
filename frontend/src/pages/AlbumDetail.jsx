@@ -16,6 +16,7 @@ import { repliesApi } from '../api/replies';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { resolveAvatarUrl } from '../utils/avatar';
+import SmartAlbumCover from '../components/SmartAlbumCover';
 import { isRequestCanceled } from '../utils/http';
 
 const { Title, Text, Paragraph } = Typography;
@@ -381,10 +382,15 @@ const AlbumDetail = () => {
         <Col xs={24} md={8}>
           <div style={styles.coverContainer}>
             {album.coverUrl ? (
-              <img 
-                src={resolveCoverUrl(album.coverUrl)} 
+              <SmartAlbumCover
+                albumId={album.id}
+                coverUrl={album.coverUrl}
                 alt={album.title}
+                variant="detail"
+                width={640}
+                height={640}
                 style={styles.coverImage}
+                loading="eager"
               />
             ) : (
               <div style={{

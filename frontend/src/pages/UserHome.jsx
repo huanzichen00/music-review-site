@@ -19,6 +19,7 @@ import {
 import { LinkOutlined, UserOutlined } from '@ant-design/icons';
 import { usersApi } from '../api/users';
 import { blogPostsApi } from '../api/blogPosts';
+import SmartAlbumCover from '../components/SmartAlbumCover';
 import { resolveAvatarUrl } from '../utils/avatar';
 import { unwrapListData } from '../utils/apiData';
 
@@ -51,17 +52,6 @@ const UserHome = () => {
 
     loadUserHome();
   }, [id, navigate]);
-
-  const resolveMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    if (url.startsWith('/api') || url.startsWith('/')) {
-      return new URL(url, window.location.origin).toString();
-    }
-    return url;
-  };
 
   if (loading) {
     return (
@@ -134,9 +124,13 @@ const UserHome = () => {
                       </Text>
                       {post.albumCoverUrl && (
                         <div style={{ marginTop: 8 }}>
-                          <img
-                            src={resolveMediaUrl(post.albumCoverUrl)}
+                          <SmartAlbumCover
+                            albumId={post.albumId}
+                            coverUrl={post.albumCoverUrl}
                             alt={post.albumTitle || 'album cover'}
+                            variant="thumb"
+                            width={52}
+                            height={52}
                             style={{
                               width: 52,
                               height: 52,
