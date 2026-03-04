@@ -36,9 +36,8 @@ const menuItemStyle = {
 };
 
 const routePrefetchers = {
-  '/music/home': () => import('../pages/Home'),
   '/music/guess-band': () => import('../pages/GuessBand'),
-  '/blog': () => import('../pages/Blog'),
+  '/music/guess-band/online': () => import('../pages/GuessBandOnline'),
 };
 
 const markGuessBandRouteStart = () => {
@@ -93,15 +92,37 @@ const Layout = ({ children }) => {
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
   const hasIdleWarmTriggeredRef = useRef(false);
+  const prefetchedRoutesRef = useRef(new Set());
+  const onlinePrefetchTimerRef = useRef(null);
   const isBlue = theme === 'blue';
   const isDark = theme === 'dark';
 
   const prefetchRoute = useCallback((path) => {
     const load = routePrefetchers[path];
-    if (load) {
-      load();
+    if (!load) {
+      return;
     }
+    if (prefetchedRoutesRef.current.has(path)) {
+      return;
+    }
+    prefetchedRoutesRef.current.add(path);
+    load();
   }, []);
+
+  const prefetchGuessBandNextHops = useCallback(() => {
+    prefetchRoute('/music/guess-band');
+    if (prefetchedRoutesRef.current.has('/music/guess-band/online')) {
+      return;
+    }
+    if (onlinePrefetchTimerRef.current != null || typeof window === 'undefined') {
+      return;
+    }
+    // Split into a second, delayed prefetch to avoid a burst of concurrent chunk work.
+    onlinePrefetchTimerRef.current = window.setTimeout(() => {
+      onlinePrefetchTimerRef.current = null;
+      prefetchRoute('/music/guess-band/online');
+    }, 350);
+  }, [prefetchRoute]);
 
   const refreshUnreadCount = useCallback(() => {
     if (!isAuthenticated) {
@@ -159,6 +180,13 @@ const Layout = ({ children }) => {
       }
     };
   }, [isAuthenticated, location.pathname]);
+
+  useEffect(() => () => {
+    if (onlinePrefetchTimerRef.current != null) {
+      window.clearTimeout(onlinePrefetchTimerRef.current);
+      onlinePrefetchTimerRef.current = null;
+    }
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -218,7 +246,7 @@ const Layout = ({ children }) => {
     {
       key: '/music',
       icon: <AppstoreOutlined style={{ fontSize: '18px' }} />,
-      label: <Link to="/music/home" style={menuLinkStyle} onMouseEnter={() => prefetchRoute('/music/home')}>音乐</Link>,
+      label: <Link to="/music/home" style={menuLinkStyle}>音乐</Link>,
       style: menuItemStyle,
     },
     {
@@ -229,12 +257,12 @@ const Layout = ({ children }) => {
           to="/music/guess-band"
           style={menuLinkStyle}
           onMouseEnter={() => {
-            prefetchRoute('/music/guess-band');
+            prefetchGuessBandNextHops();
             warmGuessBandApiCache(isAuthenticated);
           }}
           onClick={() => {
             markGuessBandRouteStart();
-            prefetchRoute('/music/guess-band');
+            prefetchGuessBandNextHops();
             warmGuessBandApiCache(isAuthenticated);
           }}
         >
@@ -246,7 +274,7 @@ const Layout = ({ children }) => {
     {
       key: '/blog',
       icon: <BookOutlined style={{ fontSize: '18px' }} />,
-      label: <Link to="/blog" style={menuLinkStyle} onMouseEnter={() => prefetchRoute('/blog')}>博客</Link>,
+      label: <Link to="/blog" style={menuLinkStyle}>博客</Link>,
       style: menuItemStyle,
     },
   ];
