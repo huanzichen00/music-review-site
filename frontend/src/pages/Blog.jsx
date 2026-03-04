@@ -225,6 +225,8 @@ const Blog = () => {
               <Select
                 allowClear
                 showSearch
+                className="blog-album-select"
+                popupClassName="blog-album-select-dropdown"
                 placeholder="选择一个专辑，读者可直接跳转"
                 optionFilterProp="label"
                 options={albums.map((album) => ({

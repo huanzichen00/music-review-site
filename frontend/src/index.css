@@ -484,6 +484,29 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2) !important;
 }
 
+:root[data-theme='dark'] .blog-page .blog-album-select .ant-select-selector {
+  background: #20242d !important;
+  border-color: #4B5563 !important;
+}
+
+:root[data-theme='dark'] .blog-album-select-dropdown.ant-select-dropdown {
+  background: #20242d !important;
+  border: 1px solid #4B5563 !important;
+}
+
+:root[data-theme='dark'] .blog-album-select-dropdown .ant-select-item {
+  color: #E5E7EB !important;
+}
+
+:root[data-theme='dark'] .blog-album-select-dropdown .ant-select-item-option-selected {
+  background: #2a3240 !important;
+  color: #E5E7EB !important;
+}
+
+:root[data-theme='dark'] .blog-album-select-dropdown .ant-select-item-option-active {
+  background: #2f3746 !important;
+}
+
 :root[data-theme='dark'] .guess-band-input .ant-select-selector {
   background: #171719 !important;
   border-color: #2F2F33 !important;
