@@ -90,7 +90,7 @@ publish_frontend() {
   fi
 
   log "Publishing frontend to $FRONTEND_TARGET_DIR ..."
-  rsync -a --delete "$FRONTEND_DIR/dist/" "$FRONTEND_TARGET_DIR/"
+  rsync -a --delete --exclude 'covers/' "$FRONTEND_DIR/dist/" "$FRONTEND_TARGET_DIR/"
   chown -R www-data:www-data "$FRONTEND_TARGET_DIR"
 }
 
