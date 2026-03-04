@@ -4,6 +4,7 @@ import com.musicreview.dto.auth.AuthResponse;
 import com.musicreview.dto.auth.LoginRequest;
 import com.musicreview.dto.auth.RegisterRequest;
 import com.musicreview.service.AuthService;
+import com.musicreview.service.LoginThrottleService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class AuthController {
     private static final String AUTH_COOKIE_NAME = "auth_token";
 
     private final AuthService authService;
+    private final LoginThrottleService loginThrottleService;
     @Value("${jwt.expiration}")
     private long jwtExpirationMs;
     @Value("${app.auth.cookie-secure:false}")
@@ -53,14 +55,29 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        String throttleKey = loginThrottleService.buildThrottleKey(request.getUsername(), extractClientIp(httpRequest));
+        if (loginThrottleService.isBlocked(throttleKey)) {
+            return ResponseEntity.status(429).body(Map.of(
+                    "error", "Too many login attempts. Please try again later.",
+                    "retryAfterSeconds", loginThrottleService.getRetryAfterSeconds(throttleKey)
+            ));
+        }
         try {
             AuthResponse response = authService.login(request);
+            loginThrottleService.recordSuccess(throttleKey);
             ResponseCookie cookie = buildAuthCookie(response.getToken(), httpRequest);
             response.setToken(null);
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, cookie.toString())
                     .body(response);
         } catch (Exception e) {
+            loginThrottleService.recordFailure(throttleKey);
+            if (loginThrottleService.isBlocked(throttleKey)) {
+                return ResponseEntity.status(429).body(Map.of(
+                        "error", "Too many login attempts. Please try again later.",
+                        "retryAfterSeconds", loginThrottleService.getRetryAfterSeconds(throttleKey)
+                ));
+            }
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid username or password"));
         }
     }
@@ -129,5 +146,17 @@ public class AuthController {
         }
         String forwardedProto = request.getHeader("X-Forwarded-Proto");
         return request.isSecure() || "https".equalsIgnoreCase(forwardedProto);
+    }
+
+    private String extractClientIp(HttpServletRequest request) {
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+        String realIp = request.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) {
+            return realIp.trim();
+        }
+        return request.getRemoteAddr();
     }
 }
