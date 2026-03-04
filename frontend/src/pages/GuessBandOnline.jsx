@@ -389,18 +389,26 @@ const GuessBandOnline = () => {
 
   useEffect(() => {
     if (!roomCode || !playerToken) return;
+    let inFlight = false;
 
-    const timer = setInterval(async () => {
+    const poll = async () => {
+      if (inFlight) return;
+      inFlight = true;
       try {
         const res = await guessBandOnlineApi.getRoom(roomCode, playerToken);
         setRoom(res.data);
       } catch {
         // keep polling quiet
+      } finally {
+        inFlight = false;
       }
-    }, 2000);
+    };
+
+    poll();
+    const timer = setInterval(poll, room?.status === 'IN_PROGRESS' ? 2000 : 5000);
 
     return () => clearInterval(timer);
-  }, [roomCode, playerToken]);
+  }, [roomCode, playerToken, room?.status]);
 
   useEffect(() => {
     if (!room || room.status !== 'IN_PROGRESS' || !room.timedMode) return undefined;

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -25,6 +26,7 @@ public class GuessBandOnlineService {
     private static final int DEFAULT_TOTAL_ROUNDS = 1;
     private static final int DEFAULT_ROUND_TIME_LIMIT_SECONDS = 180;
     private static final int MAX_PLAYERS = 2;
+    private static final int LAST_SEEN_WRITE_INTERVAL_SECONDS = 20;
 
     private final GuessBandOnlineRoomRepository roomRepository;
     private final GuessBandOnlinePlayerRepository playerRepository;
@@ -136,7 +138,7 @@ public class GuessBandOnlineService {
     @Transactional
     public GuessBandOnlineRoomResponse startRoom(String roomCode, GuessBandOnlineStartRequest request) {
         GuessBandOnlineRoom room = findRoomByCode(roomCode);
-        GuessBandOnlinePlayer caller = requirePlayer(room, request.getPlayerToken());
+        GuessBandOnlinePlayer caller = requirePlayer(room, request.getPlayerToken(), true);
 
         if (!Objects.equals(room.getOwnerPlayerToken(), caller.getPlayerToken())) {
             throw new RuntimeException("Only host can start this room");
@@ -157,7 +159,7 @@ public class GuessBandOnlineService {
     @Transactional
     public GuessBandOnlineRoomResponse nextRound(String roomCode, GuessBandOnlineStartRequest request) {
         GuessBandOnlineRoom room = findRoomByCode(roomCode);
-        requirePlayer(room, request.getPlayerToken());
+        requirePlayer(room, request.getPlayerToken(), true);
 
         if (room.getStatus() != GuessBandRoomStatus.IN_PROGRESS) {
             throw new RuntimeException("Room is not in progress");
@@ -187,7 +189,7 @@ public class GuessBandOnlineService {
     @Transactional
     public GuessBandOnlineRoomResponse rematch(String roomCode, GuessBandOnlineStartRequest request) {
         GuessBandOnlineRoom room = findRoomByCode(roomCode);
-        requirePlayer(room, request.getPlayerToken());
+        requirePlayer(room, request.getPlayerToken(), true);
         if (room.getStatus() != GuessBandRoomStatus.FINISHED) {
             throw new RuntimeException("Room is not finished yet");
         }
@@ -205,7 +207,7 @@ public class GuessBandOnlineService {
     @Transactional
     public GuessBandOnlineRoomResponse getRoomState(String roomCode, String playerToken) {
         GuessBandOnlineRoom room = findRoomByCode(roomCode);
-        requirePlayer(room, playerToken);
+        requirePlayer(room, playerToken, false);
         maybeAdvanceRoundOnTimeout(room);
         return buildRoomResponse(room, playerToken);
     }
@@ -225,8 +227,7 @@ public class GuessBandOnlineService {
             throw new RuntimeException("Round already ended, click next round");
         }
 
-        GuessBandOnlinePlayer player = requirePlayer(room, request.getPlayerToken());
-        player.setLastSeenAt(LocalDateTime.now());
+        GuessBandOnlinePlayer player = requirePlayer(room, request.getPlayerToken(), true);
 
         int usedAttempts = guessRepository.countByRoomIdAndPlayerIdAndRoundIndex(room.getId(), player.getId(), room.getCurrentRound());
         if (usedAttempts >= room.getMaxAttempts()) {
@@ -298,11 +299,18 @@ public class GuessBandOnlineService {
                 .orElseThrow(() -> new RuntimeException("Room not found"));
     }
 
-    private GuessBandOnlinePlayer requirePlayer(GuessBandOnlineRoom room, String playerToken) {
+    private GuessBandOnlinePlayer requirePlayer(GuessBandOnlineRoom room, String playerToken, boolean forcePersistLastSeen) {
         GuessBandOnlinePlayer player = playerRepository.findByRoomIdAndPlayerToken(room.getId(), playerToken)
                 .orElseThrow(() -> new RuntimeException("Invalid player token"));
-        player.setLastSeenAt(LocalDateTime.now());
-        playerRepository.save(player);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime lastSeenAt = player.getLastSeenAt();
+        boolean shouldPersist = forcePersistLastSeen
+                || lastSeenAt == null
+                || Duration.between(lastSeenAt, now).getSeconds() >= LAST_SEEN_WRITE_INTERVAL_SECONDS;
+        if (shouldPersist) {
+            player.setLastSeenAt(now);
+            playerRepository.save(player);
+        }
         return player;
     }
 

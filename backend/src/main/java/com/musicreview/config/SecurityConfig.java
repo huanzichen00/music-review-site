@@ -54,7 +54,8 @@ public class SecurityConfig {
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                         .ignoringRequestMatchers(
                                 new AntPathRequestMatcher("/api/auth/login", HttpMethod.POST.name()),
-                                new AntPathRequestMatcher("/api/auth/register", HttpMethod.POST.name())
+                                new AntPathRequestMatcher("/api/auth/register", HttpMethod.POST.name()),
+                                new AntPathRequestMatcher("/api/guess-band-online/**")
                         )
                 )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
