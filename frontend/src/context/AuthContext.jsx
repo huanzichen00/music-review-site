@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useCallback, useContext, useState, useEffect } from 'react';
 import { authApi } from '../api/auth';
 
 const AuthContext = createContext(null);
@@ -6,27 +6,37 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const ensureCsrfToken = useCallback(async () => {
+    try {
+      await authApi.getCsrf();
+    } catch {
+      // ignore csrf bootstrap failure
+    }
+  }, []);
 
   useEffect(() => {
-    authApi.getMe()
-      .then((response) => {
-        const userData = response.data;
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
-      })
-      .catch(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+    ensureCsrfToken().finally(() => {
+      authApi.getMe()
+        .then((response) => {
+          const userData = response.data;
+          localStorage.setItem('user', JSON.stringify(userData));
+          setUser(userData);
+        })
+        .catch(() => {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    });
+  }, [ensureCsrfToken]);
 
   const login = async (username, password) => {
     const response = await authApi.login({ username, password });
     const { token: _token, ...userData } = response.data;
+    await ensureCsrfToken();
     
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
@@ -37,6 +47,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (username, email, password) => {
     const response = await authApi.register({ username, email, password });
     const { token: _token, ...userData } = response.data;
+    await ensureCsrfToken();
     
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
@@ -46,6 +57,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
+      await ensureCsrfToken();
       await authApi.logout();
     } catch {
       // ignore logout API failure and clear local user state anyway
