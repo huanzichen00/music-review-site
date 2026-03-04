@@ -1151,6 +1151,9 @@ const GuessBand = () => {
             {roundOver ? '下一题' : '换一题'}
           </Button>
         </div>
+        <div className="guess-band-mobile-drag-tip">
+          提示：下拉结果里长按后上下拖拽，更容易滚动选择乐队
+        </div>
 
         {roundOver ? (
           <Card style={themedStyles.answerCard}>

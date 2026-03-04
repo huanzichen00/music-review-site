@@ -608,6 +608,10 @@ h1, h2, h3, h4, h5, h6 {
   -webkit-overflow-scrolling: touch;
 }
 
+.guess-band-mobile-drag-tip {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .guess-band-dropdown.ant-select-dropdown {
     max-height: 52vh !important;
@@ -618,6 +622,19 @@ h1, h2, h3, h4, h5, h6 {
     padding-top: 10px;
     padding-bottom: 10px;
   }
+
+  .guess-band-mobile-drag-tip {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #64748B;
+    user-select: none;
+  }
+}
+
+:root[data-theme='dark'] .guess-band-mobile-drag-tip {
+  color: #9CA3AF;
 }
 
 :root[data-theme='dark'] .guess-band-bank-select .ant-select-selector {
