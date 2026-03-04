@@ -1113,10 +1113,12 @@ const GuessBand = () => {
         <div className="guess-band-action-row" style={themedStyles.actionRow}>
           <AutoComplete
             className="guess-band-input"
+            popupClassName="guess-band-dropdown"
             value={guessInput}
             onChange={(value) => setGuessInput(value)}
             onSelect={(value) => setGuessInput(value)}
             options={filteredBands.map((band) => ({ value: band.name }))}
+            listHeight={360}
             style={{ flex: 1, minWidth: 260 }}
             filterOption={(inputValue, option) =>
               option?.value?.toLowerCase().includes(inputValue.toLowerCase())
