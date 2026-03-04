@@ -602,6 +602,7 @@ const AlbumDetail = () => {
                         type="text" 
                         icon={<EditOutlined />}
                         onClick={openReviewModal}
+                        style={{ color: isDark ? '#D1D5DB' : undefined }}
                       />,
                       <Button 
                         type="text" 
@@ -738,11 +739,12 @@ const AlbumDetail = () => {
 
       {/* Review Modal */}
       <Modal
+        className="album-review-modal"
         title={
           <span style={{ 
             fontFamily: "'Playfair Display', serif",
             fontSize: '20px',
-            color: '#5D4037',
+            color: isDark ? '#E5E7EB' : '#5D4037',
           }}>
             {myReview ? '编辑评论' : '写评论'}
           </span>
@@ -758,19 +760,32 @@ const AlbumDetail = () => {
         >
           <Form.Item
             name="rating"
-            label={<span style={{ fontFamily: "'Noto Serif SC', serif" }}>评分</span>}
+            label={
+              <span style={{ fontFamily: "'Noto Serif SC', serif", color: isDark ? '#E5E7EB' : undefined }}>
+                评分
+              </span>
+            }
             rules={[{ required: true, message: '请选择评分' }]}
           >
-            <Rate allowHalf style={{ fontSize: '28px', color: '#D4A574' }} />
+            <Rate allowHalf style={{ fontSize: '28px', color: isDark ? '#FBBF24' : '#D4A574' }} />
           </Form.Item>
           <Form.Item
             name="content"
-            label={<span style={{ fontFamily: "'Noto Serif SC', serif" }}>评论内容</span>}
+            label={
+              <span style={{ fontFamily: "'Noto Serif SC', serif", color: isDark ? '#E5E7EB' : undefined }}>
+                评论内容
+              </span>
+            }
           >
             <TextArea 
               rows={4} 
               placeholder="写下你的评论..." 
-              style={{ fontFamily: "'Noto Serif SC', serif" }}
+              style={{
+                fontFamily: "'Noto Serif SC', serif",
+                color: isDark ? '#E5E7EB' : undefined,
+                background: isDark ? '#20242d' : undefined,
+                borderColor: isDark ? '#4B5563' : undefined,
+              }}
             />
           </Form.Item>
           <Form.Item>
