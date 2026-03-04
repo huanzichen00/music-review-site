@@ -484,9 +484,24 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2) !important;
 }
 
-:root[data-theme='dark'] .blog-page .blog-album-select .ant-select-selector {
+:root[data-theme='dark'] .blog-page .blog-album-select.ant-select .ant-select-selector,
+:root[data-theme='dark'] .blog-page .blog-album-select.ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
   background: #20242d !important;
   border-color: #4B5563 !important;
+  color: #E5E7EB !important;
+}
+
+:root[data-theme='dark'] .blog-page .blog-album-select.ant-select-focused .ant-select-selector,
+:root[data-theme='dark'] .blog-page .blog-album-select.ant-select-open .ant-select-selector {
+  border-color: #60A5FA !important;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2) !important;
+}
+
+:root[data-theme='dark'] .blog-page .blog-album-select .ant-select-selection-search-input {
+  color: #E5E7EB !important;
+  -webkit-text-fill-color: #E5E7EB !important;
+  background: transparent !important;
+  caret-color: #E5E7EB !important;
 }
 
 :root[data-theme='dark'] .blog-album-select-dropdown.ant-select-dropdown {
