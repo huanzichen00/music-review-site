@@ -5,6 +5,7 @@ import com.musicreview.dto.auth.LoginRequest;
 import com.musicreview.dto.auth.RegisterRequest;
 import com.musicreview.service.AuthService;
 import com.musicreview.service.LoginThrottleService;
+import com.musicreview.service.SecurityAuditService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +27,10 @@ public class AuthController {
 
     private final AuthService authService;
     private final LoginThrottleService loginThrottleService;
+    private final SecurityAuditService securityAuditService;
     @Value("${jwt.expiration}")
     private long jwtExpirationMs;
-    @Value("${app.auth.cookie-secure:false}")
+    @Value("${app.auth.cookie-secure:true}")
     private boolean cookieSecure;
 
     /**
@@ -37,14 +39,17 @@ public class AuthController {
      */
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
+        String ip = extractClientIp(httpRequest);
         try {
             AuthResponse response = authService.register(request);
+            securityAuditService.log("register_success", request.getUsername(), ip, "user_registered");
             ResponseCookie cookie = buildAuthCookie(response.getToken(), httpRequest);
             response.setToken(null);
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, cookie.toString())
                     .body(response);
         } catch (RuntimeException e) {
+            securityAuditService.log("register_failed", request.getUsername(), ip, e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
@@ -55,8 +60,10 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
-        String throttleKey = loginThrottleService.buildThrottleKey(request.getUsername(), extractClientIp(httpRequest));
+        String ip = extractClientIp(httpRequest);
+        String throttleKey = loginThrottleService.buildThrottleKey(request.getUsername(), ip);
         if (loginThrottleService.isBlocked(throttleKey)) {
+            securityAuditService.log("login_blocked", request.getUsername(), ip, "rate_limit");
             return ResponseEntity.status(429).body(Map.of(
                     "error", "Too many login attempts. Please try again later.",
                     "retryAfterSeconds", loginThrottleService.getRetryAfterSeconds(throttleKey)
@@ -65,6 +72,7 @@ public class AuthController {
         try {
             AuthResponse response = authService.login(request);
             loginThrottleService.recordSuccess(throttleKey);
+            securityAuditService.log("login_success", request.getUsername(), ip, "authenticated");
             ResponseCookie cookie = buildAuthCookie(response.getToken(), httpRequest);
             response.setToken(null);
             return ResponseEntity.ok()
@@ -73,18 +81,22 @@ public class AuthController {
         } catch (Exception e) {
             loginThrottleService.recordFailure(throttleKey);
             if (loginThrottleService.isBlocked(throttleKey)) {
+                securityAuditService.log("login_blocked", request.getUsername(), ip, "rate_limit_after_failure");
                 return ResponseEntity.status(429).body(Map.of(
                         "error", "Too many login attempts. Please try again later.",
                         "retryAfterSeconds", loginThrottleService.getRetryAfterSeconds(throttleKey)
                 ));
             }
+            securityAuditService.log("login_failed", request.getUsername(), ip, "invalid_credentials");
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid username or password"));
         }
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest httpRequest) {
+        String ip = extractClientIp(httpRequest);
         ResponseCookie clearCookie = clearAuthCookie(httpRequest);
+        securityAuditService.log("logout", "-", ip, "cookie_cleared");
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, clearCookie.toString())
                 .body(Map.of("message", "Logged out"));
