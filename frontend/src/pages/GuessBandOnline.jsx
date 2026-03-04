@@ -159,7 +159,7 @@ const GuessBandOnline = () => {
   const [maxAttempts, setMaxAttempts] = useState(10);
   const [totalRounds, setTotalRounds] = useState(3);
   const [timedMode, setTimedMode] = useState(false);
-  const [roundTimeLimitSeconds, setRoundTimeLimitSeconds] = useState(60);
+  const [roundTimeLimitSeconds, setRoundTimeLimitSeconds] = useState(180);
 
   const [artists, setArtists] = useState([]);
   const [records, setRecords] = useState([]);

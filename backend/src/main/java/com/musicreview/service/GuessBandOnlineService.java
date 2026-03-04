@@ -23,7 +23,7 @@ public class GuessBandOnlineService {
 
     private static final int DEFAULT_MAX_ATTEMPTS = 10;
     private static final int DEFAULT_TOTAL_ROUNDS = 1;
-    private static final int DEFAULT_ROUND_TIME_LIMIT_SECONDS = 60;
+    private static final int DEFAULT_ROUND_TIME_LIMIT_SECONDS = 180;
     private static final int MAX_PLAYERS = 2;
 
     private final GuessBandOnlineRoomRepository roomRepository;

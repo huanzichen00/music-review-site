@@ -571,11 +571,15 @@ const AlbumDetail = () => {
 
       {/* Reviews */}
       <Card 
-        title={<span style={styles.cardTitle}>{isDark ? `评论（${reviews.length}）` : `💬 评论（${reviews.length}）`}</span>}
+        title={
+          <span style={{ ...styles.cardTitle, color: isDark ? '#E5E7EB' : styles.cardTitle.color }}>
+            {isDark ? `评论（${reviews.length}）` : `💬 评论（${reviews.length}）`}
+          </span>
+        }
         style={{ marginTop: '32px', borderRadius: '16px' }}
       >
         {reviews.length === 0 ? (
-          <div style={styles.emptyText}>
+          <div style={{ ...styles.emptyText, color: isDark ? '#9CA3AF' : styles.emptyText.color }}>
             还没有评论，快来抢沙发！
           </div>
         ) : (
@@ -589,7 +593,7 @@ const AlbumDetail = () => {
                       type="text"
                       icon={<MessageOutlined />}
                       onClick={() => toggleReplies(review.id)}
-                      style={{ color: '#8D6E63' }}
+                      style={{ color: isDark ? '#D1D5DB' : '#8D6E63' }}
                     >
                       {expandedReplies[review.id] ? '收起' : '回复'}
                     </Button>,
@@ -619,7 +623,7 @@ const AlbumDetail = () => {
                     title={
                       <div>
                         <span
-                          style={{ ...styles.reviewUsername, cursor: 'pointer' }}
+                          style={{ ...styles.reviewUsername, cursor: 'pointer', color: isDark ? '#E5E7EB' : styles.reviewUsername.color }}
                           onClick={() => navigate(`/users/${review.userId}`)}
                         >
                           {review.username}
@@ -634,10 +638,11 @@ const AlbumDetail = () => {
                     }
                     description={
                       <div>
-                        <p style={styles.reviewContent}>{review.content}</p>
+                        <p style={{ ...styles.reviewContent, color: isDark ? '#D1D5DB' : styles.reviewContent.color }}>{review.content}</p>
                         <Text type="secondary" style={{ 
                           fontSize: '13px',
                           fontFamily: "'Cormorant Garamond', serif",
+                          color: isDark ? '#9CA3AF' : undefined,
                         }}>
                           {new Date(review.createdAt).toLocaleDateString()}
                         </Text>
@@ -648,7 +653,11 @@ const AlbumDetail = () => {
 
                 {/* Replies Section */}
                 {expandedReplies[review.id] && (
-                  <div style={styles.replyContainer}>
+                  <div style={{
+                    ...styles.replyContainer,
+                    background: isDark ? '#1F2937' : styles.replyContainer.background,
+                    borderLeft: isDark ? '3px solid #4B5563' : styles.replyContainer.borderLeft
+                  }}>
                     {/* Reply Input */}
                     {isAuthenticated && (
                       <div style={{ marginBottom: '16px', display: 'flex', gap: '8px' }}>
@@ -692,12 +701,12 @@ const AlbumDetail = () => {
                           <div style={{ flex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <span
-                                style={{ ...styles.replyUsername, cursor: 'pointer' }}
+                                style={{ ...styles.replyUsername, cursor: 'pointer', color: isDark ? '#E5E7EB' : styles.replyUsername.color }}
                                 onClick={() => navigate(`/users/${reply.userId}`)}
                               >
                                 {reply.username}
                               </span>
-                              <span style={styles.replyDate}>
+                              <span style={{ ...styles.replyDate, color: isDark ? '#9CA3AF' : styles.replyDate.color }}>
                                 {new Date(reply.createdAt).toLocaleDateString()}
                               </span>
                               {user?.id === reply.userId && (
@@ -710,12 +719,12 @@ const AlbumDetail = () => {
                                 />
                               )}
                             </div>
-                            <p style={styles.replyContent}>{reply.content}</p>
+                            <p style={{ ...styles.replyContent, color: isDark ? '#D1D5DB' : styles.replyContent.color }}>{reply.content}</p>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <Text type="secondary" style={{ fontSize: '14px' }}>
+                      <Text type="secondary" style={{ fontSize: '14px', color: isDark ? '#9CA3AF' : undefined }}>
                         暂无回复，快来回复！
                       </Text>
                     )}
