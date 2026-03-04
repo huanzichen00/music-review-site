@@ -20,6 +20,7 @@ public class GuessBandOnlineRoomResponse {
     private Boolean timedMode;
     private Integer roundTimeLimitSeconds;
     private LocalDateTime roundStartedAt;
+    private Long roundStartedAtEpochMillis;
     private Long questionBankId;
     private String questionBankName;
     private LocalDateTime startedAt;

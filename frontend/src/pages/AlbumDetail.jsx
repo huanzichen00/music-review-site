@@ -21,6 +21,13 @@ import { isRequestCanceled } from '../utils/http';
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
+const unwrapListData = (data) => {
+  if (Array.isArray(data?.content)) {
+    return data.content;
+  }
+  return Array.isArray(data) ? data : [];
+};
+
 // 自定义样式
 const styles = {
   albumTitle: {
@@ -179,10 +186,10 @@ const AlbumDetail = () => {
     try {
       const [albumRes, reviewsRes] = await Promise.all([
         albumsApi.getById(id, { signal }),
-        reviewsApi.getByAlbum(id, { signal }),
+        reviewsApi.getByAlbum(id, { signal, params: { page: 0, size: 50 } }),
       ]);
       setAlbum(albumRes.data);
-      setReviews(reviewsRes.data);
+      setReviews(unwrapListData(reviewsRes.data));
 
       if (isAuthenticated) {
         const [favRes, myReviewRes] = await Promise.all([

@@ -10,8 +10,11 @@ import { isRequestCanceled } from '../utils/http';
 
 const HOME_ALBUM_LIMIT = 12;
 const pickRandomAlbums = (arr, limit) => {
-  if (!Array.isArray(arr) || arr.length <= limit) {
-    return arr || [];
+  if (!Array.isArray(arr)) {
+    return [];
+  }
+  if (arr.length <= limit) {
+    return arr;
   }
   const copy = [...arr];
   for (let i = 0; i < limit; i += 1) {
@@ -183,12 +186,19 @@ const Home = () => {
       setLoading(true);
       try {
         const [albumsRes, reviewsRes] = await Promise.all([
-          albumsApi.getAll({ signal: controller.signal }),
-          reviewsApi.getRecent({ signal: controller.signal }),
+          albumsApi.getAll({ signal: controller.signal, page: 0, size: 500 }),
+          reviewsApi.getRecent({ signal: controller.signal, page: 0, size: 20 }),
         ]);
-        const allAlbums = albumsRes.data || [];
+        const albumsData = albumsRes?.data;
+        const allAlbums = Array.isArray(albumsData?.content)
+          ? albumsData.content
+          : (Array.isArray(albumsData) ? albumsData : []);
+        const reviewsData = reviewsRes?.data;
+        const reviewItems = Array.isArray(reviewsData?.content)
+          ? reviewsData.content
+          : (Array.isArray(reviewsData) ? reviewsData : []);
         setAlbums(pickRandomAlbums(allAlbums, HOME_ALBUM_LIMIT));
-        setRecentReviews(reviewsRes.data);
+        setRecentReviews(reviewItems);
       } catch (error) {
         if (isRequestCanceled(error)) {
           return;

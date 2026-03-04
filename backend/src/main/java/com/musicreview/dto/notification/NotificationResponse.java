@@ -1,6 +1,7 @@
 package com.musicreview.dto.notification;
 
 import com.musicreview.entity.Notification;
+import com.musicreview.entity.enums.NotificationType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,6 +26,30 @@ public class NotificationResponse {
     private String senderUsername;
     private LocalDateTime createdAt;
 
+    public NotificationResponse(
+            Long id,
+            NotificationType type,
+            String title,
+            String content,
+            Boolean isRead,
+            Long relatedBlogPostId,
+            Long relatedBlogReplyId,
+            Long senderUserId,
+            String senderUsername,
+            LocalDateTime createdAt
+    ) {
+        this.id = id;
+        this.type = type != null ? type.name() : null;
+        this.title = title;
+        this.content = content;
+        this.isRead = isRead;
+        this.relatedBlogPostId = relatedBlogPostId;
+        this.relatedBlogReplyId = relatedBlogReplyId;
+        this.senderUserId = senderUserId;
+        this.senderUsername = senderUsername;
+        this.createdAt = createdAt;
+    }
+
     public static NotificationResponse fromEntity(Notification notification) {
         return NotificationResponse.builder()
                 .id(notification.getId())
@@ -40,4 +65,3 @@ public class NotificationResponse {
                 .build();
     }
 }
-

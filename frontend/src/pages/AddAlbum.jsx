@@ -11,6 +11,7 @@ import { genresApi } from '../api/genres';
 import { importApi } from '../api/import';
 import { filesApi } from '../api/files';
 import { useAuth } from '../context/AuthContext';
+import { unwrapListData } from '../utils/apiData';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -99,10 +100,10 @@ const AddAlbum = () => {
     const loadData = async () => {
       try {
         const [artistsRes, genresRes] = await Promise.all([
-          artistsApi.getAll(),
+          artistsApi.getAll({ page: 0, size: 500 }),
           genresApi.getAll(),
         ]);
-        setArtists(artistsRes.data);
+        setArtists(unwrapListData(artistsRes.data));
         setGenres(genresRes.data);
       } catch {
         message.error('加载数据失败');

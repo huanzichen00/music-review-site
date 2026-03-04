@@ -22,6 +22,7 @@ import { questionBanksApi } from '../api/questionBanks';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { isRequestCanceled } from '../utils/http';
+import { unwrapListData } from '../utils/apiData';
 
 const { Title, Text } = Typography;
 const MIN_ITEMS = 10;
@@ -69,11 +70,11 @@ const GuessBandBanks = () => {
     try {
       const [banksRes, artistsRes, publicBanksRes] = await Promise.all([
         questionBanksApi.getMine({ signal }),
-        artistsApi.getAll({ signal }),
+        artistsApi.getAll({ signal, page: 0, size: 500 }),
         questionBanksApi.getPublic({ signal }),
       ]);
       const mineBanks = banksRes.data || [];
-      const playableArtists = (artistsRes.data || []).filter(isPlayableArtist);
+      const playableArtists = unwrapListData(artistsRes.data).filter(isPlayableArtist);
       const allPublicBanks = publicBanksRes.data || [];
       const hallBanks = allPublicBanks.filter((bank) => {
         if (user?.id != null && bank.ownerUserId != null) {

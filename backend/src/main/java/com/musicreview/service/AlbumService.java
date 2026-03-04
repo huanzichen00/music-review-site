@@ -13,6 +13,8 @@ import com.musicreview.repository.ArtistRepository;
 import com.musicreview.repository.GenreRepository;
 import com.musicreview.repository.TrackRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,19 +38,16 @@ public class AlbumService {
     /**
      * Get all albums
      */
-    public List<AlbumResponse> getAllAlbums() {
-        return albumRepository.findAllByOrderByCreatedAtDesc().stream()
-                .map(AlbumResponse::fromEntitySimple)
-                .collect(Collectors.toList());
+    public Page<AlbumResponse> getAllAlbums(Pageable pageable) {
+        return albumRepository.findAlbumSummaries(pageable);
     }
 
     /**
      * Get albums by title initial (A-Z, #)
      */
-    public List<AlbumResponse> getAlbumsByInitial(String initial) {
-        return albumRepository.findByTitleInitialOrderByTitleAsc(initial.toUpperCase()).stream()
-                .map(AlbumResponse::fromEntitySimple)
-                .collect(Collectors.toList());
+    public Page<AlbumResponse> getAlbumsByInitial(String initial, Pageable pageable) {
+        return albumRepository.findByTitleInitialOrderByTitleAsc(initial.toUpperCase(), pageable)
+                .map(AlbumResponse::fromEntitySimple);
     }
 
     /**
@@ -64,28 +63,25 @@ public class AlbumService {
     /**
      * Get albums by artist
      */
-    public List<AlbumResponse> getAlbumsByArtist(Long artistId) {
-        return albumRepository.findByArtistIdOrderByReleaseYearDesc(artistId).stream()
-                .map(AlbumResponse::fromEntitySimple)
-                .collect(Collectors.toList());
+    public Page<AlbumResponse> getAlbumsByArtist(Long artistId, Pageable pageable) {
+        return albumRepository.findByArtistIdOrderByReleaseYearDesc(artistId, pageable)
+                .map(AlbumResponse::fromEntitySimple);
     }
 
     /**
      * Get albums by genre
      */
-    public List<AlbumResponse> getAlbumsByGenre(Long genreId) {
-        return albumRepository.findByGenreId(genreId).stream()
-                .map(AlbumResponse::fromEntitySimple)
-                .collect(Collectors.toList());
+    public Page<AlbumResponse> getAlbumsByGenre(Long genreId, Pageable pageable) {
+        return albumRepository.findByGenreId(genreId, pageable)
+                .map(AlbumResponse::fromEntitySimple);
     }
 
     /**
      * Get albums by release year
      */
-    public List<AlbumResponse> getAlbumsByYear(Integer year) {
-        return albumRepository.findByReleaseYear(year).stream()
-                .map(AlbumResponse::fromEntitySimple)
-                .collect(Collectors.toList());
+    public Page<AlbumResponse> getAlbumsByYear(Integer year, Pageable pageable) {
+        return albumRepository.findByReleaseYear(year, pageable)
+                .map(AlbumResponse::fromEntitySimple);
     }
 
     /**
@@ -98,10 +94,9 @@ public class AlbumService {
     /**
      * Search albums by title
      */
-    public List<AlbumResponse> searchAlbums(String query) {
-        return albumRepository.findByTitleContainingIgnoreCase(query).stream()
-                .map(AlbumResponse::fromEntitySimple)
-                .collect(Collectors.toList());
+    public Page<AlbumResponse> searchAlbums(String query, Pageable pageable) {
+        return albumRepository.findByTitleContainingIgnoreCase(query, pageable)
+                .map(AlbumResponse::fromEntitySimple);
     }
 
     /**

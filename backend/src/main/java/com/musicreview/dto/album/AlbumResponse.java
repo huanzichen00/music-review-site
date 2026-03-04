@@ -48,6 +48,22 @@ public class AlbumResponse {
     private Integer reviewCount;
     private Integer favoriteCount;
 
+    public AlbumResponse(Long id,
+                         String title,
+                         String titleInitial,
+                         Integer releaseYear,
+                         String coverUrl,
+                         Long artistId,
+                         String artistName) {
+        this.id = id;
+        this.title = title;
+        this.titleInitial = titleInitial;
+        this.releaseYear = releaseYear;
+        this.coverUrl = coverUrl;
+        this.artistId = artistId;
+        this.artistName = artistName;
+    }
+
     @Data
     @Builder
     @NoArgsConstructor

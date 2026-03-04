@@ -9,12 +9,15 @@ import com.musicreview.entity.enums.NotificationType;
 import com.musicreview.repository.NotificationRepository;
 import com.musicreview.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,11 +27,9 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final AuthService authService;
 
-    public List<NotificationResponse> getMyNotifications() {
+    public Page<NotificationResponse> getMyNotifications(Pageable pageable) {
         User currentUser = authService.getCurrentUser();
-        return notificationRepository.findByUserIdOrderByCreatedAtDesc(currentUser.getId()).stream()
-                .map(NotificationResponse::fromEntity)
-                .collect(Collectors.toList());
+        return notificationRepository.findNotificationResponsesByUserId(currentUser.getId(), pageable);
     }
 
     public Map<String, Long> getMyUnreadCount() {
@@ -86,17 +87,29 @@ public class NotificationService {
             throw new RuntimeException("Only Huan can publish announcements");
         }
 
-        List<User> users = userRepository.findAll();
-        List<Notification> notifications = users.stream()
-                .map(user -> Notification.builder()
+        int page = 0;
+        int batchSize = 500;
+        while (true) {
+            Page<User> userPage = userRepository.findAllByOrderByIdAsc(PageRequest.of(page, batchSize));
+            if (userPage.isEmpty()) {
+                break;
+            }
+            List<Notification> notifications = new ArrayList<>(userPage.getNumberOfElements());
+            for (User user : userPage.getContent()) {
+                notifications.add(Notification.builder()
                         .user(user)
                         .senderUser(sender)
                         .type(NotificationType.ANNOUNCEMENT)
                         .title(title.trim())
                         .content(content.trim())
                         .isRead(false)
-                        .build())
-                .toList();
-        notificationRepository.saveAll(notifications);
+                        .build());
+            }
+            notificationRepository.saveAll(notifications);
+            if (!userPage.hasNext()) {
+                break;
+            }
+            page++;
+        }
     }
 }

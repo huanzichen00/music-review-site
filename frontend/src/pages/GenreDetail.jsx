@@ -9,6 +9,7 @@ import AlbumCard from '../components/AlbumCard';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { isRequestCanceled } from '../utils/http';
+import { unwrapListData } from '../utils/apiData';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -89,13 +90,13 @@ const GenreDetail = () => {
       try {
         const [genreRes, albumsRes] = await Promise.all([
           genresApi.getById(id, { signal: controller.signal }),
-          albumsApi.getByGenre(id, { signal: controller.signal }),
+          albumsApi.getByGenre(id, { signal: controller.signal, params: { page: 0, size: 500 } }),
         ]);
         setGenre(genreRes.data || null);
-        setAlbums(albumsRes.data || []);
+        setAlbums(unwrapListData(albumsRes.data));
 
-        const artistsRes = await artistsApi.getAll({ signal: controller.signal });
-        const allArtists = artistsRes.data || [];
+        const artistsRes = await artistsApi.getAll({ signal: controller.signal, page: 0, size: 500 });
+        const allArtists = unwrapListData(artistsRes.data);
         const genreName = normalizeGenre(genreRes.data?.name || '');
         const sameGenreArtists = allArtists.filter(
           (artist) => {

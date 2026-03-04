@@ -24,6 +24,7 @@ import { blogPostsApi } from '../api/blogPosts';
 import { blogRepliesApi } from '../api/blogReplies';
 import { useTheme } from '../context/ThemeContext';
 import { resolveAvatarUrl } from '../utils/avatar';
+import { unwrapListData } from '../utils/apiData';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -64,14 +65,14 @@ const Blog = () => {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const requests = [blogPostsApi.getAll()];
+      const requests = [blogPostsApi.getAll({ page: 0, size: 100 })];
       if (isAuthenticated) {
-        requests.push(albumsApi.getAll());
+        requests.push(albumsApi.getAll({ page: 0, size: 500 }));
       }
       const [postsRes, albumsRes] = await Promise.all(requests);
-      const postList = postsRes.data || [];
+      const postList = unwrapListData(postsRes.data);
       setPosts(postList);
-      setAlbums(albumsRes?.data || []);
+      setAlbums(unwrapListData(albumsRes?.data));
       await loadRepliesForPosts(postList);
     } catch (error) {
       message.error(error.response?.data?.error || '加载博客失败');
@@ -438,4 +439,3 @@ const Blog = () => {
 };
 
 export default Blog;
-

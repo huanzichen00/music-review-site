@@ -7,11 +7,10 @@ import com.musicreview.entity.User;
 import com.musicreview.repository.AlbumRepository;
 import com.musicreview.repository.FavoriteRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,11 +23,9 @@ public class FavoriteService {
     /**
      * Get current user's favorites
      */
-    public List<FavoriteResponse> getMyFavorites() {
+    public Page<FavoriteResponse> getMyFavorites(Pageable pageable) {
         User currentUser = authService.getCurrentUser();
-        return favoriteRepository.findByUserIdOrderByCreatedAtDesc(currentUser.getId()).stream()
-                .map(FavoriteResponse::fromEntity)
-                .collect(Collectors.toList());
+        return favoriteRepository.findFavoriteResponsesByUserId(currentUser.getId(), pageable);
     }
 
     /**

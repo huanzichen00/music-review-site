@@ -5,6 +5,7 @@ import AlbumCard from '../components/AlbumCard';
 import AlphabetFilter from '../components/AlphabetFilter';
 import { useTheme } from '../context/ThemeContext';
 import { isRequestCanceled } from '../utils/http';
+import { unwrapListData } from '../utils/apiData';
 
 const styles = {
   pageTitle: {
@@ -58,9 +59,9 @@ const Albums = () => {
       setLoading(true);
       try {
         const albumsRes = selectedLetter
-          ? await albumsApi.getByInitial(selectedLetter, { signal: controller.signal })
-          : await albumsApi.getAll({ signal: controller.signal });
-        setAlbums((albumsRes.data || []).slice().sort(compareAlbumsByInitial));
+          ? await albumsApi.getByInitial(selectedLetter, { signal: controller.signal, params: { page: 0, size: 500 } })
+          : await albumsApi.getAll({ signal: controller.signal, page: 0, size: 500 });
+        setAlbums(unwrapListData(albumsRes.data).slice().sort(compareAlbumsByInitial));
         setCurrentPage(1);
       } catch (error) {
         if (isRequestCanceled(error)) {

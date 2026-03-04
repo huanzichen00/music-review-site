@@ -8,11 +8,10 @@ import com.musicreview.entity.User;
 import com.musicreview.repository.AlbumRepository;
 import com.musicreview.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,20 +24,16 @@ public class ReviewService {
     /**
      * Get reviews for an album
      */
-    public List<ReviewResponse> getReviewsByAlbum(Long albumId) {
-        return reviewRepository.findByAlbumIdOrderByCreatedAtDesc(albumId).stream()
-                .map(ReviewResponse::fromEntity)
-                .collect(Collectors.toList());
+    public Page<ReviewResponse> getReviewsByAlbum(Long albumId, Pageable pageable) {
+        return reviewRepository.findReviewResponsesByAlbumId(albumId, pageable);
     }
 
     /**
      * Get current user's reviews
      */
-    public List<ReviewResponse> getMyReviews() {
+    public Page<ReviewResponse> getMyReviews(Pageable pageable) {
         User currentUser = authService.getCurrentUser();
-        return reviewRepository.findByUserIdOrderByCreatedAtDesc(currentUser.getId()).stream()
-                .map(ReviewResponse::fromEntity)
-                .collect(Collectors.toList());
+        return reviewRepository.findReviewResponsesByUserId(currentUser.getId(), pageable);
     }
 
     /**
@@ -46,8 +41,7 @@ public class ReviewService {
      */
     public ReviewResponse getMyReviewForAlbum(Long albumId) {
         User currentUser = authService.getCurrentUser();
-        return reviewRepository.findByUserIdAndAlbumId(currentUser.getId(), albumId)
-                .map(ReviewResponse::fromEntity)
+        return reviewRepository.findReviewResponseByUserIdAndAlbumId(currentUser.getId(), albumId)
                 .orElse(null);
     }
 
@@ -120,9 +114,7 @@ public class ReviewService {
     /**
      * Get recent reviews (top 10)
      */
-    public List<ReviewResponse> getRecentReviews() {
-        return reviewRepository.findTop10ByOrderByCreatedAtDesc().stream()
-                .map(ReviewResponse::fromEntity)
-                .collect(Collectors.toList());
+    public Page<ReviewResponse> getRecentReviews(Pageable pageable) {
+        return reviewRepository.findRecentReviewResponses(pageable);
     }
 }

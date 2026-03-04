@@ -8,11 +8,16 @@ import com.musicreview.entity.User;
 import com.musicreview.repository.AlbumRepository;
 import com.musicreview.repository.ArtistRepository;
 import com.musicreview.repository.GenreRepository;
+import com.musicreview.repository.projection.ArtistAlbumCountProjection;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,19 +32,17 @@ public class ArtistService {
     /**
      * Get all artists
      */
-    public List<ArtistResponse> getAllArtists() {
-        return artistRepository.findAllByOrderByNameAsc().stream()
-                .map(ArtistResponse::fromEntity)
-                .collect(Collectors.toList());
+    public Page<ArtistResponse> getAllArtists(Pageable pageable) {
+        Page<Artist> artists = artistRepository.findAllByOrderByNameAsc(pageable);
+        return mapArtistsWithAlbumCount(artists);
     }
 
     /**
      * Get artists by name initial (A-Z, #)
      */
-    public List<ArtistResponse> getArtistsByInitial(String initial) {
-        return artistRepository.findByNameInitialOrderByNameAsc(initial.toUpperCase()).stream()
-                .map(ArtistResponse::fromEntity)
-                .collect(Collectors.toList());
+    public Page<ArtistResponse> getArtistsByInitial(String initial, Pageable pageable) {
+        Page<Artist> artists = artistRepository.findByNameInitialOrderByNameAsc(initial.toUpperCase(), pageable);
+        return mapArtistsWithAlbumCount(artists);
     }
 
     /**
@@ -48,16 +51,16 @@ public class ArtistService {
     public ArtistResponse getArtistById(Long id) {
         Artist artist = artistRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Artist not found with id: " + id));
-        return ArtistResponse.fromEntity(artist);
+        long albumCount = albumRepository.countByArtistId(id);
+        return toArtistResponse(artist, (int) albumCount);
     }
 
     /**
      * Search artists by name
      */
-    public List<ArtistResponse> searchArtists(String query) {
-        return artistRepository.findByNameContainingIgnoreCase(query).stream()
-                .map(ArtistResponse::fromEntity)
-                .collect(Collectors.toList());
+    public Page<ArtistResponse> searchArtists(String query, Pageable pageable) {
+        Page<Artist> artists = artistRepository.findByNameContainingIgnoreCase(query, pageable);
+        return mapArtistsWithAlbumCount(artists);
     }
 
     /**
@@ -81,7 +84,7 @@ public class ArtistService {
                 .build();
 
         Artist saved = artistRepository.save(artist);
-        return ArtistResponse.fromEntity(saved);
+        return toArtistResponse(saved, 0);
     }
 
     /**
@@ -106,7 +109,8 @@ public class ArtistService {
         artist.setPhotoUrl(request.getPhotoUrl());
 
         Artist saved = artistRepository.save(artist);
-        return ArtistResponse.fromEntity(saved);
+        int albumCount = (int) albumRepository.countByArtistId(saved.getId());
+        return toArtistResponse(saved, albumCount);
     }
 
     /**
@@ -124,9 +128,9 @@ public class ArtistService {
                 .orElseThrow(() -> new RuntimeException("Artist not found with id: " + id));
         
         // Check if artist has any albums
-        List<com.musicreview.entity.Album> albums = albumRepository.findByArtistIdOrderByReleaseYearDesc(id);
-        if (albums != null && !albums.isEmpty()) {
-            throw new RuntimeException("Cannot delete artist: Artist has " + albums.size() + " album(s). Please delete all albums first.");
+        long albumCount = albumRepository.countByArtistId(id);
+        if (albumCount > 0) {
+            throw new RuntimeException("Cannot delete artist: Artist has " + albumCount + " album(s). Please delete all albums first.");
         }
         
         artistRepository.deleteById(id);
@@ -162,5 +166,37 @@ public class ArtistService {
                 .description("自动同步自 artists.genre")
                 .build();
         genreRepository.save(genre);
+    }
+
+    private Page<ArtistResponse> mapArtistsWithAlbumCount(Page<Artist> artistsPage) {
+        List<Long> artistIds = artistsPage.getContent().stream()
+                .map(Artist::getId)
+                .collect(Collectors.toList());
+
+        Map<Long, Integer> albumCountMap = new HashMap<>();
+        if (!artistIds.isEmpty()) {
+            for (ArtistAlbumCountProjection item : albumRepository.countByArtistIds(artistIds)) {
+                albumCountMap.put(item.getArtistId(), (int) item.getAlbumCount());
+            }
+        }
+
+        return artistsPage.map(artist -> toArtistResponse(artist, albumCountMap.getOrDefault(artist.getId(), 0)));
+    }
+
+    private ArtistResponse toArtistResponse(Artist artist, int albumCount) {
+        return ArtistResponse.builder()
+                .id(artist.getId())
+                .name(artist.getName())
+                .nameInitial(artist.getNameInitial())
+                .country(artist.getCountry())
+                .formedYear(artist.getFormedYear())
+                .genre(artist.getGenre())
+                .memberCount(artist.getMemberCount())
+                .status(artist.getStatus())
+                .description(artist.getDescription())
+                .photoUrl(artist.getPhotoUrl())
+                .createdAt(artist.getCreatedAt())
+                .albumCount(albumCount)
+                .build();
     }
 }

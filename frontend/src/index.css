@@ -452,6 +452,43 @@ h1, h2, h3, h4, h5, h6 {
   color: #E5E7EB !important;
 }
 
+:root[data-theme='dark'] .guess-band-bank-select .ant-select-selector {
+  background: #171719 !important;
+  border-color: #2F2F33 !important;
+}
+
+:root[data-theme='dark'] .guess-band-bank-select .ant-select-arrow,
+:root[data-theme='dark'] .guess-band-bank-select .ant-select-clear {
+  color: #AEB4BE !important;
+}
+
+:root[data-theme='dark'] .guess-band-bank-select .ant-select-selection-item,
+:root[data-theme='dark'] .guess-band-bank-select .ant-select-selection-placeholder {
+  color: #E5E7EB !important;
+}
+
+:root[data-theme='dark'] .guess-band-current-bands-scroll {
+  scrollbar-color: #3A3A40 #121214;
+}
+
+:root[data-theme='dark'] .guess-band-current-bands-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+:root[data-theme='dark'] .guess-band-current-bands-scroll::-webkit-scrollbar-track {
+  background: #121214;
+}
+
+:root[data-theme='dark'] .guess-band-current-bands-scroll::-webkit-scrollbar-thumb {
+  background: #3A3A40;
+  border-radius: 8px;
+  border: 2px solid #121214;
+}
+
+:root[data-theme='dark'] .guess-band-current-bands-scroll::-webkit-scrollbar-thumb:hover {
+  background: #4B4B52;
+}
+
 :root[data-theme='dark'] .guess-band-real-input,
 :root[data-theme='dark'] .guess-band-real-input.ant-input {
   color: #E5E7EB !important;
@@ -555,4 +592,289 @@ h1, h2, h3, h4, h5, h6 {
 
 .ant-dropdown-menu-item .anticon {
   font-size: 14px !important;
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    height: auto !important;
+    min-height: 64px !important;
+    line-height: normal !important;
+    padding: 10px 12px !important;
+    align-items: flex-start !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .app-header-left,
+  .app-header-right {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .app-brand-link {
+    margin-right: 8px !important;
+    font-size: 24px !important;
+    line-height: 1 !important;
+  }
+
+  .nav-menu .ant-menu-item,
+  .nav-menu .ant-menu-title-content,
+  .nav-menu .ant-menu-item .anticon {
+    font-size: 18px !important;
+  }
+
+  .app-theme-switcher .ant-select {
+    width: 98px !important;
+  }
+
+  .app-auth-actions .ant-btn {
+    padding-inline: 10px !important;
+    font-size: 16px !important;
+  }
+
+  .music-subnav-wrap {
+    padding: 8px 12px 0 !important;
+  }
+
+  .music-subnav-rail {
+    display: flex !important;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    gap: 6px !important;
+    padding: 8px !important;
+  }
+
+  .music-subnav-rail .ant-btn {
+    flex: 0 0 auto;
+  }
+
+  .app-content {
+    padding: 14px 12px !important;
+  }
+
+  .app-footer {
+    padding: 14px 12px !important;
+  }
+
+  .guess-band-layout-row {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .guess-band-side-card,
+  .guess-band-center-wrap,
+  .guess-band-hero-card {
+    width: 100% !important;
+    flex: 1 1 auto !important;
+  }
+
+  .guess-band-filter-card {
+    display: none !important;
+  }
+
+  .guess-band-meta-row,
+  .guess-band-title-row,
+  .guess-band-links-row,
+  .guess-band-action-row {
+    width: 100%;
+  }
+
+  .guess-band-meta-row .ant-space-item,
+  .guess-band-links-row .ant-space-item,
+  .guess-band-action-row .ant-space-item {
+    width: 100%;
+  }
+
+  .guess-band-meta-row .ant-select,
+  .guess-band-action-row .ant-btn,
+  .guess-band-action-row .ant-input-affix-wrapper,
+  .guess-band-action-row .ant-input {
+    width: 100% !important;
+  }
+
+  .guess-band-current-bands-scroll {
+    height: 220px !important;
+  }
+
+  .guess-band-table-scroll,
+  .guess-band-online-table-scroll {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .guess-band-table-scroll table,
+  .guess-band-online-table-scroll table {
+    min-width: 0;
+    width: 100% !important;
+    table-layout: fixed !important;
+  }
+
+  .guess-band-table-scroll th,
+  .guess-band-table-scroll td,
+  .guess-band-online-table-scroll th,
+  .guess-band-online-table-scroll td {
+    font-size: 12px !important;
+    width: auto !important;
+    padding: 8px 4px !important;
+    white-space: normal !important;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.2;
+    text-align: center !important;
+  }
+
+  .guess-band-table-scroll th,
+  .guess-band-table-scroll td {
+    width: calc(100% / 6) !important;
+  }
+
+  .guess-band-online-table-scroll th,
+  .guess-band-online-table-scroll td {
+    width: calc(100% / 7) !important;
+  }
+
+  .guess-band-online-table-scroll .ant-avatar {
+    display: none;
+  }
+
+  .guess-band-online-page .ant-card-head-title {
+    font-size: 16px;
+  }
+
+  .guess-band-online-entry-row .ant-col {
+    margin-bottom: 10px;
+  }
+
+  .guess-band-online-join-actions {
+    width: 100%;
+  }
+
+  .guess-band-online-join-actions .ant-btn {
+    flex: 1 1 auto;
+  }
+
+  .artists-page-title {
+    margin-bottom: 12px !important;
+  }
+
+  .artists-page-title-hint {
+    display: block;
+    margin-left: 0 !important;
+    margin-top: 6px;
+    font-size: 12px !important;
+  }
+
+  .artists-page-card .ant-card-body {
+    padding: 12px !important;
+  }
+
+  .artists-filters {
+    margin-bottom: 10px !important;
+  }
+
+  .artists-table .ant-table {
+    font-size: 12px;
+  }
+
+  .artists-table .ant-table-thead > tr > th,
+  .artists-table .ant-table-tbody > tr > td {
+    padding: 8px 6px !important;
+    white-space: nowrap;
+  }
+
+  .artists-table .ant-table-pagination {
+    margin-top: 10px !important;
+  }
+
+  .guess-band-table-scroll thead th:nth-child(2),
+  .guess-band-table-scroll thead th:nth-child(6),
+  .guess-band-online-table-scroll thead th:nth-child(3),
+  .guess-band-online-table-scroll thead th:nth-child(7) {
+    color: transparent !important;
+    position: relative;
+  }
+
+  .guess-band-table-scroll thead th:nth-child(2)::after,
+  .guess-band-online-table-scroll thead th:nth-child(3)::after {
+    content: 'REG';
+    color: var(--warm-text-secondary);
+    font: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: inherit;
+    line-height: inherit;
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
+
+  .guess-band-table-scroll thead th:nth-child(6)::after,
+  .guess-band-online-table-scroll thead th:nth-child(7)::after {
+    content: 'STA';
+    color: var(--warm-text-secondary);
+    font: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: inherit;
+    line-height: inherit;
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-brand-link {
+    font-size: 20px !important;
+  }
+
+  .nav-menu .ant-menu-item,
+  .nav-menu .ant-menu-title-content,
+  .nav-menu .ant-menu-item .anticon {
+    font-size: 16px !important;
+  }
+
+  .ant-card {
+    border-radius: 12px !important;
+  }
+
+  .guess-band-page .ant-typography h1,
+  .guess-band-page .ant-typography h2 {
+    font-size: 24px !important;
+  }
+
+  .guess-band-meta-row .ant-tag,
+  .guess-band-online-page .ant-tag {
+    font-size: 12px;
+    padding-inline: 6px;
+  }
+
+  .artists-page-title {
+    font-size: 24px !important;
+  }
+
+  .artists-table .ant-table {
+    font-size: 11px;
+  }
+
+  .artists-table .ant-table-thead > tr > th,
+  .artists-table .ant-table-tbody > tr > td {
+    padding: 7px 4px !important;
+  }
+
+  .guess-band-table-scroll th,
+  .guess-band-table-scroll td,
+  .guess-band-online-table-scroll th,
+  .guess-band-online-table-scroll td {
+    font-size: 11px !important;
+    padding: 6px 3px !important;
+  }
 }

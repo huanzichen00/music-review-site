@@ -5,6 +5,9 @@ import com.musicreview.dto.artist.ArtistResponse;
 import com.musicreview.service.ArtistService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,8 +26,12 @@ public class ArtistController {
      * GET /api/artists
      */
     @GetMapping
-    public ResponseEntity<List<ArtistResponse>> getAllArtists() {
-        return ResponseEntity.ok(artistService.getAllArtists());
+    public ResponseEntity<Page<ArtistResponse>> getAllArtists(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(artistService.getAllArtists(pageable));
     }
 
     /**
@@ -32,8 +39,13 @@ public class ArtistController {
      * GET /api/artists/initial/{letter}
      */
     @GetMapping("/initial/{letter}")
-    public ResponseEntity<List<ArtistResponse>> getArtistsByInitial(@PathVariable String letter) {
-        return ResponseEntity.ok(artistService.getArtistsByInitial(letter));
+    public ResponseEntity<Page<ArtistResponse>> getArtistsByInitial(
+            @PathVariable String letter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(artistService.getArtistsByInitial(letter, pageable));
     }
 
     /**
@@ -54,8 +66,13 @@ public class ArtistController {
      * GET /api/artists/search?q=xxx
      */
     @GetMapping("/search")
-    public ResponseEntity<List<ArtistResponse>> searchArtists(@RequestParam("q") String query) {
-        return ResponseEntity.ok(artistService.searchArtists(query));
+    public ResponseEntity<Page<ArtistResponse>> searchArtists(
+            @RequestParam("q") String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(artistService.searchArtists(query, pageable));
     }
 
     /**

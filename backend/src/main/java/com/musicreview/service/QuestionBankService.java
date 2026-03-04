@@ -9,6 +9,7 @@ import com.musicreview.entity.enums.QuestionBankVisibility;
 import com.musicreview.repository.ArtistRepository;
 import com.musicreview.repository.QuestionBankItemRepository;
 import com.musicreview.repository.QuestionBankRepository;
+import com.musicreview.repository.projection.QuestionBankItemCountProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,15 +32,19 @@ public class QuestionBankService {
     @Transactional(readOnly = true)
     public List<QuestionBankSummaryResponse> getMyBanks() {
         User currentUser = authService.getCurrentUser();
-        return questionBankRepository.findByOwnerUserIdOrderByUpdatedAtDesc(currentUser.getId()).stream()
-                .map(this::toSummary)
+        List<QuestionBank> banks = questionBankRepository.findByOwnerUserIdOrderByUpdatedAtDesc(currentUser.getId());
+        Map<Long, Integer> countMap = loadItemCountMap(banks);
+        return banks.stream()
+                .map(bank -> toSummary(bank, countMap.getOrDefault(bank.getId(), 0)))
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<QuestionBankSummaryResponse> getPublicBanks() {
-        return questionBankRepository.findByVisibilityOrderByUpdatedAtDesc(QuestionBankVisibility.PUBLIC).stream()
-                .map(this::toSummary)
+        List<QuestionBank> banks = questionBankRepository.findByVisibilityOrderByUpdatedAtDesc(QuestionBankVisibility.PUBLIC);
+        Map<Long, Integer> countMap = loadItemCountMap(banks);
+        return banks.stream()
+                .map(bank -> toSummary(bank, countMap.getOrDefault(bank.getId(), 0)))
                 .collect(Collectors.toList());
     }
 
@@ -55,7 +60,7 @@ public class QuestionBankService {
                 .build();
 
         QuestionBank saved = questionBankRepository.save(questionBank);
-        return toSummary(saved);
+        return toSummary(saved, 0);
     }
 
     @Transactional
@@ -68,7 +73,8 @@ public class QuestionBankService {
         questionBank.setVisibility(parseVisibility(request.getVisibility()));
 
         QuestionBank saved = questionBankRepository.save(questionBank);
-        return toSummary(saved);
+        int itemCount = questionBankItemRepository.countByQuestionBankId(saved.getId());
+        return toSummary(saved, itemCount);
     }
 
     @Transactional
@@ -89,7 +95,7 @@ public class QuestionBankService {
 
     @Transactional(readOnly = true)
     public QuestionBankDetailResponse getPublicBankById(Long id) {
-        QuestionBank questionBank = questionBankRepository.findById(id)
+        QuestionBank questionBank = questionBankRepository.findDetailById(id)
                 .orElseThrow(() -> new RuntimeException("Question bank not found"));
         if (questionBank.getVisibility() != QuestionBankVisibility.PUBLIC) {
             throw new RuntimeException("Question bank is private");
@@ -145,8 +151,7 @@ public class QuestionBankService {
         return toDetail(saved);
     }
 
-    private QuestionBankSummaryResponse toSummary(QuestionBank questionBank) {
-        int itemCount = questionBankItemRepository.countByQuestionBankId(questionBank.getId());
+    private QuestionBankSummaryResponse toSummary(QuestionBank questionBank, int itemCount) {
         return QuestionBankSummaryResponse.fromEntity(questionBank, itemCount);
     }
 
@@ -172,5 +177,16 @@ public class QuestionBankService {
 
     private String generateShareToken() {
         return UUID.randomUUID().toString().replace("-", "");
+    }
+
+    private Map<Long, Integer> loadItemCountMap(List<QuestionBank> questionBanks) {
+        Map<Long, Integer> countMap = new HashMap<>();
+        List<Long> ids = questionBanks.stream().map(QuestionBank::getId).collect(Collectors.toList());
+        if (!ids.isEmpty()) {
+            for (QuestionBankItemCountProjection row : questionBankItemRepository.countByQuestionBankIds(ids)) {
+                countMap.put(row.getQuestionBankId(), (int) row.getItemCount());
+            }
+        }
+        return countMap;
     }
 }

@@ -6,6 +6,7 @@ import { artistsApi } from '../api/artists';
 import AlbumCard from '../components/AlbumCard';
 import { useTheme } from '../context/ThemeContext';
 import { isRequestCanceled } from '../utils/http';
+import { unwrapListData } from '../utils/apiData';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -56,12 +57,12 @@ const YearDetail = () => {
       setLoading(true);
       try {
         const [albumsRes, artistsRes] = await Promise.all([
-          albumsApi.getByYear(parsedYear, { signal: controller.signal }),
-          artistsApi.getAll({ signal: controller.signal }),
+          albumsApi.getByYear(parsedYear, { signal: controller.signal, params: { page: 0, size: 500 } }),
+          artistsApi.getAll({ signal: controller.signal, page: 0, size: 500 }),
         ]);
 
-        const yearAlbums = albumsRes.data || [];
-        const allArtists = artistsRes.data || [];
+        const yearAlbums = unwrapListData(albumsRes.data);
+        const allArtists = unwrapListData(artistsRes.data);
         const artistsFoundedThisYear = allArtists
           .filter((artist) => artist?.formedYear === parsedYear)
           .sort((a, b) => (a.name || '').localeCompare(b.name || ''));

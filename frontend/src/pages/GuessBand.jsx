@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, AutoComplete, Button, Card, Input, InputNumber, Select, Space, Spin, Tag, Typography, message } from 'antd';
 import {
   TrophyOutlined,
@@ -125,10 +125,10 @@ const styles = {
   },
   board: {
     marginTop: 16,
-    background: 'linear-gradient(180deg, #2A1425 0%, #31192D 100%)',
+    background: 'linear-gradient(180deg, #4A2C40 0%, #59364C 100%)',
     borderRadius: 14,
     padding: 10,
-    border: '1px solid #57314D',
+    border: '1px solid #6E4A5F',
   },
   table: {
     width: '100%',
@@ -154,7 +154,7 @@ const styles = {
     color: '#F7F1F5',
     fontWeight: 600,
     fontSize: 13,
-    background: '#2B1627',
+    background: '#5A3A4E',
   },
   answerCard: {
     marginTop: 16,
@@ -267,6 +267,13 @@ const isPlayableArtist = (artist) =>
       artist?.status
   );
 
+const unwrapListData = (data) => {
+  if (Array.isArray(data?.content)) {
+    return data.content;
+  }
+  return Array.isArray(data) ? data : [];
+};
+
 const toGameBand = (artist) => ({
   name: artist.name.trim(),
   region: artist.country.trim(),
@@ -275,6 +282,17 @@ const toGameBand = (artist) => ({
   members: artist.memberCount,
   status: artist.status.trim(),
 });
+
+const safeMark = (name) => {
+  if (typeof performance === 'undefined' || typeof performance.mark !== 'function') {
+    return;
+  }
+  try {
+    performance.mark(name);
+  } catch {
+    // ignore
+  }
+};
 
 const GuessBand = () => {
   const location = useLocation();
@@ -297,6 +315,36 @@ const GuessBand = () => {
   const [roundOver, setRoundOver] = useState(false);
   const [maxAttempts, setMaxAttempts] = useState(DEFAULT_MAX_ATTEMPTS);
   const [countryInput, setCountryInput] = useState('');
+  const firstInteractiveLoggedRef = useRef(false);
+  const navIdRef = useRef(null);
+  const mountMarkedRef = useRef(false);
+
+  if (!mountMarkedRef.current) {
+    mountMarkedRef.current = true;
+    safeMark('gb_chunk_loaded');
+    if (typeof window !== 'undefined') {
+      const metrics = window.__gb_metrics || {};
+      navIdRef.current = metrics.navId || null;
+      window.__gb_metrics = {
+        ...metrics,
+        chunkLoadedAt: performance.now(),
+      };
+    }
+  }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const previous = window.__gb_metrics || {};
+    window.__gb_metrics = {
+      ...previous,
+      listBuildMs: [],
+      marksAt: {
+        ...(previous.marksAt || {}),
+      },
+    };
+  }, []);
   const indexedBands = useMemo(
     () =>
       bands.map((band) => ({
@@ -322,6 +370,14 @@ const GuessBand = () => {
       }),
     [indexedBands]
   );
+  const normalizedCountryInput = useMemo(() => countryInput.trim().toLowerCase(), [countryInput]);
+  const countryFilteredBands = useMemo(() => {
+    if (!normalizedCountryInput) {
+      return sortedBands;
+    }
+    return sortedBands.filter((band) => (band.region || '').toLowerCase().includes(normalizedCountryInput));
+  }, [normalizedCountryInput, sortedBands]);
+  const visibleBands = useMemo(() => countryFilteredBands.slice(0, 240), [countryFilteredBands]);
 
   const themedStyles = useMemo(() => {
     if (isDark) {
@@ -470,7 +526,7 @@ const GuessBand = () => {
     if (state === 'close') {
       return { background: isDark ? '#52525B' : isBlue ? '#3D79BF' : '#7A5A35' };
     }
-    return { background: isDark ? '#18181B' : isBlue ? '#122742' : '#2B1627' };
+    return { background: isDark ? '#18181B' : isBlue ? '#122742' : '#5A3A4E' };
   };
 
   const renderTrendArrow = (arrow) => {
@@ -495,20 +551,71 @@ const GuessBand = () => {
 
   useEffect(() => {
     const controller = new AbortController();
+    let mounted = true;
 
     const loadBands = async () => {
       setLoading(true);
       try {
         const params = new URLSearchParams(location.search);
         const shareToken = params.get('share');
+        safeMark('gb_api_start');
+        if (typeof window !== 'undefined') {
+          const metrics = window.__gb_metrics || {};
+          if (!navIdRef.current || metrics.navId === navIdRef.current) {
+            window.__gb_metrics = {
+              ...metrics,
+              apiStartAt: performance.now(),
+            };
+          }
+        }
+
+        const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
+
+        const artistsPromise = (async () => {
+          const s = typeof performance !== 'undefined' ? performance.now() : Date.now();
+          const res = await artistsApi.getAllCached({ signal: controller.signal, page: 0, size: 200, ttlMs: 30_000 });
+          const e = typeof performance !== 'undefined' ? performance.now() : Date.now();
+          console.log('artists_ms', Number((e - s).toFixed(2)));
+          return res;
+        })();
+
+        const publicPromise = (async () => {
+          const s = typeof performance !== 'undefined' ? performance.now() : Date.now();
+          const res = await questionBanksApi.getPublicCached({ signal: controller.signal });
+          const e = typeof performance !== 'undefined' ? performance.now() : Date.now();
+          console.log('qb_public_ms', Number((e - s).toFixed(2)));
+          return res;
+        })();
+
+        const minePromise = (async () => {
+          const s = typeof performance !== 'undefined' ? performance.now() : Date.now();
+          const res = isAuthenticated
+            ? await questionBanksApi.getMineCached({ signal: controller.signal })
+            : { data: [] };
+          const e = typeof performance !== 'undefined' ? performance.now() : Date.now();
+          console.log('qb_mine_ms', Number((e - s).toFixed(2)));
+          return res;
+        })();
 
         const [artistsRes, publicBanksRes, mineBanksRes] = await Promise.all([
-          artistsApi.getAll({ signal: controller.signal }),
-          questionBanksApi.getPublic({ signal: controller.signal }),
-          isAuthenticated ? questionBanksApi.getMine({ signal: controller.signal }) : Promise.resolve({ data: [] }),
+          artistsPromise,
+          publicPromise,
+          minePromise,
         ]);
+        const t1 = typeof performance !== 'undefined' ? performance.now() : Date.now();
+        console.log('api_total_ms', Number((t1 - t0).toFixed(2)));
+        safeMark('gb_api_done');
+        if (typeof window !== 'undefined') {
+          const metrics = window.__gb_metrics || {};
+          if (!navIdRef.current || metrics.navId === navIdRef.current) {
+            window.__gb_metrics = {
+              ...metrics,
+              apiDoneAt: performance.now(),
+            };
+          }
+        }
 
-        const gameBands = (artistsRes.data || []).filter(isPlayableArtist).map(toGameBand);
+        const gameBands = unwrapListData(artistsRes.data).filter(isPlayableArtist).map(toGameBand);
         setAllBands(gameBands);
 
         const allPublicBanks = publicBanksRes.data || [];
@@ -571,12 +678,17 @@ const GuessBand = () => {
         }
         message.error('加载乐队数据失败');
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadBands();
-    return () => controller.abort();
+    return () => {
+      mounted = false;
+      controller.abort();
+    };
   }, [isAuthenticated, location.search, user?.id, user?.username]);
 
   useEffect(() => {
@@ -588,15 +700,104 @@ const GuessBand = () => {
     }
   }, [attempts.length, maxAttempts, roundOver, solved, targetBand]);
 
+  useEffect(() => {
+    if (loading || firstInteractiveLoggedRef.current) {
+      return;
+    }
+    firstInteractiveLoggedRef.current = true;
+    safeMark('gb_first_commit');
+
+    const metrics = typeof window !== 'undefined' ? (window.__gb_metrics || {}) : {};
+    const firstCommitAt = typeof performance !== 'undefined' ? performance.now() : null;
+    if (typeof window !== 'undefined') {
+      window.__gb_metrics = {
+        ...metrics,
+        firstCommitAt,
+      };
+    }
+
+    const chunkPrefetched =
+      typeof metrics.routeStartAt === 'number' &&
+      typeof metrics.chunkLoadedAt === 'number' &&
+      metrics.chunkLoadedAt < metrics.routeStartAt;
+    const effectiveChunkAt =
+      typeof metrics.chunkLoadedAt === 'number' && typeof metrics.routeStartAt === 'number'
+        ? Math.max(metrics.chunkLoadedAt, metrics.routeStartAt)
+        : metrics.chunkLoadedAt;
+    const routeToChunk =
+      typeof metrics.routeStartAt === 'number' && typeof effectiveChunkAt === 'number'
+        ? Math.max(0, effectiveChunkAt - metrics.routeStartAt)
+        : null;
+    const chunkToApiDone =
+      typeof effectiveChunkAt === 'number' && typeof metrics.apiDoneAt === 'number'
+        ? Math.max(0, metrics.apiDoneAt - effectiveChunkAt)
+        : null;
+    const apiToCommit =
+      typeof metrics.apiDoneAt === 'number' && typeof firstCommitAt === 'number'
+        ? Math.max(0, firstCommitAt - metrics.apiDoneAt)
+        : null;
+    const total =
+      typeof metrics.routeStartAt === 'number' && typeof firstCommitAt === 'number'
+        ? Math.max(0, firstCommitAt - metrics.routeStartAt)
+        : null;
+
+    const listBuildMs = Array.isArray(metrics.listBuildMs) ? metrics.listBuildMs : [];
+    const latestListBuild = listBuildMs.length ? listBuildMs[listBuildMs.length - 1] : null;
+    const maxListBuild = listBuildMs.length ? Math.max(...listBuildMs) : null;
+
+    console.table({
+      route_to_chunk_ms: routeToChunk == null ? 'n/a' : Number(routeToChunk.toFixed(2)),
+      chunk_to_api_done_ms: chunkToApiDone == null ? 'n/a' : Number(chunkToApiDone.toFixed(2)),
+      api_to_commit_ms: apiToCommit == null ? 'n/a' : Number(apiToCommit.toFixed(2)),
+      total_ms: total == null ? 'n/a' : Number(total.toFixed(2)),
+      chunk_prefetched: chunkPrefetched,
+      list_build_latest_ms: latestListBuild == null ? 'n/a' : latestListBuild,
+      list_build_max_ms: maxListBuild == null ? 'n/a' : Number(maxListBuild.toFixed(2)),
+      visible_bands_count: visibleBands.length,
+    });
+  }, [loading, visibleBands.length]);
+
   const filteredBands = useMemo(() => {
     const keyword = normalizeBand(guessInput);
     if (!keyword) {
-      return indexedBands.slice(0, 10);
+      return sortedBands;
     }
-    return indexedBands
+    return sortedBands
       .filter((band) => band.normalizedName.includes(keyword))
-      .slice(0, 10);
-  }, [indexedBands, guessInput]);
+      .slice(0, 50);
+  }, [sortedBands, guessInput]);
+  const visibleBandButtons = useMemo(
+    () => {
+      const t0 = typeof performance !== 'undefined' ? performance.now() : 0;
+      const nodes = visibleBands.map((band) => (
+        <Button
+          key={`bank-band-${band.name}`}
+          type="text"
+          onClick={() => setGuessInput(band.name)}
+          style={{
+            width: '100%',
+            justifyContent: 'flex-start',
+            paddingInline: 8,
+            color: isDark ? '#E5E7EB' : '#1F2937',
+          }}
+        >
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{band.name}</span>
+        </Button>
+      ));
+      const t1 = typeof performance !== 'undefined' ? performance.now() : 0;
+      if (typeof window !== 'undefined') {
+        const metrics = window.__gb_metrics || {};
+        const listBuildMs = Array.isArray(metrics.listBuildMs) ? metrics.listBuildMs : [];
+        listBuildMs.push(Number((t1 - t0).toFixed(2)));
+        window.__gb_metrics = {
+          ...metrics,
+          listBuildMs: listBuildMs.slice(-20),
+        };
+      }
+      return nodes;
+    },
+    [isDark, visibleBands]
+  );
 
   const resetRoundWithBands = (nextBands, excludeCurrent = false) => {
     setGuessInput('');
@@ -753,9 +954,9 @@ const GuessBand = () => {
   }
 
   return (
-    <div style={themedStyles.wrapper}>
-      <div style={themedStyles.layoutRow}>
-        <Card style={themedStyles.sideCard}>
+    <div className="guess-band-page" style={themedStyles.wrapper}>
+      <div className="guess-band-layout-row" style={themedStyles.layoutRow}>
+        <Card className="guess-band-side-card guess-band-filter-card" style={themedStyles.sideCard}>
           <Title level={4} style={themedStyles.sideTitle}>
             国家筛选
           </Title>
@@ -767,10 +968,13 @@ const GuessBand = () => {
           />
           <div style={{ marginTop: 14 }}>
             <Text strong style={{ color: isDark ? '#E5E7EB' : isBlue ? '#274B7A' : '#334155' }}>当前题库乐队</Text>
-            <Text style={{ ...themedStyles.sideSubtitle, display: 'block' }}>{sortedBands.length} 支</Text>
+            <Text style={{ ...themedStyles.sideSubtitle, display: 'block' }}>
+              {countryFilteredBands.length} 支{countryFilteredBands.length > visibleBands.length ? `（仅显示前 ${visibleBands.length} 条）` : ''}
+            </Text>
           </div>
           <div style={{ marginTop: 10 }}>
             <div
+              className="guess-band-current-bands-scroll"
               style={{
                 height: 320,
                 overflowY: 'auto',
@@ -781,29 +985,15 @@ const GuessBand = () => {
               }}
             >
               <Space direction="vertical" size={6} style={{ width: '100%' }}>
-                {sortedBands.map((band) => (
-                  <Button
-                    key={`bank-band-${band.name}`}
-                    type="text"
-                    onClick={() => setGuessInput(band.name)}
-                    style={{
-                      width: '100%',
-                      justifyContent: 'flex-start',
-                      paddingInline: 8,
-                      color: isDark ? '#E5E7EB' : '#1F2937',
-                    }}
-                  >
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{band.name}</span>
-                  </Button>
-                ))}
+                {visibleBandButtons}
               </Space>
             </div>
           </div>
         </Card>
 
-        <div style={themedStyles.centerWrap}>
-          <Card style={themedStyles.heroCard}>
-        <Space size="middle" wrap>
+        <div className="guess-band-center-wrap" style={themedStyles.centerWrap}>
+          <Card className="guess-band-hero-card" style={themedStyles.heroCard}>
+        <Space className="guess-band-meta-row" size="middle" wrap>
           <Tag color={isDark ? 'default' : 'success'}>默认 {DEFAULT_MAX_ATTEMPTS} 次</Tag>
           <Tag color={isDark ? 'default' : 'geekblue'}>乐队库 {bands.length} 支</Tag>
           <Tag color={isDark ? 'default' : 'processing'}>当前题库：{currentBankLabel}</Tag>
@@ -827,6 +1017,7 @@ const GuessBand = () => {
           <Space size={6} align="center">
             <Text>切换题库</Text>
             <Select
+              className="guess-band-bank-select"
               value={currentBankKey}
               options={bankOptions}
               onChange={handleBankChange}
@@ -836,7 +1027,7 @@ const GuessBand = () => {
           </Space>
         </Space>
 
-        <div style={styles.titleRow}>
+        <div className="guess-band-title-row" style={styles.titleRow}>
           <div>
             <Title level={1} style={themedStyles.title}>
               猜乐队
@@ -845,7 +1036,7 @@ const GuessBand = () => {
               支持默认题库、你的自选题库和分享题库。每轮最多猜 {maxAttempts} 次，猜中或用尽机会后可开始下一题。
             </Text>
           </div>
-          <Space size={10} wrap>
+          <Space className="guess-band-links-row" size={10} wrap>
             <Button
               type="primary"
               size="large"
@@ -919,7 +1110,7 @@ const GuessBand = () => {
           />
         ) : null}
 
-        <div style={themedStyles.actionRow}>
+        <div className="guess-band-action-row" style={themedStyles.actionRow}>
           <AutoComplete
             className="guess-band-input"
             value={guessInput}
@@ -971,7 +1162,8 @@ const GuessBand = () => {
           </Card>
         ) : null}
 
-        <div style={themedStyles.board}>
+        <div className="guess-band-board" style={themedStyles.board}>
+          <div className="guess-band-table-scroll">
           <table style={themedStyles.table}>
             <thead>
               <tr>
@@ -1014,11 +1206,12 @@ const GuessBand = () => {
               )}
             </tbody>
           </table>
+          </div>
         </div>
           </Card>
         </div>
 
-        <Card style={themedStyles.sideCard}>
+        <Card className="guess-band-side-card" style={themedStyles.sideCard}>
           <Title level={4} style={themedStyles.sideTitle}>
             Tips
           </Title>

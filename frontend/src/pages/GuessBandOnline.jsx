@@ -62,6 +62,33 @@ const formatCountdown = (seconds) => {
   return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 };
 
+const resolveRoundStartedAtMillis = (room) => {
+  const epochMillis = Number(room?.roundStartedAtEpochMillis);
+  if (Number.isFinite(epochMillis) && epochMillis > 0) {
+    return epochMillis;
+  }
+
+  const raw = room?.roundStartedAt;
+  if (!raw) {
+    return null;
+  }
+
+  if (typeof raw === 'number') {
+    return raw > 1e12 ? raw : raw * 1000;
+  }
+
+  if (typeof raw === 'string') {
+    const numeric = Number(raw);
+    if (Number.isFinite(numeric) && numeric > 0) {
+      return numeric > 1e12 ? numeric : numeric * 1000;
+    }
+    const parsed = Date.parse(raw);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  return null;
+};
+
 const resolveArtistPhotoUrl = (url) => {
   if (!url) {
     return '';
@@ -180,11 +207,17 @@ const GuessBandOnline = () => {
   }, [room, artists.length, bankItemCountMap]);
 
   const remainingSeconds = useMemo(() => {
-    if (!room || room.status !== 'IN_PROGRESS' || !room.timedMode || !room.roundStartedAt || !room.roundTimeLimitSeconds) {
+    if (
+      !room ||
+      room.status !== 'IN_PROGRESS' ||
+      !room.timedMode ||
+      (!room.roundStartedAt && !room.roundStartedAtEpochMillis) ||
+      !room.roundTimeLimitSeconds
+    ) {
       return null;
     }
-    const started = new Date(room.roundStartedAt).getTime();
-    if (Number.isNaN(started)) {
+    const started = resolveRoundStartedAtMillis(room);
+    if (!Number.isFinite(started)) {
       return null;
     }
     const deadline = started + room.roundTimeLimitSeconds * 1000;

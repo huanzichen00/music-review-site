@@ -8,11 +8,10 @@ import com.musicreview.entity.User;
 import com.musicreview.repository.AlbumRepository;
 import com.musicreview.repository.BlogPostRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,23 +21,17 @@ public class BlogPostService {
     private final AlbumRepository albumRepository;
     private final AuthService authService;
 
-    public List<BlogPostResponse> getAllPosts() {
-        return blogPostRepository.findAllByOrderByCreatedAtDesc().stream()
-                .map(BlogPostResponse::fromEntity)
-                .collect(Collectors.toList());
+    public Page<BlogPostResponse> getAllPosts(Pageable pageable) {
+        return blogPostRepository.findPostResponses(pageable);
     }
 
-    public List<BlogPostResponse> getMyPosts() {
+    public Page<BlogPostResponse> getMyPosts(Pageable pageable) {
         User currentUser = authService.getCurrentUser();
-        return blogPostRepository.findByUserIdOrderByCreatedAtDesc(currentUser.getId()).stream()
-                .map(BlogPostResponse::fromEntity)
-                .collect(Collectors.toList());
+        return blogPostRepository.findPostResponsesByUserId(currentUser.getId(), pageable);
     }
 
-    public List<BlogPostResponse> getPostsByUserId(Long userId) {
-        return blogPostRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
-                .map(BlogPostResponse::fromEntity)
-                .collect(Collectors.toList());
+    public Page<BlogPostResponse> getPostsByUserId(Long userId, Pageable pageable) {
+        return blogPostRepository.findPostResponsesByUserId(userId, pageable);
     }
 
     @Transactional

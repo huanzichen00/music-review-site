@@ -5,6 +5,9 @@ import com.musicreview.dto.album.AlbumResponse;
 import com.musicreview.service.AlbumService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,8 +26,12 @@ public class AlbumController {
      * GET /api/albums
      */
     @GetMapping
-    public ResponseEntity<List<AlbumResponse>> getAllAlbums() {
-        return ResponseEntity.ok(albumService.getAllAlbums());
+    public ResponseEntity<Page<AlbumResponse>> getAllAlbums(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(albumService.getAllAlbums(pageable));
     }
 
     /**
@@ -32,8 +39,13 @@ public class AlbumController {
      * GET /api/albums/initial/{letter}
      */
     @GetMapping("/initial/{letter}")
-    public ResponseEntity<List<AlbumResponse>> getAlbumsByInitial(@PathVariable String letter) {
-        return ResponseEntity.ok(albumService.getAlbumsByInitial(letter));
+    public ResponseEntity<Page<AlbumResponse>> getAlbumsByInitial(
+            @PathVariable String letter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(albumService.getAlbumsByInitial(letter, pageable));
     }
 
     /**
@@ -56,8 +68,13 @@ public class AlbumController {
      * GET /api/albums/artist/{artistId}
      */
     @GetMapping("/artist/{artistId}")
-    public ResponseEntity<List<AlbumResponse>> getAlbumsByArtist(@PathVariable Long artistId) {
-        return ResponseEntity.ok(albumService.getAlbumsByArtist(artistId));
+    public ResponseEntity<Page<AlbumResponse>> getAlbumsByArtist(
+            @PathVariable Long artistId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(albumService.getAlbumsByArtist(artistId, pageable));
     }
 
     /**
@@ -65,8 +82,13 @@ public class AlbumController {
      * GET /api/albums/genre/{genreId}
      */
     @GetMapping("/genre/{genreId}")
-    public ResponseEntity<List<AlbumResponse>> getAlbumsByGenre(@PathVariable Long genreId) {
-        return ResponseEntity.ok(albumService.getAlbumsByGenre(genreId));
+    public ResponseEntity<Page<AlbumResponse>> getAlbumsByGenre(
+            @PathVariable Long genreId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(albumService.getAlbumsByGenre(genreId, pageable));
     }
 
     /**
@@ -74,8 +96,13 @@ public class AlbumController {
      * GET /api/albums/year/{year}
      */
     @GetMapping("/year/{year}")
-    public ResponseEntity<List<AlbumResponse>> getAlbumsByYear(@PathVariable Integer year) {
-        return ResponseEntity.ok(albumService.getAlbumsByYear(year));
+    public ResponseEntity<Page<AlbumResponse>> getAlbumsByYear(
+            @PathVariable Integer year,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(albumService.getAlbumsByYear(year, pageable));
     }
 
     /**
@@ -92,8 +119,13 @@ public class AlbumController {
      * GET /api/albums/search?q=xxx
      */
     @GetMapping("/search")
-    public ResponseEntity<List<AlbumResponse>> searchAlbums(@RequestParam("q") String query) {
-        return ResponseEntity.ok(albumService.searchAlbums(query));
+    public ResponseEntity<Page<AlbumResponse>> searchAlbums(
+            @RequestParam("q") String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(albumService.searchAlbums(query, pageable));
     }
 
     /**

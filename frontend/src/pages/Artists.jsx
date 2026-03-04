@@ -24,6 +24,13 @@ import { isRequestCanceled } from '../utils/http';
 const { Title } = Typography;
 const { TextArea } = Input;
 
+const unwrapListData = (data) => {
+  if (Array.isArray(data?.content)) {
+    return data.content;
+  }
+  return Array.isArray(data) ? data : [];
+};
+
 const Artists = () => {
   const [form] = Form.useForm();
   const [artists, setArtists] = useState([]);
@@ -42,8 +49,8 @@ const Artists = () => {
   const loadArtists = async (signal) => {
     setLoading(true);
     try {
-      const response = await artistsApi.getAll({ signal });
-      setArtists(response.data);
+      const response = await artistsApi.getAll({ signal, page: 0, size: 500 });
+      setArtists(unwrapListData(response.data));
     } catch (error) {
       if (isRequestCanceled(error)) {
         return;
@@ -182,6 +189,7 @@ const Artists = () => {
       dataIndex: 'description',
       key: 'description',
       width: 260,
+      responsive: ['lg'],
       ellipsis: true,
       render: (value) => value || '-',
     },
@@ -190,6 +198,7 @@ const Artists = () => {
       dataIndex: 'genre',
       key: 'genre',
       width: 180,
+      responsive: ['md'],
       render: (value) => value || '-',
     },
     {
@@ -197,6 +206,7 @@ const Artists = () => {
       dataIndex: 'formedYear',
       key: 'formedYear',
       width: 110,
+      responsive: ['sm'],
       sorter: (a, b) => (a.formedYear || 0) - (b.formedYear || 0),
       render: (value) => value || '-',
     },
@@ -205,6 +215,7 @@ const Artists = () => {
       dataIndex: 'memberCount',
       key: 'memberCount',
       width: 100,
+      responsive: ['md'],
       sorter: (a, b) => (a.memberCount || 0) - (b.memberCount || 0),
       render: (value) => value || '-',
     },
@@ -213,6 +224,7 @@ const Artists = () => {
       dataIndex: 'albumCount',
       key: 'albumCount',
       width: 110,
+      responsive: ['md'],
       sorter: (a, b) => (a.albumCount || 0) - (b.albumCount || 0),
       render: (value) => value || 0,
     },
@@ -221,6 +233,7 @@ const Artists = () => {
       dataIndex: 'status',
       key: 'status',
       width: 100,
+      responsive: ['sm'],
       render: (value) => value || '-',
     },
   ];
@@ -229,6 +242,7 @@ const Artists = () => {
       title: 'ACTIONS',
       key: 'actions',
       width: 180,
+      responsive: ['md'],
       render: (_, artist) => (
         <div style={{ display: 'flex', gap: 8 }}>
           <Button
@@ -263,10 +277,11 @@ const Artists = () => {
   }
 
   return (
-    <div>
-      <Title level={2}>
+    <div className="artists-page">
+      <Title className="artists-page-title" level={2}>
         浏览乐队
         <span
+          className="artists-page-title-hint"
           style={{
             marginLeft: 8,
             fontSize: 14,
@@ -278,7 +293,7 @@ const Artists = () => {
         </span>
       </Title>
       
-      <Card loading={loading}>
+      <Card className="artists-page-card" loading={loading}>
         <Row className="artists-filters" gutter={[12, 12]} style={{ marginBottom: 14 }}>
           <Col xs={24} sm={12} md={8} lg={6}>
             <Input
@@ -327,6 +342,7 @@ const Artists = () => {
         </Row>
 
         <Table
+          className="artists-table"
           rowKey="id"
           columns={columns}
           dataSource={filteredArtists}
@@ -335,8 +351,10 @@ const Artists = () => {
             showSizeChanger: false,
             hideOnSinglePage: true,
             position: ['bottomCenter'],
+            responsive: true,
           }}
           size="middle"
+          scroll={{ x: 860 }}
         />
       </Card>
 

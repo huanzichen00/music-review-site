@@ -5,6 +5,7 @@ import { favoritesApi } from '../api/favorites';
 import { useAuth } from '../context/AuthContext';
 import AlbumCard from '../components/AlbumCard';
 import { isRequestCanceled } from '../utils/http';
+import { unwrapListData } from '../utils/apiData';
 
 const { Title } = Typography;
 
@@ -27,8 +28,8 @@ const Favorites = () => {
     const loadFavorites = async () => {
       setLoading(true);
       try {
-        const response = await favoritesApi.getMyFavorites({ signal: controller.signal });
-        setFavorites(response.data);
+        const response = await favoritesApi.getMyFavorites({ signal: controller.signal, page: 0, size: 200 });
+        setFavorites(unwrapListData(response.data));
       } catch (error) {
         if (isRequestCanceled(error)) {
           return;

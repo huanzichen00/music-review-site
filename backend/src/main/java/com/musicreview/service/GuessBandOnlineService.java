@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -547,6 +548,7 @@ public class GuessBandOnlineService {
                 .timedMode(room.getTimedMode())
                 .roundTimeLimitSeconds(room.getRoundTimeLimitSeconds())
                 .roundStartedAt(room.getRoundStartedAt())
+                .roundStartedAtEpochMillis(toEpochMillis(room.getRoundStartedAt()))
                 .questionBankId(room.getQuestionBank() != null ? room.getQuestionBank().getId() : null)
                 .questionBankName(room.getQuestionBank() != null ? room.getQuestionBank().getName() : "默认题库")
                 .startedAt(room.getStartedAt())
@@ -565,6 +567,13 @@ public class GuessBandOnlineService {
                         .map(GuessBandOnlineRoomGuessResponse::fromEntity)
                         .collect(Collectors.toList()))
                 .build();
+    }
+
+    private Long toEpochMillis(LocalDateTime value) {
+        if (value == null) {
+            return null;
+        }
+        return value.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
 
     private void startRoomInternal(GuessBandOnlineRoom room, List<GuessBandOnlinePlayer> players) {

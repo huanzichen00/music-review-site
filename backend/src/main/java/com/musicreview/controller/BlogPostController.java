@@ -5,10 +5,12 @@ import com.musicreview.dto.blog.BlogPostResponse;
 import com.musicreview.service.BlogPostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -23,8 +25,12 @@ public class BlogPostController {
      * GET /api/blog-posts
      */
     @GetMapping
-    public ResponseEntity<List<BlogPostResponse>> getAllPosts() {
-        return ResponseEntity.ok(blogPostService.getAllPosts());
+    public ResponseEntity<Page<BlogPostResponse>> getAllPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(blogPostService.getAllPosts(pageable));
     }
 
     /**
@@ -32,8 +38,12 @@ public class BlogPostController {
      * GET /api/blog-posts/my
      */
     @GetMapping("/my")
-    public ResponseEntity<List<BlogPostResponse>> getMyPosts() {
-        return ResponseEntity.ok(blogPostService.getMyPosts());
+    public ResponseEntity<Page<BlogPostResponse>> getMyPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(blogPostService.getMyPosts(pageable));
     }
 
     /**
@@ -41,8 +51,13 @@ public class BlogPostController {
      * GET /api/blog-posts/user/{userId}
      */
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<BlogPostResponse>> getPostsByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(blogPostService.getPostsByUserId(userId));
+    public ResponseEntity<Page<BlogPostResponse>> getPostsByUserId(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(blogPostService.getPostsByUserId(userId, pageable));
     }
 
     /**

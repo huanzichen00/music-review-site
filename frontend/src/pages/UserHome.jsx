@@ -20,6 +20,7 @@ import { LinkOutlined, UserOutlined } from '@ant-design/icons';
 import { usersApi } from '../api/users';
 import { blogPostsApi } from '../api/blogPosts';
 import { resolveAvatarUrl } from '../utils/avatar';
+import { unwrapListData } from '../utils/apiData';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -36,10 +37,10 @@ const UserHome = () => {
       try {
         const [profileRes, postsRes] = await Promise.all([
           usersApi.getUserProfile(id),
-          blogPostsApi.getByUser(id),
+          blogPostsApi.getByUser(id, { page: 0, size: 100 }),
         ]);
         setProfile(profileRes.data);
-        setPosts(postsRes.data || []);
+        setPosts(unwrapListData(postsRes.data));
       } catch {
         message.error('用户主页不存在或加载失败');
         navigate('/music/home');

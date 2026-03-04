@@ -1,6 +1,7 @@
 package com.musicreview.repository;
 
 import com.musicreview.entity.ReviewReply;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,6 +10,7 @@ import java.util.List;
 @Repository
 public interface ReviewReplyRepository extends JpaRepository<ReviewReply, Long> {
 
+    @EntityGraph(attributePaths = {"review", "user"})
     List<ReviewReply> findByReviewIdOrderByCreatedAtAsc(Long reviewId);
 
     int countByReviewId(Long reviewId);

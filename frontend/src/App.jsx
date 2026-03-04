@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ConfigProvider, Spin } from 'antd';
 import { AuthProvider } from './context/AuthContext';
@@ -131,6 +131,26 @@ const darkTheme = {
 
 function AppContent() {
   const { theme } = useTheme();
+
+  useEffect(() => {
+    const preload = () => {
+      import('./pages/Albums');
+      import('./pages/Artists');
+      import('./pages/Genres');
+      import('./pages/Years');
+      import('./pages/GuessBand');
+      import('./pages/GuessBandOnline');
+      import('./pages/Blog');
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const idleId = window.requestIdleCallback(preload, { timeout: 2000 });
+      return () => window.cancelIdleCallback?.(idleId);
+    }
+
+    const timer = window.setTimeout(preload, 500);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   return (
     <ConfigProvider theme={theme === 'blue' ? blueTheme : theme === 'dark' ? darkTheme : warmTheme}>

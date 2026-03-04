@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { genresApi } from '../api/genres';
 import { useTheme } from '../context/ThemeContext';
 import { isRequestCanceled } from '../utils/http';
+import { unwrapListData } from '../utils/apiData';
 
 const { Text } = Typography;
 
@@ -118,7 +119,7 @@ const Genres = () => {
       try {
         const response = await genresApi.getAll({ signal: controller.signal });
         setGenres(
-          (response.data || []).sort((a, b) =>
+          unwrapListData(response.data).sort((a, b) =>
             (a?.name || '').localeCompare(b?.name || '', undefined, { sensitivity: 'base' })
           )
         );

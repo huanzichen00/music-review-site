@@ -8,7 +8,19 @@ export const reviewsApi = {
   getRecent: (options = {}) =>
     cachedApiGet({
       key: REVIEWS_RECENT_CACHE_KEY,
-      request: () => api.get('/reviews/recent', { signal: options.signal }),
+      request: () => {
+        const params = {};
+        if (Number.isInteger(options.page)) {
+          params.page = options.page;
+        }
+        if (Number.isInteger(options.size)) {
+          params.size = options.size;
+        }
+        return api.get('/reviews/recent', {
+          signal: options.signal,
+          params: Object.keys(params).length > 0 ? params : undefined,
+        });
+      },
       ttlMs: REVIEWS_RECENT_TTL_MS,
       force: Boolean(options.force),
     }),

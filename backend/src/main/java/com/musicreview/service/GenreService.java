@@ -6,11 +6,14 @@ import com.musicreview.entity.Genre;
 import com.musicreview.entity.User;
 import com.musicreview.repository.AlbumRepository;
 import com.musicreview.repository.GenreRepository;
+import com.musicreview.repository.projection.GenreAlbumCountProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,8 +29,10 @@ public class GenreService {
      */
     @Transactional(readOnly = true)
     public List<GenreResponse> getAllGenres() {
-        return genreRepository.findAllByOrderByNameAsc().stream()
-                .map(genre -> GenreResponse.fromEntity(genre, getAlbumCount(genre)))
+        List<Genre> genres = genreRepository.findAllByOrderByNameAsc();
+        Map<Long, Integer> albumCountMap = getGenreAlbumCountMap(genres);
+        return genres.stream()
+                .map(genre -> GenreResponse.fromEntity(genre, albumCountMap.getOrDefault(genre.getId(), 0)))
                 .collect(Collectors.toList());
     }
 
@@ -37,7 +42,7 @@ public class GenreService {
     @Transactional(readOnly = true)
     public GenreResponse getGenreById(Long id) {
         return genreRepository.findById(id)
-                .map(genre -> GenreResponse.fromEntity(genre, getAlbumCount(genre)))
+                .map(genre -> GenreResponse.fromEntity(genre, (int) albumRepository.countByGenreId(id)))
                 .orElseThrow(() -> new RuntimeException("Genre not found with id: " + id));
     }
 
@@ -73,7 +78,7 @@ public class GenreService {
         Genre genre = genreRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Genre not found with id: " + id));
 
-        int albumCount = albumRepository.findByGenreId(id).size();
+        int albumCount = (int) albumRepository.countByGenreId(id);
         if (albumCount > 0) {
             throw new RuntimeException("Cannot delete genre: Genre has " + albumCount + " album(s). Please remove genre from albums first.");
         }
@@ -81,10 +86,16 @@ public class GenreService {
         genreRepository.delete(genre);
     }
 
-    private int getAlbumCount(Genre genre) {
-        if (genre == null || genre.getAlbums() == null) {
-            return 0;
+    private Map<Long, Integer> getGenreAlbumCountMap(List<Genre> genres) {
+        Map<Long, Integer> result = new HashMap<>();
+        List<Long> genreIds = genres.stream()
+                .map(Genre::getId)
+                .collect(Collectors.toList());
+        if (!genreIds.isEmpty()) {
+            for (GenreAlbumCountProjection row : albumRepository.countByGenreIds(genreIds)) {
+                result.put(row.getGenreId(), (int) row.getAlbumCount());
+            }
         }
-        return genre.getAlbums().size();
+        return result;
     }
 }

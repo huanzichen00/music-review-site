@@ -11,6 +11,7 @@ import { genresApi } from '../api/genres';
 import { importApi } from '../api/import';
 import { filesApi } from '../api/files';
 import { useAuth } from '../context/AuthContext';
+import { unwrapListData } from '../utils/apiData';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -126,11 +127,11 @@ const EditAlbum = () => {
     const loadData = async () => {
       try {
         const [artistsRes, genresRes, albumRes] = await Promise.all([
-          artistsApi.getAll(),
+          artistsApi.getAll({ page: 0, size: 500 }),
           genresApi.getAll(),
           albumsApi.getById(id),
         ]);
-        setArtists(artistsRes.data);
+        setArtists(unwrapListData(artistsRes.data));
         setGenres(genresRes.data);
         hydrateForm(albumRes.data);
       } catch {

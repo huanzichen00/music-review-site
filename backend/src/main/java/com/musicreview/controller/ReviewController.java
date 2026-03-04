@@ -5,10 +5,12 @@ import com.musicreview.dto.review.ReviewResponse;
 import com.musicreview.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -23,8 +25,12 @@ public class ReviewController {
      * GET /api/reviews/recent
      */
     @GetMapping("/recent")
-    public ResponseEntity<List<ReviewResponse>> getRecentReviews() {
-        return ResponseEntity.ok(reviewService.getRecentReviews());
+    public ResponseEntity<Page<ReviewResponse>> getRecentReviews(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(reviewService.getRecentReviews(pageable));
     }
 
     /**
@@ -32,8 +38,13 @@ public class ReviewController {
      * GET /api/reviews/album/{albumId}
      */
     @GetMapping("/album/{albumId}")
-    public ResponseEntity<List<ReviewResponse>> getReviewsByAlbum(@PathVariable Long albumId) {
-        return ResponseEntity.ok(reviewService.getReviewsByAlbum(albumId));
+    public ResponseEntity<Page<ReviewResponse>> getReviewsByAlbum(
+            @PathVariable Long albumId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(reviewService.getReviewsByAlbum(albumId, pageable));
     }
 
     /**
@@ -41,8 +52,12 @@ public class ReviewController {
      * GET /api/reviews/my
      */
     @GetMapping("/my")
-    public ResponseEntity<List<ReviewResponse>> getMyReviews() {
-        return ResponseEntity.ok(reviewService.getMyReviews());
+    public ResponseEntity<Page<ReviewResponse>> getMyReviews(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(reviewService.getMyReviews(pageable));
     }
 
     /**

@@ -4,6 +4,7 @@ import { BellOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { notificationsApi } from '../api/notifications';
 import { useAuth } from '../context/AuthContext';
+import { unwrapListData } from '../utils/apiData';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -20,8 +21,8 @@ const Messages = () => {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await notificationsApi.getMine();
-      const list = res.data || [];
+      const res = await notificationsApi.getMine({ page: 0, size: 200 });
+      const list = unwrapListData(res.data);
       setNotifications(list);
       if (list.some((item) => !item.isRead)) {
         try {

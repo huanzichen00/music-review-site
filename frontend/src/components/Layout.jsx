@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Layout as AntLayout, Menu, Button, Dropdown, Avatar, Badge, Select, Space } from 'antd';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -17,7 +17,9 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { resolveAvatarUrl } from '../utils/avatar';
+import { artistsApi } from '../api/artists';
 import { notificationsApi } from '../api/notifications';
+import { questionBanksApi } from '../api/questionBanks';
 
 const { Header, Content, Footer } = AntLayout;
 
@@ -33,14 +35,73 @@ const menuItemStyle = {
   fontSize: '20px',
 };
 
+const routePrefetchers = {
+  '/music/home': () => import('../pages/Home'),
+  '/music/guess-band': () => import('../pages/GuessBand'),
+  '/blog': () => import('../pages/Blog'),
+};
+
+const markGuessBandRouteStart = () => {
+  if (typeof performance === 'undefined') {
+    return;
+  }
+  try {
+    const navId = `gb-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const now = performance.now();
+    if (typeof window !== 'undefined') {
+      window.__gb_metrics = {
+        ...(window.__gb_metrics || {}),
+        navId,
+        routeStartAt: now,
+        routeStartEpoch: Date.now(),
+        listBuildMs: [],
+      };
+    }
+    if (typeof performance.clearMarks === 'function') {
+      performance.clearMarks('gb_route_start');
+      performance.clearMarks('gb_chunk_loaded');
+      performance.clearMarks('gb_api_start');
+      performance.clearMarks('gb_api_done');
+      performance.clearMarks('gb_first_commit');
+    }
+    if (typeof performance.clearMeasures === 'function') {
+      performance.clearMeasures('gb_m_route_to_chunk');
+      performance.clearMeasures('gb_m_chunk_to_api_done');
+      performance.clearMeasures('gb_m_api_to_commit');
+      performance.clearMeasures('gb_m_total');
+    }
+    if (typeof performance.mark === 'function') {
+      performance.mark('gb_route_start');
+    }
+  } catch {
+    // ignore
+  }
+};
+
+const warmGuessBandApiCache = (isAuthenticated) => {
+  artistsApi.getAllCached({ page: 0, size: 200, ttlMs: 30_000 }).catch(() => {});
+  questionBanksApi.getPublicCached({ force: true }).catch(() => {});
+  if (isAuthenticated && localStorage.getItem('token')) {
+    questionBanksApi.getMineCached({ force: true }).catch(() => {});
+  }
+};
+
 const Layout = ({ children }) => {
   const { user, logout, isAuthenticated } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
+  const hasIdleWarmTriggeredRef = useRef(false);
   const isBlue = theme === 'blue';
   const isDark = theme === 'dark';
+
+  const prefetchRoute = useCallback((path) => {
+    const load = routePrefetchers[path];
+    if (load) {
+      load();
+    }
+  }, []);
 
   const refreshUnreadCount = useCallback(() => {
     if (!isAuthenticated) {
@@ -63,6 +124,41 @@ const Layout = ({ children }) => {
     window.addEventListener('notifications-updated', handleNotificationUpdated);
     return () => window.removeEventListener('notifications-updated', handleNotificationUpdated);
   }, [refreshUnreadCount]);
+
+  useEffect(() => {
+    if (hasIdleWarmTriggeredRef.current) {
+      return;
+    }
+    const isGuessBandRoute = location.pathname.startsWith('/music/guess-band') || location.pathname.startsWith('/guess-band');
+    if (isGuessBandRoute) {
+      return;
+    }
+    hasIdleWarmTriggeredRef.current = true;
+    const runWarm = () => {
+      if (import.meta.env.DEV) {
+        console.log('qb_idle_prefetch_triggered', {
+          pathname: location.pathname,
+          isAuthenticated,
+        });
+      }
+      warmGuessBandApiCache(isAuthenticated);
+    };
+    let timer = null;
+    let idleId = null;
+    if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(runWarm, { timeout: 2000 });
+    } else {
+      timer = window.setTimeout(runWarm, 1000);
+    }
+    return () => {
+      if (idleId != null && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timer != null) {
+        window.clearTimeout(timer);
+      }
+    };
+  }, [isAuthenticated, location.pathname]);
 
   const handleLogout = () => {
     logout();
@@ -122,19 +218,35 @@ const Layout = ({ children }) => {
     {
       key: '/music',
       icon: <AppstoreOutlined style={{ fontSize: '18px' }} />,
-      label: <Link to="/music/home" style={menuLinkStyle}>音乐</Link>,
+      label: <Link to="/music/home" style={menuLinkStyle} onMouseEnter={() => prefetchRoute('/music/home')}>音乐</Link>,
       style: menuItemStyle,
     },
     {
       key: '/music/guess-band',
       icon: <CustomerServiceOutlined style={{ fontSize: '18px' }} />,
-      label: <Link to="/music/guess-band" style={menuLinkStyle}>Guess-Band</Link>,
+      label: (
+        <Link
+          to="/music/guess-band"
+          style={menuLinkStyle}
+          onMouseEnter={() => {
+            prefetchRoute('/music/guess-band');
+            warmGuessBandApiCache(isAuthenticated);
+          }}
+          onClick={() => {
+            markGuessBandRouteStart();
+            prefetchRoute('/music/guess-band');
+            warmGuessBandApiCache(isAuthenticated);
+          }}
+        >
+          Guess-Band
+        </Link>
+      ),
       style: menuItemStyle,
     },
     {
       key: '/blog',
       icon: <BookOutlined style={{ fontSize: '18px' }} />,
-      label: <Link to="/blog" style={menuLinkStyle}>博客</Link>,
+      label: <Link to="/blog" style={menuLinkStyle} onMouseEnter={() => prefetchRoute('/blog')}>博客</Link>,
       style: menuItemStyle,
     },
   ];
@@ -175,7 +287,7 @@ const Layout = ({ children }) => {
 
   return (
     <AntLayout style={{ minHeight: '100vh' }}>
-      <Header style={{ 
+      <Header className="app-header" style={{ 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'space-between',
@@ -194,8 +306,8 @@ const Layout = ({ children }) => {
             : '0 2px 8px rgba(139, 69, 19, 0.3)',
         borderBottom: isDark ? '1.5px solid #2F2F33' : isBlue ? '1.5px solid #C9DDFB' : '1.5px solid #E8D5C4',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Link to="/music/home" style={{ 
+        <div className="app-header-left" style={{ display: 'flex', alignItems: 'center' }}>
+          <Link className="app-brand-link" to="/music/home" style={{ 
             color: isDark ? '#E5E7EB' : isBlue ? '#EEF4FF' : '#FFF8E7',
             fontSize: '34px', 
             fontWeight: 700,
@@ -227,8 +339,8 @@ const Layout = ({ children }) => {
           />
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Space align="center">
+        <div className="app-header-right" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Space align="center" className="app-theme-switcher">
             <span
               style={{
                 color: isDark ? '#D1D5DB' : isBlue ? '#EEF4FF' : '#FFF8E7',
@@ -272,7 +384,7 @@ const Layout = ({ children }) => {
               </div>
             </Dropdown>
           ) : (
-            <div>
+            <div className="app-auth-actions">
               <Button 
                 type="text" 
                 icon={<LoginOutlined />}
@@ -308,8 +420,9 @@ const Layout = ({ children }) => {
       </Header>
 
       {isMusicSection && (
-      <div style={{ padding: '10px 50px 0' }}>
+      <div className="music-subnav-wrap" style={{ padding: '10px 50px 0' }}>
         <div
+          className="music-subnav-rail"
           style={{
             display: 'inline-flex',
             gap: 8,
@@ -366,7 +479,10 @@ const Layout = ({ children }) => {
           <Button
             type={selectedMusicSubKey === '/music/guess-band' ? 'primary' : 'default'}
             icon={<CustomerServiceOutlined />}
-            onClick={() => navigate('/music/guess-band')}
+            onClick={() => {
+              markGuessBandRouteStart();
+              navigate('/music/guess-band');
+            }}
           >
             猜乐队
           </Button>
@@ -381,14 +497,14 @@ const Layout = ({ children }) => {
       </div>
       )}
       
-      <Content style={{ 
+      <Content className="app-content" style={{ 
         padding: '24px 50px',
         background: 'transparent',
       }}>
         {children}
       </Content>
       
-      <Footer style={{ 
+      <Footer className="app-footer" style={{ 
         textAlign: 'center', 
         background: isDark
           ? 'linear-gradient(180deg, #111113 0%, #0D0D0F 100%)'

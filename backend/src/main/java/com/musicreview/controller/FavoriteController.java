@@ -3,10 +3,12 @@ package com.musicreview.controller;
 import com.musicreview.dto.favorite.FavoriteResponse;
 import com.musicreview.service.FavoriteService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -21,8 +23,12 @@ public class FavoriteController {
      * GET /api/favorites
      */
     @GetMapping
-    public ResponseEntity<List<FavoriteResponse>> getMyFavorites() {
-        return ResponseEntity.ok(favoriteService.getMyFavorites());
+    public ResponseEntity<Page<FavoriteResponse>> getMyFavorites(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(favoriteService.getMyFavorites(pageable));
     }
 
     /**

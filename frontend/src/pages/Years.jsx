@@ -11,6 +11,13 @@ const YEARS_PAGE_SIZE = 24;
 const YEARS_SUMMARY_CACHE_KEY = 'years:summary:v1';
 const YEARS_SUMMARY_CACHE_TTL_MS = 10 * 60 * 1000;
 
+const unwrapListData = (data) => {
+  if (Array.isArray(data?.content)) {
+    return data.content;
+  }
+  return Array.isArray(data) ? data : [];
+};
+
 const styles = {
   pageTitle: {
     fontFamily: "'Playfair Display', 'Noto Serif SC', Georgia, serif",
@@ -91,12 +98,12 @@ const Years = () => {
       try {
         const [yearsRes, albumsRes, artistsRes] = await Promise.all([
           albumsApi.getYears({ signal: controller.signal }),
-          albumsApi.getAll({ signal: controller.signal }),
-          artistsApi.getAll({ signal: controller.signal }),
+          albumsApi.getAll({ signal: controller.signal, page: 0, size: 500 }),
+          artistsApi.getAll({ signal: controller.signal, page: 0, size: 500 }),
         ]);
 
         const sortedYears = (yearsRes.data || []).slice().sort((a, b) => b - a);
-        const allAlbums = albumsRes.data || [];
+        const allAlbums = unwrapListData(albumsRes.data);
         const albumCountByYearObj = {};
         const albumNamesByYear = {};
         const albumNameSet = new Set();
@@ -114,7 +121,7 @@ const Years = () => {
           }
         });
 
-        const allArtists = artistsRes.data || [];
+        const allArtists = unwrapListData(artistsRes.data);
         const formedBandCountByYearObj = {};
         const bandNamesByYear = {};
         const bandNameSet = new Set();
