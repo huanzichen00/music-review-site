@@ -504,6 +504,15 @@ h1, h2, h3, h4, h5, h6 {
   caret-color: #E5E7EB !important;
 }
 
+:root[data-theme='dark'] .blog-page .ant-form-item .blog-album-select.ant-select.ant-select-single .ant-select-selector {
+  background: #232a36 !important;
+  border-color: #556174 !important;
+}
+
+:root[data-theme='dark'] .blog-page .ant-form-item .blog-album-select .ant-select-selection-search-input {
+  background: #232a36 !important;
+}
+
 :root[data-theme='dark'] .blog-album-select-dropdown.ant-select-dropdown {
   background: #20242d !important;
   border: 1px solid #4B5563 !important;

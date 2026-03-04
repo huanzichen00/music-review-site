@@ -364,7 +364,7 @@ const Blog = () => {
 
                         <div style={{ marginTop: 16 }}>
                           <Space align="center" style={{ marginBottom: 10 }}>
-                            <MessageOutlined />
+                            <MessageOutlined style={{ color: isDark ? '#93C5FD' : '#4E342E' }} />
                             <Text strong>回复（{replies.length}）</Text>
                           </Space>
                           {replies.length > 0 ? (
