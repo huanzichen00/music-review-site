@@ -27,9 +27,32 @@ api.interceptors.request.use(
 // Response interceptor - handle errors
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const status = error.response?.status;
+    const requestConfig = error.config || {};
+    const method = String(requestConfig.method || '').toLowerCase();
+    const isMutating = ['post', 'put', 'patch', 'delete'].includes(method);
+    const requestUrl = requestConfig.url || '';
+
+    // CSRF token may expire or become stale; refresh once and retry mutating request.
+    if (
+      status === 403 &&
+      isMutating &&
+      !requestConfig._csrfRetried &&
+      !requestUrl.includes('/auth/csrf')
+    ) {
+      try {
+        await api.get('/auth/csrf');
+        return api({
+          ...requestConfig,
+          _csrfRetried: true,
+        });
+      } catch {
+        // fall through to normal 403 handling
+      }
+    }
+
     if (error.response?.status === 401) {
-      const requestUrl = error.config?.url || '';
       const isUploadEndpoint = requestUrl.includes('/files/album-cover');
       if (!isUploadEndpoint) {
         localStorage.removeItem('user');
