@@ -18,9 +18,8 @@ const getCurrentUserId = () => {
 };
 
 const getMineCacheKey = () => {
-  const token = localStorage.getItem('token') || '';
   const userId = getCurrentUserId();
-  return `${QB_MINE_CACHE_KEY_PREFIX}:${userId}:${shortHash(token)}`;
+  return `${QB_MINE_CACHE_KEY_PREFIX}:${userId}:${shortHash(userId)}`;
 };
 
 export const questionBanksApi = {

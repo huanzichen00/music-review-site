@@ -81,7 +81,7 @@ const markGuessBandRouteStart = () => {
 const warmGuessBandApiCache = (isAuthenticated) => {
   artistsApi.getAllCached({ page: 0, size: 200, ttlMs: 30_000 }).catch(() => {});
   questionBanksApi.getPublicCached({ force: true }).catch(() => {});
-  if (isAuthenticated && localStorage.getItem('token')) {
+  if (isAuthenticated) {
     questionBanksApi.getMineCached({ force: true }).catch(() => {});
   }
 };
@@ -160,8 +160,8 @@ const Layout = ({ children }) => {
     };
   }, [isAuthenticated, location.pathname]);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/music/home');
   };
 

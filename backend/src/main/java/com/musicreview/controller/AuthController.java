@@ -4,8 +4,12 @@ import com.musicreview.dto.auth.AuthResponse;
 import com.musicreview.dto.auth.LoginRequest;
 import com.musicreview.dto.auth.RegisterRequest;
 import com.musicreview.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,17 +20,27 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private static final String AUTH_COOKIE_NAME = "auth_token";
+
     private final AuthService authService;
+    @Value("${jwt.expiration}")
+    private long jwtExpirationMs;
+    @Value("${app.auth.cookie-secure:false}")
+    private boolean cookieSecure;
 
     /**
      * Register a new user
      * POST /api/auth/register
      */
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
         try {
             AuthResponse response = authService.register(request);
-            return ResponseEntity.ok(response);
+            ResponseCookie cookie = buildAuthCookie(response.getToken(), httpRequest);
+            response.setToken(null);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                    .body(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
@@ -37,13 +51,25 @@ public class AuthController {
      * POST /api/auth/login
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         try {
             AuthResponse response = authService.login(request);
-            return ResponseEntity.ok(response);
+            ResponseCookie cookie = buildAuthCookie(response.getToken(), httpRequest);
+            response.setToken(null);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                    .body(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid username or password"));
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest httpRequest) {
+        ResponseCookie clearCookie = clearAuthCookie(httpRequest);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, clearCookie.toString())
+                .body(Map.of("message", "Logged out"));
     }
 
     /**
@@ -65,5 +91,33 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    private ResponseCookie buildAuthCookie(String token, HttpServletRequest request) {
+        return ResponseCookie.from(AUTH_COOKIE_NAME, token)
+                .httpOnly(true)
+                .secure(isSecureRequest(request))
+                .path("/")
+                .sameSite("Lax")
+                .maxAge(jwtExpirationMs / 1000)
+                .build();
+    }
+
+    private ResponseCookie clearAuthCookie(HttpServletRequest request) {
+        return ResponseCookie.from(AUTH_COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(isSecureRequest(request))
+                .path("/")
+                .sameSite("Lax")
+                .maxAge(0)
+                .build();
+    }
+
+    private boolean isSecureRequest(HttpServletRequest request) {
+        if (cookieSecure) {
+            return true;
+        }
+        String forwardedProto = request.getHeader("X-Forwarded-Proto");
+        return request.isSecure() || "https".equalsIgnoreCase(forwardedProto);
     }
 }

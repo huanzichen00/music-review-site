@@ -5,14 +5,9 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(() => !!localStorage.getItem('token'));
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      return;
-    }
-
     authApi.getMe()
       .then((response) => {
         const userData = response.data;
@@ -31,9 +26,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     const response = await authApi.login({ username, password });
-    const { token, ...userData } = response.data;
+    const { token: _token, ...userData } = response.data;
     
-    localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
     
@@ -42,16 +36,20 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (username, email, password) => {
     const response = await authApi.register({ username, email, password });
-    const { token, ...userData } = response.data;
+    const { token: _token, ...userData } = response.data;
     
-    localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
     
     return userData;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await authApi.logout();
+    } catch {
+      // ignore logout API failure and clear local user state anyway
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
