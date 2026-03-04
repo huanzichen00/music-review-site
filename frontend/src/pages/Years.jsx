@@ -282,7 +282,7 @@ const Years = () => {
         </Card>
       ) : (
         <Card>
-          <Row gutter={[12, 12]} style={{ marginBottom: 14 }}>
+          <Row className="years-filters" gutter={[12, 12]} style={{ marginBottom: 14 }}>
             <Col xs={24} sm={12} md={8} lg={4}>
               <Input
                 allowClear
