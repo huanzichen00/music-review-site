@@ -236,6 +236,15 @@ public class GuessBandOnlineService {
         Artist guessedArtist = artistRepository.findById(request.getArtistId())
                 .orElseThrow(() -> new RuntimeException("Artist not found"));
 
+        boolean alreadyGuessedThisRound = guessRepository.existsByRoomIdAndRoundIndexAndGuessedArtistId(
+                room.getId(),
+                room.getCurrentRound(),
+                guessedArtist.getId()
+        );
+        if (alreadyGuessedThisRound) {
+            throw new RuntimeException("This band has already been guessed in this round");
+        }
+
         boolean correct = Objects.equals(guessedArtist.getId(), room.getTargetArtist().getId());
 
         GuessBandOnlineGuess guess = GuessBandOnlineGuess.builder()

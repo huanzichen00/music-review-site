@@ -26,6 +26,8 @@ public interface GuessBandOnlineGuessRepository extends JpaRepository<GuessBandO
 
     int countByRoomIdAndRoundIndex(Long roomId, Integer roundIndex);
 
+    boolean existsByRoomIdAndRoundIndexAndGuessedArtistId(Long roomId, Integer roundIndex, Long guessedArtistId);
+
     void deleteByRoomId(Long roomId);
 
     @Query("""
