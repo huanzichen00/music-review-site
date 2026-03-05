@@ -279,3 +279,65 @@ cd /var/www/music-review-site
 git revert --no-edit HEAD
 bash scripts/deploy_nginx.sh deploy_frontend
 ```
+
+## 8) Round 3: force Home LCP to same-domain cover (2026-03-05)
+
+### A2 implementation (offline full generation)
+
+Executed:
+```bash
+python3 scripts/generate_cover_webp.py --sleep 0.005 --timeout 6
+```
+
+Result:
+- `processed=431 generated=384 skipped=47 failed=0`
+- Final verification: DB albums with non-empty cover URL = `431`, missing `_300.webp` = `0`
+
+Script improvement (low-load + faster):
+- For `music.126.net`, fetch resized source (`?param=1200y1200`) before local webp conversion
+- Reuse HTTP session (keep-alive)
+
+File:
+- `scripts/generate_cover_webp.py`
+
+### Home LCP source forcing (frontend)
+
+- Removed Home first-card remote-first preference.
+- Preload source changed to same-domain local cover:
+  - `href=/covers/{albumId}_300.webp`
+- Kept first 1-2 cards:
+  - `loading="eager"`
+  - `fetchPriority="high"`
+
+Files:
+- `frontend/src/pages/Home.jsx`
+- `frontend/src/components/AlbumCard.jsx`
+
+### Validation evidence
+
+DevTools-equivalent LCP entry sample (`/`):
+- `tagName: IMG`
+- `src: https://guessband.cn/covers/503_300.webp`
+- `startTime: ~2176ms`
+
+Cloudflare/cache checks:
+- `/covers/503_300.webp`:
+  - `cf-cache-status: HIT` (second request)
+  - edge header currently `cache-control: max-age=14400`
+- Origin (`http://127.0.0.1/covers/10_300.webp`):
+  - `Cache-Control: public, max-age=31536000, immutable`
+
+### Lighthouse Mobile (3-run median)
+
+Before baseline:
+- `/`: LCP `11796ms`, TBT `1765ms`
+- `/music/guess-band`: LCP `8271ms`, TBT `2052ms`
+
+Round-3 final:
+- `/`: LCP `9359ms`, TBT `2108ms`
+- `/music/guess-band`: LCP `8734ms`, TBT `1065ms`
+
+Status:
+- Home LCP root-cause fix is effective (LCP src switched from 126.net to same-domain `/covers`).
+- TBT on Guess-Band improved significantly.
+- Target (`LCP <4s`, `TBT <600ms`) not yet reached in Lighthouse simulated mobile.

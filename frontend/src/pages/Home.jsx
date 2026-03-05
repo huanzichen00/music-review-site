@@ -6,7 +6,6 @@ import { reviewsApi } from '../api/reviews';
 import AlbumCard from '../components/AlbumCard';
 import SmartAlbumCover from '../components/SmartAlbumCover';
 import { resolveAvatarUrl } from '../utils/avatar';
-import { getOptimizedCoverUrl } from '../utils/cover';
 import { useTheme } from '../context/ThemeContext';
 import { isRequestCanceled } from '../utils/http';
 
@@ -207,13 +206,10 @@ const Home = () => {
 
   useEffect(() => {
     const firstAlbum = albums[0];
-    if (!firstAlbum?.coverUrl || typeof document === 'undefined') {
+    if (!firstAlbum?.id || typeof document === 'undefined') {
       return undefined;
     }
-    const href = getOptimizedCoverUrl({ coverUrl: firstAlbum.coverUrl, variant: 'thumb' });
-    if (!href) {
-      return undefined;
-    }
+    const href = `/covers/${firstAlbum.id}_300.webp`;
     const link = document.createElement('link');
     link.rel = 'preload';
     link.as = 'image';

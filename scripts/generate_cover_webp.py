@@ -50,6 +50,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--timeout", type=float, default=12.0, help="HTTP timeout in seconds.")
     parser.add_argument("--force", action="store_true", help="Regenerate files even if already present.")
     parser.add_argument("--dry-run", action="store_true", help="Print actions but do not write files.")
+    parser.add_argument(
+        "--netease-source-edge",
+        type=int,
+        default=1200,
+        help="When source is music.126.net, request resized source to reduce transfer.",
+    )
     return parser.parse_args()
 
 
@@ -84,10 +90,20 @@ def db_rows(args: argparse.Namespace) -> Iterable[AlbumCoverRow]:
         conn.close()
 
 
-def read_source_bytes(row: AlbumCoverRow, upload_dir: Path, timeout: float) -> Optional[bytes]:
+def read_source_bytes(
+    row: AlbumCoverRow,
+    upload_dir: Path,
+    timeout: float,
+    session: requests.Session,
+    netease_source_edge: int,
+) -> Optional[bytes]:
     url = row.cover_url
     if url.startswith("http://") or url.startswith("https://"):
-        resp = requests.get(url, timeout=timeout)
+        fetch_url = url
+        if "music.126.net" in url and "param=" not in url:
+            sep = "&" if "?" in url else "?"
+            fetch_url = f"{url}{sep}param={netease_source_edge}y{netease_source_edge}"
+        resp = session.get(fetch_url, timeout=timeout)
         if resp.status_code != 200:
             return None
         return resp.content
@@ -134,13 +150,15 @@ def main() -> int:
     generated = 0
     skipped = 0
     failed = 0
+    session = requests.Session()
+    session.headers.update({"User-Agent": "music-review-cover-generator/1.1"})
 
     for row in db_rows(args):
         processed += 1
         out_base = covers_dir / str(row.album_id)
-        raw = read_source_bytes(row, upload_dir, args.timeout)
+        raw = read_source_bytes(row, upload_dir, args.timeout, session, args.netease_source_edge)
         if not raw:
-            skipped += 1
+            failed += 1
             continue
         changed = save_variants(raw, out_base, args.quality, args.force, args.dry_run)
         if changed:

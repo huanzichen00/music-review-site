@@ -101,7 +101,6 @@ const AlbumCard = ({ album, priority = 'auto' }) => {
               coverUrl={album.coverUrl}
               alt={album.title}
               variant="thumb"
-              sourcePreference={priority === 'high' ? 'remote-first' : 'local-first'}
               width={220}
               height={220}
               style={styles.coverImage}
