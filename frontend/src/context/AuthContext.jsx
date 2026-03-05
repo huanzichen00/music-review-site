@@ -24,8 +24,8 @@ export const AuthProvider = ({ children }) => {
       }
 
       const token = localStorage.getItem('token');
-      const cachedUser = localStorage.getItem('user');
-      if (!token && !cachedUser) {
+      if (!token) {
+        localStorage.removeItem('user');
         if (mounted) {
           setUser(null);
           setLoading(false);
@@ -69,6 +69,7 @@ export const AuthProvider = ({ children }) => {
     const { token: _token, ...userData } = response.data;
     await ensureCsrfToken();
     
+    localStorage.setItem('token', 'cookie-auth');
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
     
@@ -80,6 +81,7 @@ export const AuthProvider = ({ children }) => {
     const { token: _token, ...userData } = response.data;
     await ensureCsrfToken();
     
+    localStorage.setItem('token', 'cookie-auth');
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
     
