@@ -23,6 +23,7 @@ import { makeArtistSearchCacheKey, normalizeArtistSearchKeyword } from '../utils
 const { Title, Text } = Typography;
 const DEFAULT_MAX_ATTEMPTS = 10;
 const GUESS_BAND_ARTIST_FETCH_SIZE = 500;
+const GUESS_BAND_INITIAL_FETCH_SIZE = 20;
 const GUESS_BAND_SEARCH_LIMIT = 20;
 const GUESS_BAND_SEARCH_DEBOUNCE_MS = 250;
 const TRACK_PAGE = '/music/guess-band';
@@ -647,6 +648,19 @@ const GuessBand = () => {
 
         const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
 
+        const artistsPromise = (async () => {
+          const s = typeof performance !== 'undefined' ? performance.now() : Date.now();
+          const res = await artistsApi.getAllCached({
+            signal: controller.signal,
+            page: 0,
+            size: GUESS_BAND_INITIAL_FETCH_SIZE,
+            ttlMs: 30_000,
+          });
+          const e = typeof performance !== 'undefined' ? performance.now() : Date.now();
+          debugLog('artists_init_ms', Number((e - s).toFixed(2)));
+          return res;
+        })();
+
         const publicPromise = (async () => {
           const s = typeof performance !== 'undefined' ? performance.now() : Date.now();
           const res = await questionBanksApi.getPublicCached({ signal: controller.signal });
@@ -665,7 +679,8 @@ const GuessBand = () => {
           return res;
         })();
 
-        const [publicBanksRes, mineBanksRes] = await Promise.all([
+        const [artistsRes, publicBanksRes, mineBanksRes] = await Promise.all([
+          artistsPromise,
           publicPromise,
           minePromise,
         ]);
@@ -681,6 +696,9 @@ const GuessBand = () => {
             };
           }
         }
+
+        const gameBands = unwrapListData(artistsRes.data).filter(isPlayableArtist).map(toGameBand);
+        setAllBands(gameBands);
 
         const allPublicBanks = publicBanksRes.data || [];
         const mineBanks = mineBanksRes.data || [];
@@ -710,9 +728,9 @@ const GuessBand = () => {
           value: `guest:${bank.id}`,
           label: `游客 · ${bank.name} (${bank.itemCount || 0})`,
         }));
-        const defaultLabel = allBands.length > 0 ? `默认题库 (${allBands.length})` : '默认题库';
+        const defaultLabel = gameBands.length > 0 ? `默认题库 (${gameBands.length})` : '默认题库';
         let nextOptions = [{ value: 'default', label: defaultLabel }, ...mineOptions, ...publicOptions, ...guestOptions];
-        let nextBands = [];
+        let nextBands = gameBands;
         let nextBankKey = 'default';
         let nextBankLabel = '默认题库';
 
