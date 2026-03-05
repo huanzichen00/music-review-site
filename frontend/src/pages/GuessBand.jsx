@@ -607,6 +607,24 @@ const GuessBand = () => {
     return run;
   };
 
+  const preloadDefaultBankIfNeeded = async () => {
+    if (currentBankKey !== 'default' || bands.length > 0 || bankSwitching) {
+      return;
+    }
+    try {
+      setBankSwitching(true);
+      const defaultBands = await ensureDefaultBandsLoaded();
+      setBands(defaultBands);
+      setTargetBand((prev) => (prev ? prev : pickRandomBand(defaultBands)));
+    } catch (error) {
+      if (!isRequestCanceled(error)) {
+        message.warning('默认题库加载失败，请稍后重试');
+      }
+    } finally {
+      setBankSwitching(false);
+    }
+  };
+
   useEffect(() => {
     const controller = new AbortController();
     let mounted = true;
@@ -1342,6 +1360,9 @@ const GuessBand = () => {
                   className="guess-band-real-input"
                   size="large"
                   placeholder="输入乐队名，例如：Radiohead / Queen / The Beatles"
+                  onFocus={() => {
+                    preloadDefaultBankIfNeeded();
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter') {
                       submitGuess();
