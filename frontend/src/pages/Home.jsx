@@ -1,16 +1,15 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Row, Col, Card, Spin, message, List, Avatar, Rate, Button, Space } from 'antd';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { albumsApi } from '../api/albums';
-import { reviewsApi } from '../api/reviews';
-import AlbumCard from '../components/AlbumCard';
-import SmartAlbumCover from '../components/SmartAlbumCover';
-import { resolveAvatarUrl } from '../utils/avatar';
 import { useTheme } from '../context/ThemeContext';
 import { isRequestCanceled } from '../utils/http';
+import SmartAlbumCover from '../components/SmartAlbumCover';
 
-const HOME_ALBUM_LIMIT = 12;
+const HomeAlbumGrid = lazy(() => import('../components/HomeAlbumGrid'));
+
+const HOME_ALBUM_LIMIT = 6;
 const HOME_ALBUM_FETCH_SIZE = 60;
+
 const pickRandomAlbums = (arr, limit) => {
   if (!Array.isArray(arr)) {
     return [];
@@ -27,101 +26,85 @@ const pickRandomAlbums = (arr, limit) => {
 };
 
 const styles = {
-  pageTitle: {
-    fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
-    fontSize: '48px',
-    fontWeight: 500,
-    color: '#4E342E',
-    marginBottom: '24px',
-    letterSpacing: '1px',
-    textShadow: '1px 1px 2px rgba(139, 69, 19, 0.15)',
+  page: {
+    maxWidth: 1160,
+    margin: '0 auto',
   },
-  featureCard: {
-    marginBottom: '24px',
-    borderRadius: '14px',
+  hero: {
+    display: 'grid',
+    gridTemplateColumns: 'minmax(0, 1fr) 220px',
+    gap: 18,
+    alignItems: 'center',
+    borderRadius: 14,
     border: '1px solid #D9B99A',
     background: 'linear-gradient(135deg, #FFF7EB 0%, #FFE7CF 100%)',
-    boxShadow: '0 6px 18px rgba(139, 69, 19, 0.1)',
-  },
-  featureTitle: {
-    fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
-    fontSize: '30px',
-    color: '#5D4037',
-    lineHeight: 1.2,
-  },
-  featureDesc: {
-    marginTop: '6px',
-    color: '#7A5B4E',
-    fontSize: '16px',
-  },
-  sectionTitle: {
-    fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
-    fontSize: '36px',
-    fontWeight: 500,
-    color: '#5D4037',
+    boxShadow: '0 6px 18px rgba(139, 69, 19, 0.10)',
+    padding: '18px',
     marginBottom: '20px',
-    letterSpacing: '0.5px',
   },
-  emptyText: {
-    textAlign: 'center',
-    color: '#6D4C41',
-    fontSize: '16px',
-    fontWeight: 500,
-    fontFamily: "'Noto Serif SC', serif",
-    padding: '40px',
-  },
-  reviewCard: {
-    borderRadius: '12px',
-    background: 'linear-gradient(145deg, #FFF8EE 0%, #FFE9D6 100%)',
-    border: '1px solid #E5B992',
-  },
-  reviewUsername: {
-    fontFamily: "'Cormorant Garamond', serif",
-    fontSize: '18px',
-    fontWeight: 700,
+  title: {
+    fontFamily: "'ZCOOL KuaiLe', 'Noto Sans SC', 'Noto Serif SC', cursive",
+    fontSize: '42px',
     color: '#4E342E',
+    margin: 0,
+    lineHeight: 1.15,
   },
-  reviewAlbum: {
-    fontFamily: "'Playfair Display', serif",
-    fontSize: '16px',
-    fontWeight: 600,
-    color: '#5D4037',
-    cursor: 'pointer',
-    flex: 1,
-    minWidth: 0,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
+  subtitle: {
+    marginTop: 8,
+    color: '#7A5B4E',
+    fontSize: 16,
+    lineHeight: 1.6,
   },
-  reviewAlbumRow: {
+  ctaRow: {
     display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
+    gap: 10,
+    marginTop: 14,
+    flexWrap: 'wrap',
   },
-  reviewAlbumCover: {
-    flexShrink: 0,
-    border: '1px solid #E5B992',
+  ctaBtn: {
+    border: 'none',
+    borderRadius: 10,
+    padding: '10px 16px',
+    fontWeight: 700,
+    cursor: 'pointer',
+    background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)',
+    color: '#FFF8E7',
   },
-  reviewContent: {
-    fontFamily: "'Noto Serif SC', serif",
-    fontSize: '18px',
-    fontWeight: 500,
-    color: '#4E342E',
-    marginTop: '12px',
-    marginBottom: '8px',
-    lineHeight: 1.8,
-    maxHeight: '96px',
-    overflowY: 'auto',
-    overflowX: 'hidden',
-    whiteSpace: 'pre-wrap',
-    wordBreak: 'break-word',
-    padding: '12px 8px 12px 0',
+  ctaSubBtn: {
+    border: '1px solid #D9B99A',
+    borderRadius: 10,
+    padding: '10px 16px',
+    fontWeight: 700,
+    cursor: 'pointer',
+    background: '#FFF7EB',
+    color: '#5D4037',
   },
-  reviewDate: {
-    fontFamily: "'Cormorant Garamond', serif",
-    fontSize: '14px',
-    fontWeight: 600,
+  heroCoverWrap: {
+    width: 220,
+    height: 220,
+    borderRadius: 12,
+    overflow: 'hidden',
+    border: '1px solid #D9B99A',
+    background: '#F5E6D3',
+  },
+  heroCover: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    display: 'block',
+  },
+  loadingHint: {
     color: '#8D6E63',
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  error: {
+    borderRadius: 10,
+    background: '#FFF1F0',
+    border: '1px solid #FFCCC7',
+    color: '#CF1322',
+    padding: '10px 12px',
+    marginBottom: 14,
   },
 };
 
@@ -129,72 +112,33 @@ const Home = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [albums, setAlbums] = useState([]);
-  const [recentReviews, setRecentReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const themedStyles = useMemo(() => {
-    if (!isDark) {
-      return styles;
-    }
-    return {
-      ...styles,
-      pageTitle: {
-        ...styles.pageTitle,
-        color: '#E5E7EB',
-        textShadow: 'none',
-      },
-      featureCard: {
-        ...styles.featureCard,
-        border: '1px solid #2F2F33',
-        background: 'linear-gradient(135deg, #171719 0%, #131316 100%)',
-        boxShadow: '0 6px 18px rgba(0,0,0,0.35)',
-      },
-      featureTitle: { ...styles.featureTitle, color: '#E5E7EB' },
-      featureDesc: { ...styles.featureDesc, color: '#A3A3A3' },
-      sectionTitle: { ...styles.sectionTitle, color: '#D1D5DB' },
-      emptyText: { ...styles.emptyText, color: '#9CA3AF' },
-      reviewCard: {
-        ...styles.reviewCard,
-        background: 'linear-gradient(145deg, #171719 0%, #131316 100%)',
-        border: '1px solid #2F2F33',
-      },
-      reviewUsername: { ...styles.reviewUsername, color: '#E5E7EB' },
-      reviewAlbum: { ...styles.reviewAlbum, color: '#D1D5DB' },
-      reviewAlbumCover: { ...styles.reviewAlbumCover, border: '1px solid #2F2F33' },
-      reviewContent: {
-        ...styles.reviewContent,
-        color: '#D1D5DB',
-      },
-      reviewDate: { ...styles.reviewDate, color: '#9CA3AF' },
-    };
-  }, [isDark]);
+  const firstAlbum = albums[0] || null;
 
   useEffect(() => {
     const controller = new AbortController();
-
     const loadData = async () => {
       setLoading(true);
+      setError('');
       try {
-        const [albumsRes, reviewsRes] = await Promise.all([
-          albumsApi.getAll({ signal: controller.signal, page: 0, size: HOME_ALBUM_FETCH_SIZE }),
-          reviewsApi.getRecent({ signal: controller.signal, page: 0, size: 20 }),
-        ]);
+        const albumsRes = await albumsApi.getAll({
+          signal: controller.signal,
+          page: 0,
+          size: HOME_ALBUM_FETCH_SIZE,
+        });
         const albumsData = albumsRes?.data;
         const allAlbums = Array.isArray(albumsData?.content)
           ? albumsData.content
           : (Array.isArray(albumsData) ? albumsData : []);
-        const reviewsData = reviewsRes?.data;
-        const reviewItems = Array.isArray(reviewsData?.content)
-          ? reviewsData.content
-          : (Array.isArray(reviewsData) ? reviewsData : []);
         setAlbums(pickRandomAlbums(allAlbums, HOME_ALBUM_LIMIT));
-        setRecentReviews(reviewItems);
-      } catch (error) {
-        if (isRequestCanceled(error)) {
+      } catch (err) {
+        if (isRequestCanceled(err)) {
           return;
         }
-        message.error('加载数据失败');
+        setError('加载首页专辑失败，请稍后重试。');
       } finally {
         setLoading(false);
       }
@@ -205,7 +149,6 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    const firstAlbum = albums[0];
     if (!firstAlbum?.id || typeof document === 'undefined') {
       return undefined;
     }
@@ -219,143 +162,98 @@ const Home = () => {
     return () => {
       document.head.removeChild(link);
     };
-  }, [albums]);
+  }, [firstAlbum?.id]);
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-      const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-      if (diffHours === 0) {
-        const diffMinutes = Math.floor(diffTime / (1000 * 60));
-        return `${diffMinutes} 分钟前`;
-      }
-      return `${diffHours} 小时前`;
+  const themedStyles = useMemo(() => {
+    if (!isDark) {
+      return styles;
     }
-    if (diffDays === 1) {
-      return '昨天';
-    }
-    if (diffDays < 7) {
-      return `${diffDays} 天前`;
-    }
-    return date.toLocaleDateString();
-  };
+    return {
+      ...styles,
+      hero: {
+        ...styles.hero,
+        border: '1px solid #2F2F33',
+        background: 'linear-gradient(135deg, #171719 0%, #131316 100%)',
+        boxShadow: '0 6px 18px rgba(0, 0, 0, 0.35)',
+      },
+      title: {
+        ...styles.title,
+        color: '#E5E7EB',
+      },
+      subtitle: {
+        ...styles.subtitle,
+        color: '#A3A3A3',
+      },
+      ctaBtn: {
+        ...styles.ctaBtn,
+        background: 'linear-gradient(135deg, #3F3F46 0%, #27272A 100%)',
+        color: '#F3F4F6',
+      },
+      ctaSubBtn: {
+        ...styles.ctaSubBtn,
+        border: '1px solid #2F2F33',
+        background: '#18181B',
+        color: '#D1D5DB',
+      },
+      heroCoverWrap: {
+        ...styles.heroCoverWrap,
+        border: '1px solid #2F2F33',
+        background: '#18181B',
+      },
+      loadingHint: {
+        ...styles.loadingHint,
+        color: '#9CA3AF',
+      },
+      error: {
+        ...styles.error,
+        background: '#3F1D1D',
+        border: '1px solid #7F1D1D',
+        color: '#FCA5A5',
+      },
+    };
+  }, [isDark]);
 
   return (
-    <div>
-      <h1 style={themedStyles.pageTitle}>精选专辑</h1>
-      <Card style={themedStyles.featureCard}>
-        <Space
-          size="middle"
-          style={{ width: '100%', justifyContent: 'space-between', flexWrap: 'wrap' }}
-        >
-          <div>
-            <div style={themedStyles.featureTitle}>新功能：Guess-Band 猜乐队</div>
-            <div style={themedStyles.featureDesc}>根据地区、风格、年份和人数提示，挑战你对乐队的熟悉度。</div>
+    <div style={themedStyles.page}>
+      <section style={themedStyles.hero}>
+        <div>
+          <h1 style={themedStyles.title}>精选专辑</h1>
+          <div style={themedStyles.subtitle}>
+            首页首屏优先加载本域封面，优先保证可见内容快速渲染。
           </div>
-          <Button type="primary" size="large" onClick={() => navigate('/music/guess-band')}>
-            进入 guess-band
-          </Button>
-        </Space>
-      </Card>
-
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px' }}>
-          <Spin size="large" />
+          <div style={themedStyles.ctaRow}>
+            <button type="button" style={themedStyles.ctaBtn} onClick={() => navigate('/music/guess-band')}>
+              进入 Guess-Band
+            </button>
+            <button type="button" style={themedStyles.ctaSubBtn} onClick={() => navigate('/music/albums')}>
+              浏览全部专辑
+            </button>
+          </div>
         </div>
-      ) : (
-        <>
-          {albums.length === 0 ? (
-            <Card style={{ borderRadius: '12px' }}>
-              <p style={themedStyles.emptyText}>暂无专辑。</p>
-            </Card>
-          ) : (
-            <Row gutter={[24, 24]}>
-              {albums.map((album, index) => (
-                <Col key={album.id} xs={12} sm={8} md={6} lg={4}>
-                  <AlbumCard album={album} priority={index === 0 ? 'high' : index === 1 ? 'high' : 'auto'} />
-                </Col>
-              ))}
-            </Row>
-          )}
 
-          {recentReviews.length > 0 && (
-            <div style={{ marginTop: '60px' }}>
-              <h2 style={themedStyles.sectionTitle}>{isDark ? '最新评论' : '💬 最新评论'}</h2>
-              <Card style={themedStyles.reviewCard}>
-                <List
-                  itemLayout="horizontal"
-                  dataSource={recentReviews}
-                  renderItem={(review) => (
-                    <List.Item style={{ padding: '16px 0' }}>
-                      <List.Item.Meta
-                        avatar={(
-                          <Avatar
-                            src={resolveAvatarUrl(review.userAvatar)}
-                            size={48}
-                            style={{ border: isDark ? '2px solid #2F2F33' : '2px solid #E8D5C4' }}
-                          />
-                        )}
-                        title={(
-                          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                            <span
-                              style={{ ...themedStyles.reviewUsername, cursor: 'pointer' }}
-                              onClick={() => navigate(`/users/${review.userId}`)}
-                            >
-                              {review.username}
-                            </span>
-                            <Rate
-                              disabled
-                              value={review.rating}
-                              allowHalf
-                              style={{ fontSize: '14px', color: isDark ? '#9CA3AF' : '#D4A574' }}
-                            />
-                            <span style={themedStyles.reviewDate}>{formatDate(review.createdAt)}</span>
-                          </div>
-                        )}
-                        description={(
-                          <div>
-                            <div style={styles.reviewAlbumRow}>
-                              <div
-                                style={themedStyles.reviewAlbum}
-                                onClick={() => navigate(`/music/albums/${review.albumId}`)}
-                                title={`${review.albumTitle} - ${review.artistName}`}
-                              >
-                                {review.albumTitle} - {review.artistName}
-                              </div>
-                              {review.albumCoverUrl && (
-                                <SmartAlbumCover
-                                  albumId={review.albumId}
-                                  coverUrl={review.albumCoverUrl}
-                                  alt={review.albumTitle || 'album cover'}
-                                  variant="thumb"
-                                  width={26}
-                                  height={26}
-                                  style={{
-                                    width: 26,
-                                    height: 26,
-                                    borderRadius: '50%',
-                                    objectFit: 'cover',
-                                    ...themedStyles.reviewAlbumCover,
-                                  }}
-                                />
-                              )}
-                            </div>
-                            {review.content && <p style={themedStyles.reviewContent}>{review.content}</p>}
-                          </div>
-                        )}
-                      />
-                    </List.Item>
-                  )}
-                />
-              </Card>
-            </div>
-          )}
-        </>
-      )}
+        <div style={themedStyles.heroCoverWrap}>
+          {firstAlbum?.id ? (
+            <SmartAlbumCover
+              albumId={firstAlbum.id}
+              coverUrl={firstAlbum.coverUrl}
+              alt={firstAlbum.title || 'album cover'}
+              variant="thumb"
+              width={220}
+              height={220}
+              style={themedStyles.heroCover}
+              loading="eager"
+              fetchPriority="high"
+            />
+          ) : null}
+        </div>
+      </section>
+
+      {error ? <div style={themedStyles.error}>{error}</div> : null}
+      {loading ? <div style={themedStyles.loadingHint}>正在加载推荐专辑...</div> : null}
+
+      <Suspense fallback={<div style={themedStyles.loadingHint}>正在加载专辑列表...</div>}>
+        <HomeAlbumGrid albums={albums} />
+      </Suspense>
     </div>
   );
 };
