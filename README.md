@@ -1,6 +1,6 @@
 # Music Review Site（乐评网站）
 
-一个参考 [progarchives.com](https://www.progarchives.com) 的音乐评论网站，包含专辑/乐队浏览、收藏、评论与猜乐队玩法。
+一个参考 [progarchives.com](https://www.progarchives.com) 的音乐网站，当前主体为“猜乐队”玩法，并保留专辑/乐队浏览、收藏与评论能力。
 
 ## 📁 项目结构
 
@@ -20,10 +20,13 @@ music-review-site/
 | 前端 | React + Vite + Ant Design |
 | 后端 | Java Spring Boot |
 | 数据库 | MySQL |
+| 缓存 | Redis |
+| 容器化 | Docker |
 | 认证 | JWT |
 
 ## 功能模块
 
+- [x] 猜乐队主站（默认题库 / 公开题库 / 自选题库 / 联机）
 - [x] 数据库设计
 - [x] 用户系统（注册/登录）
 - [x] 艺术家管理
@@ -32,7 +35,6 @@ music-review-site/
 - [x] 用户收藏
 - [x] 乐评系统
 - [x] 首字母检索
-- [x] 猜乐队（默认题库 / 公开题库 / 自选题库）
 - [x] 游客自选题库（浏览器本地 localStorage，登录用户可创建可分享题库）
 - [x] 联机猜乐队模式（房间对战）
 
