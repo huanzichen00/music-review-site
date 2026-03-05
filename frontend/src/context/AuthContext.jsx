@@ -15,22 +15,53 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    ensureCsrfToken().finally(() => {
-      authApi.getMe()
-        .then((response) => {
-          const userData = response.data;
-          localStorage.setItem('user', JSON.stringify(userData));
+    let mounted = true;
+    const bootstrapAuth = async () => {
+      try {
+        await ensureCsrfToken();
+      } catch {
+        // ignore csrf bootstrap failure
+      }
+
+      const token = localStorage.getItem('token');
+      const cachedUser = localStorage.getItem('user');
+      if (!token && !cachedUser) {
+        if (mounted) {
+          setUser(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const response = await authApi.getMe();
+        const userData = response.data;
+        localStorage.setItem('user', JSON.stringify(userData));
+        if (mounted) {
           setUser(userData);
-        })
-        .catch(() => {
+        }
+      } catch (error) {
+        const status = error?.response?.status;
+        if (status === 400 || status === 401) {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
-          setUser(null);
-        })
-        .finally(() => {
+          if (mounted) {
+            setUser(null);
+          }
+        } else if (!error?.response || status >= 500) {
+          console.error('[auth] bootstrap getMe failed', error);
+        }
+      } finally {
+        if (mounted) {
           setLoading(false);
-        });
-    });
+        }
+      }
+    };
+
+    bootstrapAuth();
+    return () => {
+      mounted = false;
+    };
   }, [ensureCsrfToken]);
 
   const login = async (username, password) => {

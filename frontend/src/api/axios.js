@@ -54,7 +54,11 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401) {
       const isUploadEndpoint = requestUrl.includes('/files/album-cover');
-      if (!isUploadEndpoint) {
+      const isMeEndpoint = requestUrl.includes('/auth/me');
+      if (isMeEndpoint) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      } else if (!isUploadEndpoint) {
         localStorage.removeItem('user');
         window.location.href = '/login';
       }
