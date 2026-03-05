@@ -321,6 +321,23 @@ CREATE TABLE guess_band_online_match_records (
 CREATE INDEX idx_guess_band_online_records_created_at ON guess_band_online_match_records(created_at);
 
 -- =====================================================
+-- 15. 极简用户行为事件表
+-- =====================================================
+CREATE TABLE events (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    event_type VARCHAR(50) NOT NULL COMMENT '事件类型',
+    page VARCHAR(100) NOT NULL COMMENT '页面路径',
+    user_id VARCHAR(100) DEFAULT NULL COMMENT '用户ID(游客为guest)',
+    ip VARCHAR(64) DEFAULT NULL COMMENT '客户端IP',
+    user_agent TEXT COMMENT 'User-Agent',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
+) COMMENT '极简用户行为事件表';
+
+CREATE INDEX idx_events_type_time ON events(event_type, created_at);
+CREATE INDEX idx_events_page_time ON events(page, created_at);
+CREATE INDEX idx_events_user_time ON events(user_id, created_at);
+
+-- =====================================================
 -- 初始数据: 流派
 -- =====================================================
 INSERT INTO genres (name, description) VALUES

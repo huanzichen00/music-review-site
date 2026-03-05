@@ -55,6 +55,7 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(
                                 new AntPathRequestMatcher("/api/auth/login", HttpMethod.POST.name()),
                                 new AntPathRequestMatcher("/api/auth/register", HttpMethod.POST.name()),
+                                new AntPathRequestMatcher("/api/event", HttpMethod.POST.name()),
                                 new AntPathRequestMatcher("/api/guess-band-online/**")
                         )
                 )
@@ -64,6 +65,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/import/**").permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/event", HttpMethod.POST.name())).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/**", HttpMethod.OPTIONS.name())).permitAll()
                         // Public read access for albums, artists, genres, reviews
                         .requestMatchers(

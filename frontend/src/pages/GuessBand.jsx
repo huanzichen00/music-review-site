@@ -17,10 +17,12 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { isRequestCanceled } from '../utils/http';
 import { loadGuestQuestionBanks } from '../utils/guestQuestionBanks';
+import { track } from '../utils/track';
 
 const { Title, Text } = Typography;
 const DEFAULT_MAX_ATTEMPTS = 10;
 const GUESS_BAND_ARTIST_FETCH_SIZE = 500;
+const TRACK_PAGE = '/music/guess-band';
 
 const styles = {
   wrapper: {
@@ -333,6 +335,8 @@ const GuessBand = () => {
   const firstInteractiveLoggedRef = useRef(false);
   const navIdRef = useRef(null);
   const mountMarkedRef = useRef(false);
+  const roundStartedRef = useRef(false);
+  const roundFinishedRef = useRef(false);
 
   if (!mountMarkedRef.current) {
     mountMarkedRef.current = true;
@@ -359,6 +363,10 @@ const GuessBand = () => {
         ...(previous.marksAt || {}),
       },
     };
+  }, []);
+
+  useEffect(() => {
+    track('page_view', TRACK_PAGE);
   }, []);
   const indexedBands = useMemo(
     () =>
@@ -718,6 +726,10 @@ const GuessBand = () => {
 
   useEffect(() => {
     if (!roundOver && !solved && attempts.length >= maxAttempts && attempts.length > 0) {
+      if (!roundFinishedRef.current) {
+        track('game_finish', TRACK_PAGE);
+        roundFinishedRef.current = true;
+      }
       setRoundOver(true);
       if (targetBand) {
         message.error(`本轮最多尝试 ${maxAttempts} 次，答案是 ${targetBand.name}`);
@@ -825,6 +837,8 @@ const GuessBand = () => {
   );
 
   const resetRoundWithBands = (nextBands, excludeCurrent = false) => {
+    roundStartedRef.current = false;
+    roundFinishedRef.current = false;
     setGuessInput('');
     setAttempts([]);
     setSolved(false);
@@ -978,12 +992,21 @@ const GuessBand = () => {
     }
 
     const resultRow = buildGuessResult(matchedBand, targetBand);
+    if (!roundStartedRef.current) {
+      track('game_start', TRACK_PAGE);
+      roundStartedRef.current = true;
+    }
+    track('guess_submit', TRACK_PAGE);
     const isCorrect = resultRow.correct;
     const nextAttempts = [resultRow, ...attempts];
     setAttempts(nextAttempts);
     setGuessInput('');
 
     if (isCorrect) {
+      if (!roundFinishedRef.current) {
+        track('game_finish', TRACK_PAGE);
+        roundFinishedRef.current = true;
+      }
       setSolved(true);
       setRoundOver(true);
       message.success(`猜中了！答案是 ${targetBand.name}`);
@@ -991,6 +1014,10 @@ const GuessBand = () => {
     }
 
     if (nextAttempts.length >= maxAttempts) {
+      if (!roundFinishedRef.current) {
+        track('game_finish', TRACK_PAGE);
+        roundFinishedRef.current = true;
+      }
       setRoundOver(true);
       message.error(`本轮最多尝试 ${maxAttempts} 次，答案是 ${targetBand.name}`);
     }
