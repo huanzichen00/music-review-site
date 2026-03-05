@@ -16,9 +16,11 @@ import { questionBanksApi } from '../api/questionBanks';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { isRequestCanceled } from '../utils/http';
+import { loadGuestQuestionBanks } from '../utils/guestQuestionBanks';
 
 const { Title, Text } = Typography;
 const DEFAULT_MAX_ATTEMPTS = 10;
+const GUESS_BAND_ARTIST_FETCH_SIZE = 500;
 
 const styles = {
   wrapper: {
@@ -275,6 +277,7 @@ const unwrapListData = (data) => {
 };
 
 const toGameBand = (artist) => ({
+  id: artist.id,
   name: artist.name.trim(),
   region: artist.country.trim(),
   genre: artist.genre.trim(),
@@ -585,7 +588,12 @@ const GuessBand = () => {
 
         const artistsPromise = (async () => {
           const s = typeof performance !== 'undefined' ? performance.now() : Date.now();
-          const res = await artistsApi.getAllCached({ signal: controller.signal, page: 0, size: 200, ttlMs: 30_000 });
+          const res = await artistsApi.getAllCached({
+            signal: controller.signal,
+            page: 0,
+            size: GUESS_BAND_ARTIST_FETCH_SIZE,
+            ttlMs: 30_000,
+          });
           const e = typeof performance !== 'undefined' ? performance.now() : Date.now();
           debugLog('artists_ms', Number((e - s).toFixed(2)));
           return res;
@@ -653,7 +661,12 @@ const GuessBand = () => {
           label: `公开 · ${bank.name}（${bank.ownerUsername || '匿名'}） (${bank.itemCount || 0})`,
         }));
 
-        let nextOptions = [{ value: 'default', label: `默认题库 (${gameBands.length})` }, ...mineOptions, ...publicOptions];
+        const guestBanks = !isAuthenticated ? loadGuestQuestionBanks() : [];
+        const guestOptions = guestBanks.map((bank) => ({
+          value: `guest:${bank.id}`,
+          label: `游客 · ${bank.name} (${bank.itemCount || 0})`,
+        }));
+        let nextOptions = [{ value: 'default', label: `默认题库 (${gameBands.length})` }, ...mineOptions, ...publicOptions, ...guestOptions];
         let nextBands = gameBands;
         let nextBankKey = 'default';
         let nextBankLabel = '默认题库';
@@ -869,6 +882,32 @@ const GuessBand = () => {
       } finally {
         setBankSwitching(false);
       }
+      return;
+    }
+
+    if (value.startsWith('guest:')) {
+      const guestId = value.replace('guest:', '');
+      if (!guestId) {
+        return;
+      }
+      const guestBanks = loadGuestQuestionBanks();
+      const guestBank = guestBanks.find((bank) => String(bank.id) === guestId);
+      if (!guestBank) {
+        message.error('游客题库不存在，可能已被删除');
+        return;
+      }
+      const allBandsMap = new Map(allBands.map((band) => [Number(band.id), band]));
+      const nextBands = (guestBank.artistIds || [])
+        .map((id) => allBandsMap.get(Number(id)))
+        .filter(Boolean);
+      if (!nextBands.length) {
+        message.warning('该游客题库暂无可用题目');
+        return;
+      }
+      setCurrentBankKey(value);
+      setCurrentBankLabel(`${guestBank.name}（游客）`);
+      setBands(nextBands);
+      resetRoundWithBands(nextBands);
       return;
     }
 
@@ -1090,16 +1129,14 @@ const GuessBand = () => {
             >
               联机模式
             </Button>
-            {isAuthenticated ? (
-              <Button
-                type="primary"
-                size="large"
-                href="/music/guess-band/banks"
-                style={themedStyles.banksLinkButton}
-              >
-                管理自选题库
-              </Button>
-            ) : null}
+            <Button
+              type="primary"
+              size="large"
+              href="/music/guess-band/banks"
+              style={themedStyles.banksLinkButton}
+            >
+              管理题库
+            </Button>
           </Space>
         </div>
         {!isAuthenticated ? (
@@ -1107,7 +1144,7 @@ const GuessBand = () => {
             style={themedStyles.highlightTip}
             type="warning"
             showIcon
-            message="登录后可在“管理自选题库”里创建 10-300 题的专属题库并分享链接。"
+            message="游客也可在“管理题库”创建本地题库（存储在当前浏览器），登录后可创建可分享题库。"
           />
         ) : null}
 
@@ -1121,109 +1158,113 @@ const GuessBand = () => {
           />
         ) : null}
 
-        <div className="guess-band-action-row" style={themedStyles.actionRow}>
-          <AutoComplete
-            className="guess-band-input"
-            popupClassName="guess-band-dropdown"
-            value={guessInput}
-            onChange={(value) => setGuessInput(value)}
-            onSelect={(value) => setGuessInput(value)}
-            options={filteredBands.map((band) => ({ value: band.name }))}
-            listHeight={360}
-            style={{ flex: 1, minWidth: 260 }}
-            filterOption={(inputValue, option) =>
-              option?.value?.toLowerCase().includes(inputValue.toLowerCase())
-            }
-            disabled={loading || roundOver || bankSwitching}
-          >
-            <Input
-              className="guess-band-real-input"
-              size="large"
-              placeholder="输入乐队名，例如：Radiohead / Queen / The Beatles"
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  submitGuess();
+        {loading ? null : (
+          <>
+            <div className="guess-band-action-row" style={themedStyles.actionRow}>
+              <AutoComplete
+                className="guess-band-input"
+                popupClassName="guess-band-dropdown"
+                value={guessInput}
+                onChange={(value) => setGuessInput(value)}
+                onSelect={(value) => setGuessInput(value)}
+                options={filteredBands.map((band) => ({ value: band.name }))}
+                listHeight={360}
+                style={{ flex: 1, minWidth: 260 }}
+                filterOption={(inputValue, option) =>
+                  option?.value?.toLowerCase().includes(inputValue.toLowerCase())
                 }
-                if (
-                  event.key === 'Tab' &&
-                  filteredBands.length > 0 &&
-                  !roundOver
-                ) {
-                  event.preventDefault();
-                  submitGuess(filteredBands[0].name);
-                }
-              }}
-            />
-          </AutoComplete>
-          <Button type="primary" size="large" icon={<RocketOutlined />} onClick={() => submitGuess()} disabled={loading || roundOver || bankSwitching}>
-            提交猜测
-          </Button>
-          <Button size="large" icon={<ReloadOutlined />} onClick={restartRound} disabled={loading || !bands.length || bankSwitching}>
-            {roundOver ? '下一题' : '换一题'}
-          </Button>
-        </div>
-        <div className="guess-band-mobile-drag-tip">
-          提示：下拉结果里长按后上下拖拽，更容易滚动选择乐队
-        </div>
+                disabled={roundOver || bankSwitching}
+              >
+                <Input
+                  className="guess-band-real-input"
+                  size="large"
+                  placeholder="输入乐队名，例如：Radiohead / Queen / The Beatles"
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      submitGuess();
+                    }
+                    if (
+                      event.key === 'Tab' &&
+                      filteredBands.length > 0 &&
+                      !roundOver
+                    ) {
+                      event.preventDefault();
+                      submitGuess(filteredBands[0].name);
+                    }
+                  }}
+                />
+              </AutoComplete>
+              <Button type="primary" size="large" icon={<RocketOutlined />} onClick={() => submitGuess()} disabled={roundOver || bankSwitching}>
+                提交猜测
+              </Button>
+              <Button size="large" icon={<ReloadOutlined />} onClick={restartRound} disabled={!bands.length || bankSwitching}>
+                {roundOver ? '下一题' : '换一题'}
+              </Button>
+            </div>
+            <div className="guess-band-mobile-drag-tip">
+              提示：下拉结果里长按后上下拖拽，更容易滚动选择乐队
+            </div>
 
-        {roundOver ? (
-          <Card style={themedStyles.answerCard}>
-            <Space>
-              <TrophyOutlined style={{ color: '#1F8A70' }} />
-              <Text strong>
-                {solved ? '猜中了！' : '本轮结束！'} 答案：{targetBand.name} | {targetBand.region} | {targetBand.genre} | {targetBand.yearFormed} |
-                {' '}{targetBand.members}人 | {targetBand.status}
-              </Text>
-            </Space>
-          </Card>
-        ) : null}
+            {roundOver ? (
+              <Card style={themedStyles.answerCard}>
+                <Space>
+                  <TrophyOutlined style={{ color: '#1F8A70' }} />
+                  <Text strong>
+                    {solved ? '猜中了！' : '本轮结束！'} 答案：{targetBand.name} | {targetBand.region} | {targetBand.genre} | {targetBand.yearFormed} |
+                    {' '}{targetBand.members}人 | {targetBand.status}
+                  </Text>
+                </Space>
+              </Card>
+            ) : null}
 
-        <div className="guess-band-board" style={themedStyles.board}>
-          <div className="guess-band-table-scroll">
-          <table style={themedStyles.table}>
-            <thead>
-              <tr>
-                <th style={{ ...themedStyles.th, width: '26%' }}>BAND</th>
-                <th style={{ ...themedStyles.th, width: '14%' }}>REGION</th>
-                <th style={{ ...themedStyles.th, width: '20%' }}>GENRE</th>
-                <th style={{ ...themedStyles.th, width: '12%' }}>YEAR</th>
-                <th style={{ ...themedStyles.th, width: '12%' }}>MEM</th>
-                <th style={{ ...themedStyles.th, width: '16%' }}>STATUS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {attempts.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ ...themedStyles.tdBase, padding: '20px 10px', color: isDark ? '#9CA3AF' : isBlue ? '#AFC4E1' : '#D2BCC8' }}>
-                    还没有猜测，开始输入第一个乐队吧
-                  </td>
-                </tr>
-              ) : (
-                attempts.map((attempt) => (
-                  <tr key={attempt.bandName}>
-                    <td style={themedStyles.tdBase}>{attempt.bandName}</td>
-                    <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.region.state) }}>{attempt.region.value}</td>
-                    <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.genre.state) }}>{attempt.genre.value}</td>
-                    <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.year.state) }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                        {attempt.year.value}
-                        {renderTrendArrow(attempt.year.arrow)}
-                      </span>
-                    </td>
-                    <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.members.state) }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                        {attempt.members.value}
-                        {renderTrendArrow(attempt.members.arrow)}
-                      </span>
-                    </td>
-                    <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.status.state) }}>{attempt.status.value}</td>
+            <div className="guess-band-board" style={themedStyles.board}>
+              <div className="guess-band-table-scroll">
+              <table style={themedStyles.table}>
+                <thead>
+                  <tr>
+                    <th style={{ ...themedStyles.th, width: '26%' }}>BAND</th>
+                    <th style={{ ...themedStyles.th, width: '14%' }}>REGION</th>
+                    <th style={{ ...themedStyles.th, width: '20%' }}>GENRE</th>
+                    <th style={{ ...themedStyles.th, width: '12%' }}>YEAR</th>
+                    <th style={{ ...themedStyles.th, width: '12%' }}>MEM</th>
+                    <th style={{ ...themedStyles.th, width: '16%' }}>STATUS</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-          </div>
-        </div>
+                </thead>
+                <tbody>
+                  {attempts.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} style={{ ...themedStyles.tdBase, padding: '20px 10px', color: isDark ? '#9CA3AF' : isBlue ? '#AFC4E1' : '#D2BCC8' }}>
+                        还没有猜测，开始输入第一个乐队吧
+                      </td>
+                    </tr>
+                  ) : (
+                    attempts.map((attempt) => (
+                      <tr key={attempt.bandName}>
+                        <td style={themedStyles.tdBase}>{attempt.bandName}</td>
+                        <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.region.state) }}>{attempt.region.value}</td>
+                        <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.genre.state) }}>{attempt.genre.value}</td>
+                        <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.year.state) }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            {attempt.year.value}
+                            {renderTrendArrow(attempt.year.arrow)}
+                          </span>
+                        </td>
+                        <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.members.state) }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            {attempt.members.value}
+                            {renderTrendArrow(attempt.members.arrow)}
+                          </span>
+                        </td>
+                        <td style={{ ...themedStyles.tdBase, ...getCellStyleByTheme(attempt.status.state) }}>{attempt.status.value}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+              </div>
+            </div>
+          </>
+        )}
           </Card>
         </div>
 

@@ -23,6 +23,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { isRequestCanceled } from '../utils/http';
 import { unwrapListData } from '../utils/apiData';
+import { loadGuestQuestionBanks, makeGuestBankId, saveGuestQuestionBanks } from '../utils/guestQuestionBanks';
 
 const { Title, Text } = Typography;
 const MIN_ITEMS = 10;
@@ -61,19 +62,20 @@ const GuessBandBanks = () => {
   const [publicSearch, setPublicSearch] = useState('');
 
   const loadInitial = async (signal) => {
-    if (!isAuthenticated) {
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
     try {
-      const [banksRes, artistsRes, publicBanksRes] = await Promise.all([
-        questionBanksApi.getMine({ signal }),
+      const requests = [
         artistsApi.getAll({ signal, page: 0, size: 500 }),
         questionBanksApi.getPublic({ signal }),
-      ]);
-      const mineBanks = banksRes.data || [];
+      ];
+      if (isAuthenticated) {
+        requests.unshift(questionBanksApi.getMine({ signal }));
+      }
+      const responses = await Promise.all(requests);
+      const banksRes = isAuthenticated ? responses[0] : { data: loadGuestQuestionBanks() };
+      const artistsRes = isAuthenticated ? responses[1] : responses[0];
+      const publicBanksRes = isAuthenticated ? responses[2] : responses[1];
+      const mineBanks = isAuthenticated ? (banksRes.data || []) : loadGuestQuestionBanks();
       const playableArtists = unwrapListData(artistsRes.data).filter(isPlayableArtist);
       const allPublicBanks = publicBanksRes.data || [];
       const hallBanks = allPublicBanks.filter((bank) => {
@@ -121,6 +123,23 @@ const GuessBandBanks = () => {
   }, [isAuthenticated, user?.id, user?.username]);
 
   const openBank = async (bankId, bankList = banks) => {
+    if (!isAuthenticated) {
+      const localBanks = Array.isArray(bankList) ? bankList : loadGuestQuestionBanks();
+      const detail = localBanks.find((bank) => String(bank.id) === String(bankId));
+      if (!detail) {
+        message.error('游客题库不存在');
+        return;
+      }
+      setSelectedBankId(detail.id);
+      setSelectedBank(detail);
+      setTargetKeys((detail.artistIds || []).map((artistId) => String(artistId)));
+      metaForm.setFieldsValue({
+        name: detail.name,
+        visibility: detail.visibility || 'PUBLIC',
+      });
+      setBanks(localBanks);
+      return;
+    }
     try {
       const detailRes = await questionBanksApi.getMineById(bankId);
       const detail = detailRes.data;
@@ -180,6 +199,21 @@ const GuessBandBanks = () => {
   const countValid = selectedCount >= MIN_ITEMS && selectedCount <= MAX_ITEMS;
 
   const refreshBanks = async (preferId = selectedBankId) => {
+    if (!isAuthenticated) {
+      const mineBanks = loadGuestQuestionBanks();
+      setBanks(mineBanks);
+      if (!mineBanks.length) {
+        setSelectedBankId(null);
+        setSelectedBank(null);
+        setTargetKeys([]);
+        return;
+      }
+      const targetId = mineBanks.some((bank) => String(bank.id) === String(preferId))
+        ? preferId
+        : mineBanks[0].id;
+      await openBank(targetId, mineBanks);
+      return;
+    }
     const banksRes = await questionBanksApi.getMine();
     const mineBanks = banksRes.data || [];
     setBanks(mineBanks);
@@ -219,11 +253,29 @@ const GuessBandBanks = () => {
   const handleCreate = async () => {
     try {
       const values = await createForm.validateFields();
-      const createRes = await questionBanksApi.create({
-        name: values.name.trim(),
-        visibility: values.visibility,
-      });
-      const createdBankId = createRes?.data?.id;
+      let createdBankId = null;
+      if (isAuthenticated) {
+        const createRes = await questionBanksApi.create({
+          name: values.name.trim(),
+          visibility: values.visibility,
+        });
+        createdBankId = createRes?.data?.id;
+      } else {
+        const localBanks = loadGuestQuestionBanks();
+        const next = {
+          id: makeGuestBankId(),
+          name: values.name.trim(),
+          visibility: values.visibility || 'PUBLIC',
+          artistIds: [],
+          ownerUsername: '游客',
+          ownerUserId: null,
+          shareToken: null,
+          itemCount: 0,
+        };
+        localBanks.unshift(next);
+        saveGuestQuestionBanks(localBanks);
+        createdBankId = next.id;
+      }
       setCreateOpen(false);
       createForm.resetFields();
       await refreshBanks(createdBankId);
@@ -240,10 +292,23 @@ const GuessBandBanks = () => {
     try {
       const values = await metaForm.validateFields();
       setSavingMeta(true);
-      await questionBanksApi.update(selectedBankId, {
-        name: values.name.trim(),
-        visibility: values.visibility,
-      });
+      if (isAuthenticated) {
+        await questionBanksApi.update(selectedBankId, {
+          name: values.name.trim(),
+          visibility: values.visibility,
+        });
+      } else {
+        const localBanks = loadGuestQuestionBanks().map((bank) =>
+          String(bank.id) === String(selectedBankId)
+            ? {
+                ...bank,
+                name: values.name.trim(),
+                visibility: values.visibility || 'PUBLIC',
+              }
+            : bank
+        );
+        saveGuestQuestionBanks(localBanks);
+      }
       await refreshBanks(selectedBankId);
       await refreshPublicBanks();
       message.success('题库信息已更新');
@@ -264,9 +329,23 @@ const GuessBandBanks = () => {
 
     try {
       setSavingItems(true);
-      await questionBanksApi.updateItems(selectedBankId, {
-        artistIds: targetKeys.map((key) => Number(key)),
-      });
+      if (isAuthenticated) {
+        await questionBanksApi.updateItems(selectedBankId, {
+          artistIds: targetKeys.map((key) => Number(key)),
+        });
+      } else {
+        const nextArtistIds = targetKeys.map((key) => Number(key));
+        const localBanks = loadGuestQuestionBanks().map((bank) =>
+          String(bank.id) === String(selectedBankId)
+            ? {
+                ...bank,
+                artistIds: nextArtistIds,
+                itemCount: nextArtistIds.length,
+              }
+            : bank
+        );
+        saveGuestQuestionBanks(localBanks);
+      }
       await refreshBanks(selectedBankId);
       message.success('题库题目已保存');
     } catch (error) {
@@ -287,7 +366,12 @@ const GuessBandBanks = () => {
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
-          await questionBanksApi.remove(selectedBankId);
+          if (isAuthenticated) {
+            await questionBanksApi.remove(selectedBankId);
+          } else {
+            const localBanks = loadGuestQuestionBanks().filter((bank) => String(bank.id) !== String(selectedBankId));
+            saveGuestQuestionBanks(localBanks);
+          }
           await refreshBanks();
           await refreshPublicBanks();
           message.success('题库已删除');
@@ -334,19 +418,6 @@ const GuessBandBanks = () => {
     );
   }
 
-  if (!isAuthenticated) {
-    return (
-      <Card>
-        <Alert
-          type="info"
-          showIcon
-          message="题库管理需要登录"
-          description="请先登录后创建、编辑和分享你的自选题库。"
-        />
-      </Card>
-    );
-  }
-
   return (
     <div style={{ maxWidth: 1320, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -355,6 +426,16 @@ const GuessBandBanks = () => {
           新建题库
         </Button>
       </div>
+
+      {!isAuthenticated ? (
+        <Alert
+          style={{ marginTop: 14 }}
+          type="info"
+          showIcon
+          message="游客模式：题库保存在当前浏览器（localStorage）"
+          description="游客题库不上传服务器，无法跨设备同步；登录后可创建可分享题库。"
+        />
+      ) : null}
 
       <div style={{ display: 'flex', gap: 16, marginTop: 16, alignItems: 'stretch', flexWrap: 'wrap' }}>
         <Card
@@ -451,7 +532,7 @@ const GuessBandBanks = () => {
                   <Button icon={<SaveOutlined />} onClick={handleSaveMeta} loading={savingMeta}>保存信息</Button>
                 </Form.Item>
                 <Form.Item>
-                  <Button icon={<LinkOutlined />} onClick={handleCopyShareLink}>复制分享链接</Button>
+                  <Button icon={<LinkOutlined />} onClick={handleCopyShareLink} disabled={!isAuthenticated}>复制分享链接</Button>
                 </Form.Item>
                 <Form.Item>
                   <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>删除题库</Button>

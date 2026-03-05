@@ -9,6 +9,7 @@ const HomeAlbumGrid = lazy(() => import('../components/HomeAlbumGrid'));
 
 const HOME_ALBUM_LIMIT = 6;
 const HOME_ALBUM_FETCH_SIZE = 60;
+const HOME_ALBUM_PAGE_HINT = 8;
 
 const pickRandomAlbums = (arr, limit) => {
   if (!Array.isArray(arr)) {
@@ -124,9 +125,10 @@ const Home = () => {
       setLoading(true);
       setError('');
       try {
+        const randomPage = Math.floor(Math.random() * HOME_ALBUM_PAGE_HINT);
         const albumsRes = await albumsApi.getAll({
           signal: controller.signal,
-          page: 0,
+          page: randomPage,
           size: HOME_ALBUM_FETCH_SIZE,
         });
         const albumsData = albumsRes?.data;
@@ -218,9 +220,6 @@ const Home = () => {
       <section style={themedStyles.hero}>
         <div>
           <h1 style={themedStyles.title}>精选专辑</h1>
-          <div style={themedStyles.subtitle}>
-            首页首屏优先加载本域封面，优先保证可见内容快速渲染。
-          </div>
           <div style={themedStyles.ctaRow}>
             <button type="button" style={themedStyles.ctaBtn} onClick={() => navigate('/music/guess-band')}>
               进入 Guess-Band

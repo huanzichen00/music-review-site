@@ -73,7 +73,7 @@ const warmGuessBandApiCache = async (isAuthenticated) => {
       import('../api/artists'),
       import('../api/questionBanks'),
     ]);
-    artistsApi.getAllCached({ page: 0, size: 200, ttlMs: 30_000 }).catch(() => {});
+    artistsApi.getAllCached({ page: 0, size: 500, ttlMs: 30_000 }).catch(() => {});
     questionBanksApi.getPublicCached({ force: true }).catch(() => {});
     if (isAuthenticated) {
       questionBanksApi.getMineCached({ force: true }).catch(() => {});
@@ -244,13 +244,11 @@ const Layout = ({ children }) => {
   const menuItems = [
     {
       key: '/music',
-      icon: glyph('音'),
       label: <Link to="/music/home" style={menuLinkStyle}>音乐</Link>,
       style: menuItemStyle,
     },
     {
       key: '/music/guess-band',
-      icon: glyph('猜'),
       label: (
         <Link
           to="/music/guess-band"
@@ -272,7 +270,6 @@ const Layout = ({ children }) => {
     },
     {
       key: '/blog',
-      icon: glyph('博'),
       label: <Link to="/blog" style={menuLinkStyle}>博客</Link>,
       style: menuItemStyle,
     },
@@ -417,7 +414,6 @@ const Layout = ({ children }) => {
             <div className="app-auth-actions">
               <Button 
                 type="text" 
-                icon={glyph('登')}
                 onClick={() => navigate('/login')}
                 style={{ 
                   color: isDark ? '#D1D5DB' : isBlue ? '#EEF4FF' : '#FFF8E7',
@@ -473,42 +469,36 @@ const Layout = ({ children }) => {
         >
           <Button
             type={selectedMusicSubKey === '/music/home' ? 'primary' : 'default'}
-            icon={glyph('首')}
             onClick={() => navigate('/music/home')}
           >
             首页
           </Button>
           <Button
             type={selectedMusicSubKey === '/music/albums' ? 'primary' : 'default'}
-            icon={glyph('专')}
             onClick={() => navigate('/music/albums')}
           >
             专辑
           </Button>
           <Button
             type={selectedMusicSubKey === '/music/artists' ? 'primary' : 'default'}
-            icon={glyph('队')}
             onClick={() => navigate('/music/artists')}
           >
             乐队
           </Button>
           <Button
             type={selectedMusicSubKey === '/music/genres' ? 'primary' : 'default'}
-            icon={glyph('风')}
             onClick={() => navigate('/music/genres')}
           >
             风格
           </Button>
           <Button
             type={selectedMusicSubKey === '/music/years' ? 'primary' : 'default'}
-            icon={glyph('年')}
             onClick={() => navigate('/music/years')}
           >
             年份
           </Button>
           <Button
             type={selectedMusicSubKey === '/music/guess-band' ? 'primary' : 'default'}
-            icon={glyph('猜')}
             onClick={() => {
               markGuessBandRouteStart();
               navigate('/music/guess-band');
@@ -518,7 +508,6 @@ const Layout = ({ children }) => {
           </Button>
           <Button
             type={selectedMusicSubKey === '/music/add-album' ? 'primary' : 'default'}
-            icon={glyph('加')}
             onClick={() => navigate('/music/add-album')}
           >
             添加专辑
