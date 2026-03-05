@@ -22,7 +22,7 @@ import { makeArtistSearchCacheKey, normalizeArtistSearchKeyword } from '../utils
 
 const { Title, Text } = Typography;
 const DEFAULT_MAX_ATTEMPTS = 10;
-const GUESS_BAND_ARTIST_FETCH_SIZE = 500;
+const GUESS_BAND_ARTIST_FETCH_SIZE = 200;
 const GUESS_BAND_INITIAL_FETCH_SIZE = 20;
 const GUESS_BAND_SEARCH_LIMIT = 20;
 const GUESS_BAND_SEARCH_DEBOUNCE_MS = 250;
@@ -347,6 +347,9 @@ const GuessBand = () => {
   const searchRequestIdRef = useRef(0);
   const searchAbortControllerRef = useRef(null);
   const defaultBandsPromiseRef = useRef(null);
+  const defaultBandsFullLoadedRef = useRef(false);
+  const defaultBandsWarmupPromiseRef = useRef(null);
+  const currentBankKeyRef = useRef('default');
 
   if (!mountMarkedRef.current) {
     mountMarkedRef.current = true;
@@ -378,6 +381,10 @@ const GuessBand = () => {
   useEffect(() => {
     track('page_view', TRACK_PAGE);
   }, []);
+
+  useEffect(() => {
+    currentBankKeyRef.current = currentBankKey;
+  }, [currentBankKey]);
 
   useEffect(() => () => {
     if (searchAbortControllerRef.current) {
@@ -585,7 +592,7 @@ const GuessBand = () => {
   };
 
   const ensureDefaultBandsLoaded = async (signal) => {
-    if (allBands.length > 0) {
+    if (allBands.length > 0 && defaultBandsFullLoadedRef.current) {
       return allBands;
     }
     if (defaultBandsPromiseRef.current) {
@@ -599,6 +606,7 @@ const GuessBand = () => {
         ttlMs: 30_000,
       });
       const gameBands = unwrapListData(res.data).filter(isPlayableArtist).map(toGameBand);
+      defaultBandsFullLoadedRef.current = true;
       setAllBands(gameBands);
       return gameBands;
     })().finally(() => {
@@ -606,24 +614,6 @@ const GuessBand = () => {
     });
     defaultBandsPromiseRef.current = run;
     return run;
-  };
-
-  const preloadDefaultBankIfNeeded = async () => {
-    if (currentBankKey !== 'default' || bands.length > 0 || bankSwitching) {
-      return;
-    }
-    try {
-      setBankSwitching(true);
-      const defaultBands = await ensureDefaultBandsLoaded();
-      setBands(defaultBands);
-      setTargetBand((prev) => (prev ? prev : pickRandomBand(defaultBands)));
-    } catch (error) {
-      if (!isRequestCanceled(error)) {
-        message.warning('默认题库加载失败，请稍后重试');
-      }
-    } finally {
-      setBankSwitching(false);
-    }
   };
 
   useEffect(() => {
@@ -698,6 +688,7 @@ const GuessBand = () => {
         }
 
         const gameBands = unwrapListData(artistsRes.data).filter(isPlayableArtist).map(toGameBand);
+        defaultBandsFullLoadedRef.current = false;
         setAllBands(gameBands);
 
         const allPublicBanks = publicBanksRes.data || [];
@@ -760,6 +751,36 @@ const GuessBand = () => {
         setCurrentBankKey(nextBankKey);
         setCurrentBankLabel(nextBankLabel);
         setTargetBand(nextBands.length > 0 ? pickRandomBand(nextBands) : null);
+
+        if (!defaultBandsWarmupPromiseRef.current) {
+          const warmup = (async () => {
+            const fullRes = await artistsApi.getAllCached({
+              signal: controller.signal,
+              page: 0,
+              size: GUESS_BAND_ARTIST_FETCH_SIZE,
+              ttlMs: 30_000,
+            });
+            const fullBands = unwrapListData(fullRes.data).filter(isPlayableArtist).map(toGameBand);
+            if (!fullBands.length) {
+              return;
+            }
+            defaultBandsFullLoadedRef.current = true;
+            setAllBands(fullBands);
+            setBankOptions((prev) => prev.map((option) => (
+              option.value === 'default'
+                ? { ...option, label: `默认题库 (${fullBands.length})` }
+                : option
+            )));
+            setBands((prev) => (currentBankKeyRef.current === 'default' ? fullBands : prev));
+          })().catch((error) => {
+            if (!isRequestCanceled(error)) {
+              debugLog('artists_warmup_failed');
+            }
+          }).finally(() => {
+            defaultBandsWarmupPromiseRef.current = null;
+          });
+          defaultBandsWarmupPromiseRef.current = warmup;
+        }
       } catch (error) {
         if (isRequestCanceled(error)) {
           return;
@@ -1378,9 +1399,6 @@ const GuessBand = () => {
                   className="guess-band-real-input"
                   size="large"
                   placeholder="输入乐队名，例如：Radiohead / Queen / The Beatles"
-                  onFocus={() => {
-                    preloadDefaultBankIfNeeded();
-                  }}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter') {
                       submitGuess();
