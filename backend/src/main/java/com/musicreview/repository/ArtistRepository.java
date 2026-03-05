@@ -1,5 +1,6 @@
 package com.musicreview.repository;
 
+import com.musicreview.dto.artist.ArtistSearchItemResponse;
 import com.musicreview.entity.Artist;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Page;
@@ -44,4 +45,12 @@ public interface ArtistRepository extends JpaRepository<Artist, Long> {
               AND a.status IS NOT NULL
             """)
     List<Artist> findPlayableArtistsByQuestionBankId(@Param("questionBankId") Long questionBankId);
+
+    @Query("""
+            SELECT new com.musicreview.dto.artist.ArtistSearchItemResponse(a.id, a.name)
+            FROM Artist a
+            WHERE LOWER(a.name) LIKE LOWER(CONCAT(:query, '%'))
+            ORDER BY a.name ASC
+            """)
+    List<ArtistSearchItemResponse> searchLiteByNamePrefix(@Param("query") String query, Pageable pageable);
 }

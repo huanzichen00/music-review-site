@@ -69,11 +69,9 @@ const markGuessBandRouteStart = () => {
 
 const warmGuessBandApiCache = async (isAuthenticated) => {
   try {
-    const [{ artistsApi }, { questionBanksApi }] = await Promise.all([
-      import('../api/artists'),
+    const [{ questionBanksApi }] = await Promise.all([
       import('../api/questionBanks'),
     ]);
-    artistsApi.getAllCached({ page: 0, size: 500, ttlMs: 30_000 }).catch(() => {});
     questionBanksApi.getPublicCached({ force: true }).catch(() => {});
     if (isAuthenticated) {
       questionBanksApi.getMineCached({ force: true }).catch(() => {});

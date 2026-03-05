@@ -2,6 +2,7 @@ package com.musicreview.controller;
 
 import com.musicreview.dto.artist.ArtistRequest;
 import com.musicreview.dto.artist.ArtistResponse;
+import com.musicreview.dto.artist.ArtistSearchItemResponse;
 import com.musicreview.service.ArtistService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -65,7 +66,7 @@ public class ArtistController {
      * Search artists by name
      * GET /api/artists/search?q=xxx
      */
-    @GetMapping("/search")
+    @GetMapping(value = "/search", params = {"q", "!limit"})
     public ResponseEntity<Page<ArtistResponse>> searchArtists(
             @RequestParam("q") String query,
             @RequestParam(defaultValue = "0") int page,
@@ -73,6 +74,18 @@ public class ArtistController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(artistService.searchArtists(query, pageable));
+    }
+
+    /**
+     * Search artist names (lightweight)
+     * GET /api/artists/search?q=xxx&limit=20
+     */
+    @GetMapping(value = "/search", params = {"q", "limit"})
+    public ResponseEntity<List<ArtistSearchItemResponse>> searchArtistNames(
+            @RequestParam("q") String query,
+            @RequestParam(defaultValue = "20") Integer limit
+    ) {
+        return ResponseEntity.ok(artistService.searchArtistNames(query, limit));
     }
 
     /**

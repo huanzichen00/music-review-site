@@ -69,6 +69,14 @@ export const artistsApi = {
   getByInitial: (letter, config = {}) => api.get(`/artists/initial/${letter}`, config),
   getById: (id, config = {}) => api.get(`/artists/${id}`, config),
   search: (query, config = {}) => api.get(`/artists/search?q=${query}`, config),
+  searchLite: (query, limit = 20, config = {}) =>
+    api.get('/artists/search', {
+      ...config,
+      params: {
+        q: query,
+        limit,
+      },
+    }),
   create: async (data) => {
     const res = await api.post('/artists', data);
     invalidateApiCache(ARTISTS_ALL_CACHE_KEY);

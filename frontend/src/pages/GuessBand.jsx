@@ -18,10 +18,13 @@ import { useTheme } from '../context/ThemeContext';
 import { isRequestCanceled } from '../utils/http';
 import { loadGuestQuestionBanks } from '../utils/guestQuestionBanks';
 import { track } from '../utils/track';
+import { makeArtistSearchCacheKey, normalizeArtistSearchKeyword } from '../utils/artistSearch';
 
 const { Title, Text } = Typography;
 const DEFAULT_MAX_ATTEMPTS = 10;
 const GUESS_BAND_ARTIST_FETCH_SIZE = 500;
+const GUESS_BAND_SEARCH_LIMIT = 20;
+const GUESS_BAND_SEARCH_DEBOUNCE_MS = 250;
 const TRACK_PAGE = '/music/guess-band';
 
 const styles = {
@@ -327,6 +330,8 @@ const GuessBand = () => {
   const [shareBank, setShareBank] = useState(null);
   const [targetBand, setTargetBand] = useState(null);
   const [guessInput, setGuessInput] = useState('');
+  const [searchOptions, setSearchOptions] = useState([]);
+  const [searchingArtists, setSearchingArtists] = useState(false);
   const [attempts, setAttempts] = useState([]);
   const [solved, setSolved] = useState(false);
   const [roundOver, setRoundOver] = useState(false);
@@ -337,6 +342,10 @@ const GuessBand = () => {
   const mountMarkedRef = useRef(false);
   const roundStartedRef = useRef(false);
   const roundFinishedRef = useRef(false);
+  const searchCacheRef = useRef(new Map());
+  const searchRequestIdRef = useRef(0);
+  const searchAbortControllerRef = useRef(null);
+  const defaultBandsPromiseRef = useRef(null);
 
   if (!mountMarkedRef.current) {
     mountMarkedRef.current = true;
@@ -368,6 +377,13 @@ const GuessBand = () => {
   useEffect(() => {
     track('page_view', TRACK_PAGE);
   }, []);
+
+  useEffect(() => () => {
+    if (searchAbortControllerRef.current) {
+      searchAbortControllerRef.current.abort();
+      searchAbortControllerRef.current = null;
+    }
+  }, []);
   const indexedBands = useMemo(
     () =>
       bands.map((band) => ({
@@ -376,11 +392,6 @@ const GuessBand = () => {
       })),
     [bands]
   );
-  const bandLookup = useMemo(() => {
-    const map = new Map();
-    indexedBands.forEach((band) => map.set(band.normalizedName, band));
-    return map;
-  }, [indexedBands]);
   const sortedBands = useMemo(
     () =>
       indexedBands.slice().sort((a, b) => {
@@ -572,6 +583,30 @@ const GuessBand = () => {
     );
   };
 
+  const ensureDefaultBandsLoaded = async (signal) => {
+    if (allBands.length > 0) {
+      return allBands;
+    }
+    if (defaultBandsPromiseRef.current) {
+      return defaultBandsPromiseRef.current;
+    }
+    const run = (async () => {
+      const res = await artistsApi.getAllCached({
+        signal,
+        page: 0,
+        size: GUESS_BAND_ARTIST_FETCH_SIZE,
+        ttlMs: 30_000,
+      });
+      const gameBands = unwrapListData(res.data).filter(isPlayableArtist).map(toGameBand);
+      setAllBands(gameBands);
+      return gameBands;
+    })().finally(() => {
+      defaultBandsPromiseRef.current = null;
+    });
+    defaultBandsPromiseRef.current = run;
+    return run;
+  };
+
   useEffect(() => {
     const controller = new AbortController();
     let mounted = true;
@@ -594,19 +629,6 @@ const GuessBand = () => {
 
         const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
 
-        const artistsPromise = (async () => {
-          const s = typeof performance !== 'undefined' ? performance.now() : Date.now();
-          const res = await artistsApi.getAllCached({
-            signal: controller.signal,
-            page: 0,
-            size: GUESS_BAND_ARTIST_FETCH_SIZE,
-            ttlMs: 30_000,
-          });
-          const e = typeof performance !== 'undefined' ? performance.now() : Date.now();
-          debugLog('artists_ms', Number((e - s).toFixed(2)));
-          return res;
-        })();
-
         const publicPromise = (async () => {
           const s = typeof performance !== 'undefined' ? performance.now() : Date.now();
           const res = await questionBanksApi.getPublicCached({ signal: controller.signal });
@@ -625,8 +647,7 @@ const GuessBand = () => {
           return res;
         })();
 
-        const [artistsRes, publicBanksRes, mineBanksRes] = await Promise.all([
-          artistsPromise,
+        const [publicBanksRes, mineBanksRes] = await Promise.all([
           publicPromise,
           minePromise,
         ]);
@@ -642,9 +663,6 @@ const GuessBand = () => {
             };
           }
         }
-
-        const gameBands = unwrapListData(artistsRes.data).filter(isPlayableArtist).map(toGameBand);
-        setAllBands(gameBands);
 
         const allPublicBanks = publicBanksRes.data || [];
         const mineBanks = mineBanksRes.data || [];
@@ -674,8 +692,9 @@ const GuessBand = () => {
           value: `guest:${bank.id}`,
           label: `游客 · ${bank.name} (${bank.itemCount || 0})`,
         }));
-        let nextOptions = [{ value: 'default', label: `默认题库 (${gameBands.length})` }, ...mineOptions, ...publicOptions, ...guestOptions];
-        let nextBands = gameBands;
+        const defaultLabel = allBands.length > 0 ? `默认题库 (${allBands.length})` : '默认题库';
+        let nextOptions = [{ value: 'default', label: defaultLabel }, ...mineOptions, ...publicOptions, ...guestOptions];
+        let nextBands = [];
         let nextBankKey = 'default';
         let nextBankLabel = '默认题库';
 
@@ -704,7 +723,7 @@ const GuessBand = () => {
         setBands(nextBands);
         setCurrentBankKey(nextBankKey);
         setCurrentBankLabel(nextBankLabel);
-        setTargetBand(pickRandomBand(nextBands));
+        setTargetBand(nextBands.length > 0 ? pickRandomBand(nextBands) : null);
       } catch (error) {
         if (isRequestCanceled(error)) {
           return;
@@ -803,6 +822,78 @@ const GuessBand = () => {
       .filter((band) => band.normalizedName.includes(keyword))
       .slice(0, 50);
   }, [sortedBands, guessInput]);
+
+  useEffect(() => {
+    const isDefaultBank = currentBankKey === 'default';
+    if (!isDefaultBank) {
+      setSearchOptions([]);
+      setSearchingArtists(false);
+      return () => {};
+    }
+
+    const keyword = normalizeArtistSearchKeyword(guessInput);
+    if (keyword.length < 2) {
+      setSearchOptions([]);
+      setSearchingArtists(false);
+      if (searchAbortControllerRef.current) {
+        searchAbortControllerRef.current.abort();
+        searchAbortControllerRef.current = null;
+      }
+      return () => {};
+    }
+
+    const cacheKey = makeArtistSearchCacheKey(keyword, GUESS_BAND_SEARCH_LIMIT);
+    const cached = searchCacheRef.current.get(cacheKey);
+    if (cached) {
+      setSearchOptions(cached);
+      setSearchingArtists(false);
+      return () => {};
+    }
+
+    const timeoutId = window.setTimeout(async () => {
+      if (searchAbortControllerRef.current) {
+        searchAbortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      searchAbortControllerRef.current = controller;
+      const requestId = searchRequestIdRef.current + 1;
+      searchRequestIdRef.current = requestId;
+      setSearchingArtists(true);
+      try {
+        const res = await artistsApi.searchLite(keyword, GUESS_BAND_SEARCH_LIMIT, {
+          signal: controller.signal,
+        });
+        if (requestId !== searchRequestIdRef.current) {
+          return;
+        }
+        const nextOptions = (Array.isArray(res?.data) ? res.data : []).map((item) => ({
+          value: item.name,
+          label: item.name,
+        }));
+        searchCacheRef.current.set(cacheKey, nextOptions);
+        setSearchOptions(nextOptions);
+      } catch (error) {
+        if (isRequestCanceled(error)) {
+          return;
+        }
+        message.warning('乐队搜索失败，请稍后重试');
+        setSearchOptions([]);
+      } finally {
+        if (requestId === searchRequestIdRef.current) {
+          setSearchingArtists(false);
+        }
+      }
+    }, GUESS_BAND_SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [currentBankKey, guessInput]);
+
+  const autoCompleteOptions = currentBankKey === 'default'
+    ? searchOptions
+    : filteredBands.map((band) => ({ value: band.name }));
+
   const visibleBandButtons = useMemo(
     () => {
       const t0 = typeof performance !== 'undefined' ? performance.now() : 0;
@@ -853,10 +944,20 @@ const GuessBand = () => {
     }
 
     if (value === 'default') {
-      setCurrentBankKey('default');
-      setCurrentBankLabel('默认题库');
-      setBands(allBands);
-      resetRoundWithBands(allBands);
+      try {
+        setBankSwitching(true);
+        const defaultBands = allBands.length > 0 ? allBands : await ensureDefaultBandsLoaded();
+        setCurrentBankKey('default');
+        setCurrentBankLabel('默认题库');
+        setBands(defaultBands);
+        resetRoundWithBands(defaultBands);
+      } catch (error) {
+        if (!isRequestCanceled(error)) {
+          message.error('加载默认题库失败');
+        }
+      } finally {
+        setBankSwitching(false);
+      }
       return;
     }
 
@@ -904,13 +1005,27 @@ const GuessBand = () => {
       if (!guestId) {
         return;
       }
+      let defaultBands = allBands;
+      if (!defaultBands.length) {
+        try {
+          setBankSwitching(true);
+          defaultBands = await ensureDefaultBandsLoaded();
+        } catch (error) {
+          if (!isRequestCanceled(error)) {
+            message.error('加载游客题库依赖的乐队数据失败');
+          }
+          return;
+        } finally {
+          setBankSwitching(false);
+        }
+      }
       const guestBanks = loadGuestQuestionBanks();
       const guestBank = guestBanks.find((bank) => String(bank.id) === guestId);
       if (!guestBank) {
         message.error('游客题库不存在，可能已被删除');
         return;
       }
-      const allBandsMap = new Map(allBands.map((band) => [Number(band.id), band]));
+      const allBandsMap = new Map(defaultBands.map((band) => [Number(band.id), band]));
       const nextBands = (guestBank.artistIds || [])
         .map((id) => allBandsMap.get(Number(id)))
         .filter(Boolean);
@@ -958,8 +1073,10 @@ const GuessBand = () => {
     resetRoundWithBands(bands, true);
   };
 
-  const submitGuess = (inputValue = guessInput) => {
+  const submitGuess = async (inputValue = guessInput) => {
     const finalInput = typeof inputValue === 'string' ? inputValue : guessInput;
+    let activeTargetBand = targetBand;
+    let activeBands = bands;
     if (!finalInput.trim()) {
       message.warning('先输入一个乐队名');
       return;
@@ -972,13 +1089,33 @@ const GuessBand = () => {
       );
       return;
     }
-    if (!targetBand) {
+    if (currentBankKey === 'default' && bands.length === 0) {
+      try {
+        setBankSwitching(true);
+        const defaultBands = await ensureDefaultBandsLoaded();
+        activeBands = defaultBands;
+        setBands(defaultBands);
+        if (!activeTargetBand) {
+          activeTargetBand = pickRandomBand(defaultBands);
+          setTargetBand(activeTargetBand);
+        }
+      } catch (error) {
+        if (!isRequestCanceled(error)) {
+          message.error('加载默认题库失败，请稍后重试');
+        }
+        return;
+      } finally {
+        setBankSwitching(false);
+      }
+    }
+    if (!activeTargetBand) {
       message.warning('乐队题库未就绪');
       return;
     }
 
     const normalizedInput = normalizeBand(finalInput);
-    const matchedBand = bandLookup.get(normalizedInput);
+    const activeBandLookup = new Map(activeBands.map((band) => [normalizeBand(band.name), band]));
+    const matchedBand = activeBandLookup.get(normalizedInput);
 
     if (!matchedBand) {
       message.warning('请从乐队库里选择一个名字（可参考下方联想）');
@@ -991,7 +1128,7 @@ const GuessBand = () => {
       return;
     }
 
-    const resultRow = buildGuessResult(matchedBand, targetBand);
+    const resultRow = buildGuessResult(matchedBand, activeTargetBand);
     if (!roundStartedRef.current) {
       track('game_start', TRACK_PAGE);
       roundStartedRef.current = true;
@@ -1009,7 +1146,7 @@ const GuessBand = () => {
       }
       setSolved(true);
       setRoundOver(true);
-      message.success(`猜中了！答案是 ${targetBand.name}`);
+      message.success(`猜中了！答案是 ${activeTargetBand.name}`);
       return;
     }
 
@@ -1019,7 +1156,7 @@ const GuessBand = () => {
         roundFinishedRef.current = true;
       }
       setRoundOver(true);
-      message.error(`本轮最多尝试 ${maxAttempts} 次，答案是 ${targetBand.name}`);
+      message.error(`本轮最多尝试 ${maxAttempts} 次，答案是 ${activeTargetBand.name}`);
     }
   };
 
@@ -1175,7 +1312,7 @@ const GuessBand = () => {
           />
         ) : null}
 
-        {!loading && bands.length === 0 ? (
+        {!loading && bands.length === 0 && currentBankKey !== 'default' ? (
           <Alert
             style={{ marginTop: 16 }}
             type="warning"
@@ -1194,12 +1331,11 @@ const GuessBand = () => {
                 value={guessInput}
                 onChange={(value) => setGuessInput(value)}
                 onSelect={(value) => setGuessInput(value)}
-                options={filteredBands.map((band) => ({ value: band.name }))}
+                options={autoCompleteOptions}
                 listHeight={360}
                 style={{ flex: 1, minWidth: 260 }}
-                filterOption={(inputValue, option) =>
-                  option?.value?.toLowerCase().includes(inputValue.toLowerCase())
-                }
+                filterOption={false}
+                notFoundContent={currentBankKey === 'default' && searchingArtists ? <Spin size="small" /> : null}
                 disabled={roundOver || bankSwitching}
               >
                 <Input
@@ -1212,11 +1348,11 @@ const GuessBand = () => {
                     }
                     if (
                       event.key === 'Tab' &&
-                      filteredBands.length > 0 &&
+                      autoCompleteOptions.length > 0 &&
                       !roundOver
                     ) {
                       event.preventDefault();
-                      submitGuess(filteredBands[0].name);
+                      submitGuess(autoCompleteOptions[0].value);
                     }
                   }}
                 />

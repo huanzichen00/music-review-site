@@ -2,6 +2,7 @@ package com.musicreview.service;
 
 import com.musicreview.dto.artist.ArtistRequest;
 import com.musicreview.dto.artist.ArtistResponse;
+import com.musicreview.dto.artist.ArtistSearchItemResponse;
 import com.musicreview.entity.Artist;
 import com.musicreview.entity.Genre;
 import com.musicreview.entity.User;
@@ -11,6 +12,7 @@ import com.musicreview.repository.GenreRepository;
 import com.musicreview.repository.projection.ArtistAlbumCountProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +63,15 @@ public class ArtistService {
     public Page<ArtistResponse> searchArtists(String query, Pageable pageable) {
         Page<Artist> artists = artistRepository.findByNameContainingIgnoreCase(query, pageable);
         return mapArtistsWithAlbumCount(artists);
+    }
+
+    public List<ArtistSearchItemResponse> searchArtistNames(String query, Integer limit) {
+        String keyword = query == null ? "" : query.trim();
+        if (keyword.isEmpty()) {
+            return List.of();
+        }
+        int safeLimit = limit == null ? 20 : Math.max(1, Math.min(limit, 50));
+        return artistRepository.searchLiteByNamePrefix(keyword, PageRequest.of(0, safeLimit));
     }
 
     /**
