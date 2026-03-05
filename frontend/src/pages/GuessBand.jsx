@@ -870,15 +870,17 @@ const GuessBand = () => {
     });
   }, [loading, visibleBands.length]);
 
+  const normalizedGuessKeyword = useMemo(() => normalizeArtistSearchKeyword(guessInput), [guessInput]);
+
   const filteredBands = useMemo(() => {
-    const keyword = normalizeBand(guessInput);
+    const keyword = normalizedGuessKeyword;
     if (!keyword) {
       return sortedBands;
     }
     return sortedBands
       .filter((band) => band.normalizedName.includes(keyword))
       .slice(0, 50);
-  }, [sortedBands, guessInput]);
+  }, [sortedBands, normalizedGuessKeyword]);
 
   useEffect(() => {
     const isDefaultBank = currentBankKey === 'default';
@@ -888,7 +890,7 @@ const GuessBand = () => {
       return () => {};
     }
 
-    const keyword = normalizeArtistSearchKeyword(guessInput);
+    const keyword = normalizedGuessKeyword;
     if (keyword.length < 2) {
       setSearchOptions([]);
       setSearchingArtists(false);
@@ -945,11 +947,12 @@ const GuessBand = () => {
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [currentBankKey, guessInput]);
+  }, [currentBankKey, normalizedGuessKeyword]);
 
+  const localOptions = filteredBands.map((band) => ({ value: band.name, label: band.name }));
   const autoCompleteOptions = currentBankKey === 'default'
-    ? searchOptions
-    : filteredBands.map((band) => ({ value: band.name }));
+    ? (normalizedGuessKeyword.length >= 2 ? searchOptions : localOptions)
+    : localOptions;
 
   const visibleBandButtons = useMemo(
     () => {
