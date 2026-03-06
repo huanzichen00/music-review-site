@@ -1486,6 +1486,42 @@ const GuessBand = () => {
               </table>
               </div>
             </div>
+
+            <Card className="guess-band-mobile-bank-card" style={themedStyles.sideCard}>
+              <Title level={4} style={themedStyles.sideTitle}>
+                当前题库乐队
+              </Title>
+              <Input
+                placeholder="输入国家/地区，如 UK、US、华语"
+                value={countryInput}
+                onChange={(event) => setCountryInput(event.target.value)}
+                allowClear
+                disabled={loading}
+              />
+              <div style={{ marginTop: 14 }}>
+                <Text strong style={{ color: isDark ? '#E5E7EB' : isBlue ? '#274B7A' : '#334155' }}>当前题库乐队</Text>
+                <Text style={{ ...themedStyles.sideSubtitle, display: 'block' }}>
+                  {countryFilteredBands.length} 支{countryFilteredBands.length > visibleBands.length ? `（仅显示前 ${visibleBands.length} 条）` : ''}
+                </Text>
+              </div>
+              <div style={{ marginTop: 10 }}>
+                <div
+                  className="guess-band-current-bands-scroll"
+                  style={{
+                    height: 220,
+                    overflowY: 'auto',
+                    borderRadius: 8,
+                    border: isDark ? '1px solid #2F2F33' : '1px solid #CBD5E1',
+                    background: isDark ? '#121214' : '#FFFFFF',
+                    padding: '6px 8px',
+                  }}
+                >
+                  <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                    {visibleBandButtons}
+                  </Space>
+                </div>
+              </div>
+            </Card>
           </>
         )}
           </Card>

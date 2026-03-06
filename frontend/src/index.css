@@ -612,6 +612,10 @@ h1, h2, h3, h4, h5, h6 {
   display: none;
 }
 
+.guess-band-mobile-bank-card {
+  display: none !important;
+}
+
 @media (max-width: 768px) {
   .guess-band-dropdown.ant-select-dropdown {
     max-height: 52vh !important;
@@ -859,6 +863,11 @@ h1, h2, h3, h4, h5, h6 {
 
   .guess-band-filter-card {
     display: none !important;
+  }
+
+  .guess-band-mobile-bank-card {
+    display: block !important;
+    margin-top: 12px;
   }
 
   .guess-band-meta-row,
