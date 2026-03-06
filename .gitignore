@@ -52,6 +52,8 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
+backend/src/main/resources/application-local.properties
+backend/src/main/resources/application-private.properties
 
 # =====================================================
 # OS
@@ -66,5 +68,9 @@ Thumbs.db
 *.swo
 *~
 
-# Uploaded files
-backend/uploads/
+# Uploaded files (keep directories, ignore runtime data)
+backend/uploads/**
+!backend/uploads/
+!backend/uploads/.gitkeep
+!backend/uploads/avatars/
+!backend/uploads/avatars/.gitkeep

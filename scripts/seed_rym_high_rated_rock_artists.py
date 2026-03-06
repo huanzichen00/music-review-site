@@ -12,15 +12,16 @@ Notes:
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 from typing import Dict, List, Optional
 
 
-MYSQL_HOST = "127.0.0.1"
-MYSQL_PORT = "3306"
-MYSQL_USER = "root"
-MYSQL_PASS = "Huanzc304"
-MYSQL_DB = "music_review"
+MYSQL_HOST = os.getenv("MYSQL_HOST", "127.0.0.1")
+MYSQL_PORT = os.getenv("MYSQL_PORT", "3306")
+MYSQL_USER = os.getenv("MYSQL_USER", "root")
+MYSQL_PASS = os.getenv("MYSQL_PASS", "change_me")
+MYSQL_DB = os.getenv("MYSQL_DB", "music_review")
 
 
 RYM_ROCK_ARTISTS: List[Dict[str, Optional[object]]] = [

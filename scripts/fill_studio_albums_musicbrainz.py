@@ -29,12 +29,12 @@ MB_BASE = "https://musicbrainz.org/ws/2"
 USER_AGENT = "MusicReviewStudioSeeder/1.0 (music-review-site)"
 NETEASE_SEARCH = "https://music.163.com/api/search/get"
 
-# Project-local defaults (aligned with existing scripts in this repo)
-MYSQL_HOST = "127.0.0.1"
-MYSQL_PORT = 3306
-MYSQL_USER = "root"
-MYSQL_PASS = "Huanzc304"
-MYSQL_DB = "music_review"
+# Project-local defaults (non-secret defaults; override via env vars)
+MYSQL_HOST = os.getenv("MYSQL_HOST", "127.0.0.1")
+MYSQL_PORT = int(os.getenv("MYSQL_PORT", "3306"))
+MYSQL_USER = os.getenv("MYSQL_USER", "root")
+MYSQL_PASS = os.getenv("MYSQL_PASS", "change_me")
+MYSQL_DB = os.getenv("MYSQL_DB", "music_review")
 
 BLOCKED_SECONDARY_TYPES = {
     "live",

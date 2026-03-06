@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -9,11 +10,11 @@ import urllib.request
 import re
 
 
-MYSQL_HOST = "127.0.0.1"
-MYSQL_PORT = "3306"
-MYSQL_USER = "root"
-MYSQL_PASS = "Huanzc304"
-MYSQL_DB = "music_review"
+MYSQL_HOST = os.getenv("MYSQL_HOST", "127.0.0.1")
+MYSQL_PORT = os.getenv("MYSQL_PORT", "3306")
+MYSQL_USER = os.getenv("MYSQL_USER", "root")
+MYSQL_PASS = os.getenv("MYSQL_PASS", "change_me")
+MYSQL_DB = os.getenv("MYSQL_DB", "music_review")
 
 IMPORT_BASE = "http://127.0.0.1:8080/api/import"
 

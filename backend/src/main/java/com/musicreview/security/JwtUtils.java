@@ -3,9 +3,11 @@ package com.musicreview.security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -21,6 +23,13 @@ public class JwtUtils {
 
     @Value("${jwt.expiration}")
     private long jwtExpiration;
+
+    @PostConstruct
+    void validateConfig() {
+        if (!StringUtils.hasText(jwtSecret)) {
+            throw new IllegalStateException("JWT_SECRET is required and must not be empty");
+        }
+    }
 
     /**
      * Extract username from JWT token

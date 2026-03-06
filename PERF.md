@@ -5,7 +5,7 @@
 ### Cover URL distribution (DB)
 Command:
 ```bash
-MYSQL_PWD='music_review_app_2026!' mysql -h127.0.0.1 -P3306 -umusic_review_app -N -e "
+MYSQL_PWD='<db_password>' mysql -h127.0.0.1 -P3306 -umusic_review_app -N -e "
 SELECT CASE
   WHEN cover_url LIKE 'https://p%.music.126.net%' THEN 'netease_p'
   WHEN cover_url LIKE '/api/files/album-covers/%' THEN 'local_api'

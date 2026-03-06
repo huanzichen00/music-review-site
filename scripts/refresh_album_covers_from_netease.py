@@ -23,11 +23,11 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 
-MYSQL_HOST = "127.0.0.1"
-MYSQL_PORT = "3306"
-MYSQL_USER = "root"
-MYSQL_PASS = "Huanzc304"
-MYSQL_DB = "music_review"
+MYSQL_HOST = os.getenv("MYSQL_HOST", "127.0.0.1")
+MYSQL_PORT = os.getenv("MYSQL_PORT", "3306")
+MYSQL_USER = os.getenv("MYSQL_USER", "root")
+MYSQL_PASS = os.getenv("MYSQL_PASS", "change_me")
+MYSQL_DB = os.getenv("MYSQL_DB", "music_review")
 
 NETEASE_SEARCH = "https://music.163.com/api/search/get"
 UPLOAD_DIR = Path("/opt/music-review/uploads/album-covers")

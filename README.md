@@ -38,6 +38,13 @@ music-review-site/
 - [x] 游客自选题库（浏览器本地 localStorage，登录用户可创建可分享题库）
 - [x] 联机猜乐队模式（房间对战）
 
+## Security: secrets are not committed
+
+- 仓库不再保存数据库账号密码、JWT secret 等敏感信息。
+- 后端使用环境变量读取配置，模板见 `backend/src/main/resources/application.example.properties`。
+- 前端开发环境变量模板见 `frontend/.env.example`。
+- 运行时上传文件目录 `backend/uploads/` 不应提交到 git。
+
 ## 快速开始
 
 ### 1. 初始化数据库
@@ -46,28 +53,57 @@ music-review-site/
 mysql -u root -p < database/init.sql
 ```
 
-### 2. 启动后端
+### 2. 启动后端（必须先设置环境变量）
+
+参考模板：`backend/src/main/resources/application.example.properties`
+
+Linux/macOS（bash/zsh）：
 
 ```bash
+export SPRING_DATASOURCE_URL='jdbc:mysql://localhost:3306/music_review?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true'
+export SPRING_DATASOURCE_USERNAME='your_db_user'
+export SPRING_DATASOURCE_PASSWORD='your_db_password'
+export JWT_SECRET='replace_with_a_secure_random_secret_or_base64'
 cd backend
 ./mvnw spring-boot:run
 ```
 
-默认数据库配置见 `backend/src/main/resources/application.properties`（MySQL `music_review`）。
+Windows PowerShell：
+
+```powershell
+$env:SPRING_DATASOURCE_URL='jdbc:mysql://localhost:3306/music_review?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true'
+$env:SPRING_DATASOURCE_USERNAME='your_db_user'
+$env:SPRING_DATASOURCE_PASSWORD='your_db_password'
+$env:JWT_SECRET='replace_with_a_secure_random_secret_or_base64'
+cd backend
+./mvnw spring-boot:run
+```
+
+说明：
+- `JWT_SECRET` 为空时后端会在启动阶段 fail-fast 并退出。
+- 可通过 `SPRING_PROFILES_ACTIVE=local` 扩展本地 profile（按需）。
 
 ### 3. 启动前端
 
 ```bash
 cd frontend
+cp .env.example .env.local
 npm install
 npm run dev
+```
+
+`.env.local` 示例：
+
+```dotenv
+VITE_API_BASE_URL=http://localhost:8080
+VITE_ALLOWED_HOSTS=localhost,127.0.0.1,xxxx.ngrok-free.dev
 ```
 
 前端默认本地开发地址：`http://localhost:5173`
 
 ## 部署（Nginx + SpringBoot）
 
-在项目根目录执行：
+先在生产环境注入后端环境变量（`SPRING_DATASOURCE_*` 与 `JWT_SECRET`），再执行部署脚本。
 
 ```bash
 bash scripts/deploy_nginx.sh deploy
@@ -89,6 +125,27 @@ bash scripts/deploy_nginx.sh status            # 查看 nginx 与后端服务状
 - Nginx 对外提供前端页面（默认 `80/443`）
 - 后端服务默认监听 `8080`，由 Nginx 反向代理到 `/api/*`
 - 前端静态目录默认发布到 `/var/www/music-review`
+
+## Secret rotation 与历史清理
+
+- 如果历史版本曾泄露过密钥，必须立即 rotation：更换数据库密码、更新 `JWT_SECRET`，并使旧 token 失效。
+- 如需从 git 历史抹除敏感文件/字符串，可使用 `git filter-repo`（不会自动执行）：
+
+```bash
+# 删除某文件在历史中的所有版本
+git filter-repo --path backend/src/main/resources/application.properties --invert-paths
+
+# 替换历史中的敏感文本（示例）
+cat > /tmp/replacements.txt <<'EOF'
+literal:<old_db_password_here>==>***REMOVED***
+literal:<old_jwt_secret_here>==>***REMOVED***
+EOF
+git filter-repo --replace-text /tmp/replacements.txt
+```
+
+警告：
+- 清理历史后需要 `git push --force --all --tags`，会影响所有现有 clone/fork。
+- 即使做了历史清理，也必须完成密钥 rotation。
 
 ## 数据库表
 

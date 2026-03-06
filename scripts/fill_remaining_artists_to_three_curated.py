@@ -6,15 +6,16 @@ Idempotent: deduplicate by (artist_id, normalized title).
 
 from __future__ import annotations
 
+import os
 import subprocess
 from typing import Dict, List, Optional, Tuple
 
 
-MYSQL_HOST = "127.0.0.1"
-MYSQL_PORT = "3306"
-MYSQL_USER = "root"
-MYSQL_PASS = "Huanzc304"
-MYSQL_DB = "music_review"
+MYSQL_HOST = os.getenv("MYSQL_HOST", "127.0.0.1")
+MYSQL_PORT = os.getenv("MYSQL_PORT", "3306")
+MYSQL_USER = os.getenv("MYSQL_USER", "root")
+MYSQL_PASS = os.getenv("MYSQL_PASS", "change_me")
+MYSQL_DB = os.getenv("MYSQL_DB", "music_review")
 
 CURATED: Dict[str, List[Tuple[str, int]]] = {
     "Dire Straits": [("Dire Straits", 1978), ("Communique", 1979), ("Making Movies", 1980)],
@@ -135,4 +136,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

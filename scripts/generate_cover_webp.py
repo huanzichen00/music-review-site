@@ -41,7 +41,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--db-port", type=int, default=int(os.getenv("DB_PORT", "3306")))
     parser.add_argument("--db-name", default=os.getenv("DB_NAME", "music_review"))
     parser.add_argument("--db-user", default=os.getenv("DB_USER", "music_review_app"))
-    parser.add_argument("--db-pass", default=os.getenv("DB_PASS", "music_review_app_2026!"))
+    parser.add_argument("--db-pass", default=os.getenv("DB_PASS", "change_me"))
     parser.add_argument("--covers-dir", default=os.getenv("COVERS_DIR", "/var/www/music-review/covers"))
     parser.add_argument("--upload-dir", default=os.getenv("UPLOAD_DIR", "/opt/music-review/uploads/album-covers"))
     parser.add_argument("--quality", type=int, default=75)
