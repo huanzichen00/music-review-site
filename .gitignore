@@ -67,6 +67,7 @@ Thumbs.db
 *.swp
 *.swo
 *~
+learning/
 
 # Uploaded files (keep directories, ignore runtime data)
 backend/uploads/**

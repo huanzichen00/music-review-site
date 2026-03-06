@@ -53,6 +53,21 @@ music-review-site/
 mysql -u root -p < database/init.sql
 ```
 
+导入公开种子数据（仅音乐目录数据，不含用户数据）：
+
+```bash
+mysql -u root -p music_review < database/seed_public.sql
+```
+
+说明：
+- `seed_public.sql` 仅包含：`artists` / `genres` / `albums` / `album_genres` / `tracks`
+- 不包含用户隐私与行为数据：`users` / `favorites` / `reviews` / `events` / `question_banks` 等
+- 如需从你自己的数据库重新导出公开种子：
+```bash
+env DB_HOST=127.0.0.1 DB_PORT=3306 DB_NAME=music_review DB_USER=music_review_app DB_PASS='<db_password>' \
+  python3 database/export_public_seed.py
+```
+
 ### 2. 启动后端（必须先设置环境变量）
 
 参考模板：`backend/src/main/resources/application.example.properties`
