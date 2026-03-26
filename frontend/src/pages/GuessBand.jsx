@@ -181,13 +181,41 @@ const styles = {
 };
 
 const CATEGORY_GROUPS = {
-  UK: 'EU',
-  Ireland: 'EU',
-  Germany: 'EU',
-  Italy: 'EU',
-  US: 'NA',
-  Australia: 'OC',
-  Japan: 'JP',
+  uk: 'EU',
+  'united kingdom': 'EU',
+  england: 'EU',
+  ireland: 'EU',
+  germany: 'EU',
+  france: 'EU',
+  italy: 'EU',
+  sweden: 'EU',
+  norway: 'EU',
+  finland: 'EU',
+  poland: 'EU',
+  iceland: 'EU',
+  denmark: 'EU',
+  netherlands: 'EU',
+  belgium: 'EU',
+  austria: 'EU',
+  switzerland: 'EU',
+  portugal: 'EU',
+  spain: 'EU',
+  greece: 'EU',
+  czechia: 'EU',
+  'czech republic': 'EU',
+  hungary: 'EU',
+  romania: 'EU',
+  us: 'NA',
+  usa: 'NA',
+  'united states': 'NA',
+  'united states of america': 'NA',
+  canada: 'NA',
+  australia: 'OC',
+  'new zealand': 'OC',
+  japan: 'JP',
+  cn: 'CN',
+  china: 'CN',
+  中国: 'CN',
   华语: 'CN',
 };
 
@@ -237,6 +265,8 @@ const getBandAliasName = (normalizedName) => {
   return alias || null;
 };
 
+const normalizeCategoryValue = (value) => (value || '').trim().toLowerCase();
+
 const matchesBandKeyword = (band, keyword) => {
   if (!keyword) {
     return true;
@@ -249,10 +279,15 @@ const matchesBandKeyword = (band, keyword) => {
 };
 
 const compareCategory = (guessValue, targetValue, groupMap = null) => {
-  if (guessValue === targetValue) {
+  const normalizedGuess = normalizeCategoryValue(guessValue);
+  const normalizedTarget = normalizeCategoryValue(targetValue);
+  if (!normalizedGuess || !normalizedTarget) {
+    return 'miss';
+  }
+  if (normalizedGuess === normalizedTarget) {
     return 'exact';
   }
-  if (groupMap && groupMap[guessValue] && groupMap[guessValue] === groupMap[targetValue]) {
+  if (groupMap && groupMap[normalizedGuess] && groupMap[normalizedGuess] === groupMap[normalizedTarget]) {
     return 'close';
   }
   return 'miss';

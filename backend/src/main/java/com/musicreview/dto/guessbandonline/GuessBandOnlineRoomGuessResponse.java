@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.Map;
 
 @Data
@@ -13,13 +14,41 @@ import java.util.Map;
 public class GuessBandOnlineRoomGuessResponse {
 
     private static final Map<String, String> CATEGORY_GROUPS = Map.ofEntries(
-            Map.entry("UK", "EU"),
-            Map.entry("Ireland", "EU"),
-            Map.entry("Germany", "EU"),
-            Map.entry("Italy", "EU"),
-            Map.entry("US", "NA"),
-            Map.entry("Australia", "OC"),
-            Map.entry("Japan", "JP"),
+            Map.entry("uk", "EU"),
+            Map.entry("united kingdom", "EU"),
+            Map.entry("england", "EU"),
+            Map.entry("ireland", "EU"),
+            Map.entry("germany", "EU"),
+            Map.entry("france", "EU"),
+            Map.entry("italy", "EU"),
+            Map.entry("sweden", "EU"),
+            Map.entry("norway", "EU"),
+            Map.entry("finland", "EU"),
+            Map.entry("poland", "EU"),
+            Map.entry("iceland", "EU"),
+            Map.entry("denmark", "EU"),
+            Map.entry("netherlands", "EU"),
+            Map.entry("belgium", "EU"),
+            Map.entry("austria", "EU"),
+            Map.entry("switzerland", "EU"),
+            Map.entry("portugal", "EU"),
+            Map.entry("spain", "EU"),
+            Map.entry("greece", "EU"),
+            Map.entry("czechia", "EU"),
+            Map.entry("czech republic", "EU"),
+            Map.entry("hungary", "EU"),
+            Map.entry("romania", "EU"),
+            Map.entry("us", "NA"),
+            Map.entry("usa", "NA"),
+            Map.entry("united states", "NA"),
+            Map.entry("united states of america", "NA"),
+            Map.entry("canada", "NA"),
+            Map.entry("australia", "OC"),
+            Map.entry("new zealand", "OC"),
+            Map.entry("japan", "JP"),
+            Map.entry("cn", "CN"),
+            Map.entry("china", "CN"),
+            Map.entry("中国", "CN"),
             Map.entry("华语", "CN")
     );
 
@@ -99,16 +128,22 @@ public class GuessBandOnlineRoomGuessResponse {
     }
 
     private static String compareCategory(String guessValue, String targetValue, Map<String, String> groupMap) {
-        if (guessValue == null || targetValue == null) {
+        String normalizedGuess = normalizeCategoryValue(guessValue);
+        String normalizedTarget = normalizeCategoryValue(targetValue);
+        if (normalizedGuess.isEmpty() || normalizedTarget.isEmpty()) {
             return "miss";
         }
-        if (guessValue.equals(targetValue)) {
+        if (normalizedGuess.equals(normalizedTarget)) {
             return "exact";
         }
-        if (groupMap != null && groupMap.containsKey(guessValue) && groupMap.get(guessValue).equals(groupMap.get(targetValue))) {
+        if (groupMap != null && groupMap.containsKey(normalizedGuess) && groupMap.get(normalizedGuess).equals(groupMap.get(normalizedTarget))) {
             return "close";
         }
         return "miss";
+    }
+
+    private static String normalizeCategoryValue(String value) {
+        return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
     }
 
     private static NumberCompareResult compareNumber(Integer guessValue, Integer targetValue, int closeDistance) {
