@@ -22,7 +22,7 @@ import { makeArtistSearchCacheKey, normalizeArtistSearchKeyword } from '../utils
 
 const { Title, Text } = Typography;
 const DEFAULT_MAX_ATTEMPTS = 10;
-const GUESS_BAND_ARTIST_FETCH_SIZE = 200;
+const GUESS_BAND_ARTIST_FETCH_SIZE = 250;
 const GUESS_BAND_INITIAL_FETCH_SIZE = 20;
 const GUESS_BAND_SEARCH_LIMIT = 20;
 const GUESS_BAND_SEARCH_DEBOUNCE_MS = 250;
@@ -227,6 +227,26 @@ const pickRandomBand = (bands, excludeBand = null) => {
 
 const normalizeBand = (value) => value.trim().toLowerCase();
 const startsWithLatinLetter = (value) => /^[A-Za-z]/.test((value || '').trim());
+const THE_PREFIX = 'the ';
+
+const getBandAliasName = (normalizedName) => {
+  if (!normalizedName.startsWith(THE_PREFIX)) {
+    return null;
+  }
+  const alias = normalizedName.slice(THE_PREFIX.length).trim();
+  return alias || null;
+};
+
+const matchesBandKeyword = (band, keyword) => {
+  if (!keyword) {
+    return true;
+  }
+  if (band.normalizedName.startsWith(keyword)) {
+    return true;
+  }
+  const alias = getBandAliasName(band.normalizedName);
+  return Boolean(alias && alias.startsWith(keyword));
+};
 
 const compareCategory = (guessValue, targetValue, groupMap = null) => {
   if (guessValue === targetValue) {
@@ -878,7 +898,7 @@ const GuessBand = () => {
       return sortedBands;
     }
     return sortedBands
-      .filter((band) => band.normalizedName.includes(keyword))
+      .filter((band) => matchesBandKeyword(band, keyword))
       .slice(0, 50);
   }, [sortedBands, normalizedGuessKeyword]);
 
@@ -950,8 +970,20 @@ const GuessBand = () => {
   }, [currentBankKey, normalizedGuessKeyword]);
 
   const localOptions = filteredBands.map((band) => ({ value: band.name, label: band.name }));
+  const mergedDefaultOptions = useMemo(() => {
+    if (normalizedGuessKeyword.length < 2) {
+      return localOptions;
+    }
+    const dedup = new Map();
+    [...localOptions, ...searchOptions].forEach((item) => {
+      if (item?.value && !dedup.has(item.value)) {
+        dedup.set(item.value, item);
+      }
+    });
+    return Array.from(dedup.values()).slice(0, 50);
+  }, [localOptions, searchOptions, normalizedGuessKeyword.length]);
   const autoCompleteOptions = currentBankKey === 'default'
-    ? (normalizedGuessKeyword.length >= 2 ? searchOptions : localOptions)
+    ? (normalizedGuessKeyword.length >= 2 ? mergedDefaultOptions : localOptions)
     : localOptions;
 
   const visibleBandButtons = useMemo(
@@ -1174,7 +1206,17 @@ const GuessBand = () => {
     }
 
     const normalizedInput = normalizeBand(finalInput);
-    const activeBandLookup = new Map(activeBands.map((band) => [normalizeBand(band.name), band]));
+    const activeBandLookup = new Map();
+    activeBands.forEach((band) => {
+      const normalizedName = normalizeBand(band.name);
+      if (!activeBandLookup.has(normalizedName)) {
+        activeBandLookup.set(normalizedName, band);
+      }
+      const alias = getBandAliasName(normalizedName);
+      if (alias && !activeBandLookup.has(alias)) {
+        activeBandLookup.set(alias, band);
+      }
+    });
     const matchedBand = activeBandLookup.get(normalizedInput);
 
     if (!matchedBand) {
@@ -1182,7 +1224,7 @@ const GuessBand = () => {
       return;
     }
 
-    const duplicated = attempts.some((attempt) => normalizeBand(attempt.bandName) === normalizedInput);
+    const duplicated = attempts.some((attempt) => normalizeBand(attempt.bandName) === normalizeBand(matchedBand.name));
     if (duplicated) {
       message.warning('这个乐队你已经猜过了');
       return;
