@@ -549,6 +549,12 @@ const GuessBandBanks = () => {
               </div>
 
               <div style={{ marginTop: 14 }}>
+                <Text type="secondary">
+                  操作提示：先在左侧“可选乐队”勾选条目，再点击中间箭头按钮加入右侧“题库乐队”。
+                </Text>
+              </div>
+
+              <div style={{ marginTop: 10 }}>
                 <Transfer
                   dataSource={transferDataSource}
                   titles={['可选乐队', '题库乐队']}
