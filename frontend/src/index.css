@@ -177,6 +177,19 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--warm-border);
 }
 
+.app-github-link {
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+.app-github-link:hover {
+  transform: translateY(-1px) scale(1.04);
+}
+
+.app-github-link:focus-visible {
+  outline: 2px solid var(--warm-accent-light);
+  outline-offset: 3px;
+}
+
 /* 标签 */
 .ant-tag {
   border-color: var(--warm-border);
@@ -865,6 +878,20 @@ h1, h2, h3, h4, h5, h6 {
     flex-wrap: wrap;
   }
 
+  .app-header-right {
+    gap: 8px !important;
+  }
+
+  .app-github-link {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .app-github-link svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
   .app-brand-link {
     margin-right: 8px !important;
     font-size: 24px !important;
@@ -1089,6 +1116,20 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @media (max-width: 480px) {
+  .app-header-right {
+    gap: 6px !important;
+  }
+
+  .app-github-link {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .app-github-link svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
   .app-brand-link {
     font-size: 20px !important;
   }

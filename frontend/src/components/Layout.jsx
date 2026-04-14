@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Layout as AntLayout, Menu, Button, Dropdown, Avatar, Badge, Select, Space } from 'antd';
+import { Layout as AntLayout, Menu, Button, Dropdown, Avatar, Badge, Select, Space, Tooltip } from 'antd';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -24,6 +24,20 @@ const menuGlyphStyle = {
   lineHeight: 1,
 };
 const glyph = (text) => <span style={menuGlyphStyle}>{text}</span>;
+const githubRepoUrl = 'https://github.com/huanzichen00/music-review-site';
+
+const GithubMark = ({ color }) => (
+  <svg
+    aria-hidden="true"
+    viewBox="0 0 24 24"
+    width="20"
+    height="20"
+    fill="currentColor"
+    style={{ display: 'block', color }}
+  >
+    <path d="M12 .5C5.65.5.5 5.66.5 12.02c0 5.09 3.29 9.4 7.86 10.92.57.1.78-.25.78-.56 0-.28-.01-1.2-.02-2.17-3.2.7-3.88-1.36-3.88-1.36-.52-1.34-1.28-1.69-1.28-1.69-1.05-.72.08-.71.08-.71 1.16.08 1.78 1.2 1.78 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.47.11-3.07 0 0 .97-.31 3.19 1.18a11.1 11.1 0 0 1 5.8 0c2.22-1.49 3.19-1.18 3.19-1.18.63 1.6.23 2.78.11 3.07.74.81 1.19 1.83 1.19 3.09 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.06.78 2.14 0 1.54-.01 2.79-.01 3.17 0 .31.2.67.79.56A11.53 11.53 0 0 0 23.5 12.02C23.5 5.66 18.35.5 12 .5Z" />
+  </svg>
+);
 
 const routePrefetchers = {
   '/music/guess-band': () => import('../pages/GuessBand'),
@@ -362,6 +376,38 @@ const Layout = ({ children }) => {
         </div>
         
         <div className="app-header-right" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Tooltip title="GitHub 仓库" placement="bottom">
+            <a
+              href={githubRepoUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open GitHub repository"
+              className="app-github-link"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 42,
+                height: 42,
+                borderRadius: '50%',
+                background: isDark
+                  ? 'rgba(229, 231, 235, 0.12)'
+                  : isBlue
+                  ? 'rgba(255, 255, 255, 0.2)'
+                  : 'rgba(255, 248, 231, 0.18)',
+                border: isDark ? '1px solid #4B5563' : isBlue ? '1px solid #D8E7FF' : '1px solid #F7D8A8',
+                color: isDark ? '#E5E7EB' : isBlue ? '#F8FBFF' : '#FFF8E7',
+                boxShadow: isDark
+                  ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+                  : isBlue
+                  ? '0 4px 12px rgba(30, 79, 158, 0.22)'
+                  : '0 4px 12px rgba(139, 69, 19, 0.18)',
+                backdropFilter: 'blur(6px)',
+              }}
+            >
+              <GithubMark color="currentColor" />
+            </a>
+          </Tooltip>
           <Space align="center" className="app-theme-switcher">
             <span
               style={{
