@@ -2,15 +2,14 @@
 
 一个参考 [progarchives.com](https://www.progarchives.com) 的音乐网站，当前主体为“猜乐队”玩法，并保留专辑/乐队浏览、收藏与评论能力。
 
-## 📁 项目结构
+## 项目结构
 
-```
+```text
 music-review-site/
 ├── backend/          # Spring Boot 后端
 ├── frontend/         # React 前端
-├── database/         # 数据库脚本
-│   └── init.sql      # 建表脚本
-└── README.md         # 项目说明
+├── database/         # 数据库脚本与公开种子
+└── README.md
 ```
 
 ## 技术栈
@@ -21,7 +20,6 @@ music-review-site/
 | 后端 | Java Spring Boot |
 | 数据库 | MySQL |
 | 缓存 | Redis |
-| 容器化 | Docker |
 | 认证 | JWT |
 
 ## 功能模块
@@ -38,12 +36,27 @@ music-review-site/
 - [x] 游客自选题库（浏览器本地 localStorage，登录用户可创建可分享题库）
 - [x] 联机猜乐队模式（房间对战）
 
-## Security: secrets are not committed
+## 开源说明
 
-- 仓库不再保存数据库账号密码、JWT secret 等敏感信息。
-- 后端使用环境变量读取配置，模板见 `backend/src/main/resources/application.example.properties`。
-- 前端开发环境变量模板见 `frontend/.env.example`。
-- 运行时上传文件目录 `backend/uploads/` 不应提交到 git。
+- 仓库不再提交数据库账号密码、JWT secret 等敏感信息。
+- 后端通过环境变量读取数据库与 JWT 配置。
+- 仓库包含公开音乐目录种子与公开猜乐队演示题库种子，方便本地快速体验。
+- 不包含真实用户隐私与行为数据，也不包含私有部署脚本。
+
+当前公开仓库可以复现：
+
+- 音乐目录浏览
+- 猜乐队默认题库
+- 演示公开题库
+- 自己注册账号后创建新题库
+- 联机房间功能代码
+
+当前公开仓库不会复现：
+
+- 私有题库
+- 游客本地题库历史
+- 真实用户收藏、评论、博客、通知
+- 行为日志与线上联机历史
 
 ## 快速开始
 
@@ -53,26 +66,42 @@ music-review-site/
 mysql -u root -p < database/init.sql
 ```
 
-导入公开种子数据（仅音乐目录数据，不含用户数据）：
+### 2. 导入公开音乐目录数据
 
 ```bash
 mysql -u root -p music_review < database/seed_public.sql
 ```
 
-说明：
-- `seed_public.sql` 仅包含：`artists` / `genres` / `albums` / `album_genres` / `tracks`
-- 不包含用户隐私与行为数据：`users` / `favorites` / `reviews` / `events` / `question_banks` 等
-- 如需从你自己的数据库重新导出公开种子：
+`seed_public.sql` 仅包含：
+
+- `artists`
+- `genres`
+- `albums`
+- `album_genres`
+- `tracks`
+
+### 3. 导入公开猜乐队演示题库
+
 ```bash
-env DB_HOST=127.0.0.1 DB_PORT=3306 DB_NAME=music_review DB_USER=music_review_app DB_PASS='<db_password>' \
-  python3 database/export_public_seed.py
+mysql -u root -p music_review < database/seed_public_guess_band.sql
 ```
 
-### 2. 启动后端（必须先设置环境变量）
+这个种子会导入：
+
+- 一个匿名化的 demo 用户
+- 3 个公开题库
+- 对应的题库乐队条目
+
+说明：
+
+- 这些题库只用于公开仓库体验，不包含真实用户邮箱或私有题库。
+- demo 用户仅用于满足外键，不作为真实登录账号使用。
+
+### 4. 启动后端
 
 参考模板：`backend/src/main/resources/application.example.properties`
 
-Linux/macOS（bash/zsh）：
+Linux/macOS：
 
 ```bash
 export SPRING_DATASOURCE_URL='jdbc:mysql://localhost:3306/music_review?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true'
@@ -95,10 +124,11 @@ cd backend
 ```
 
 说明：
-- `JWT_SECRET` 为空时后端会在启动阶段 fail-fast 并退出。
-- 可通过 `SPRING_PROFILES_ACTIVE=local` 扩展本地 profile（按需）。
 
-### 3. 启动前端
+- `JWT_SECRET` 为空时后端会在启动阶段 fail-fast 并退出。
+- 默认启用 Redis 登录节流，如本地没有 Redis，可在配置里关闭 `app.auth.login.redis.enabled` 或自行启动 Redis。
+
+### 5. 启动前端
 
 ```bash
 cd frontend
@@ -111,56 +141,41 @@ npm run dev
 
 ```dotenv
 VITE_API_BASE_URL=http://localhost:8080
-VITE_ALLOWED_HOSTS=localhost,127.0.0.1,xxxx.ngrok-free.dev
+VITE_ALLOWED_HOSTS=localhost,127.0.0.1
 ```
 
 前端默认本地开发地址：`http://localhost:5173`
 
-## 部署（Nginx + SpringBoot）
+## 公开种子再导出
 
-先在生产环境注入后端环境变量（`SPRING_DATASOURCE_*` 与 `JWT_SECRET`），再执行部署脚本。
+如果你在自己的数据库上维护了公开数据，可以重新生成公开种子。
 
-```bash
-bash scripts/deploy_nginx.sh deploy
-```
-
-常用命令：
+先安装导出脚本依赖：
 
 ```bash
-bash scripts/deploy_nginx.sh deploy            # 构建 + 发布 + 后端按变更重启 + 重载Nginx + 健康检查
-bash scripts/deploy_nginx.sh deploy_frontend   # 仅前端构建发布 + 重载Nginx
-bash scripts/deploy_nginx.sh build             # 仅构建前后端
-bash scripts/deploy_nginx.sh publish_frontend  # 仅发布前端静态文件
-bash scripts/deploy_nginx.sh publish_backend   # 仅发布后端 jar
-bash scripts/deploy_nginx.sh check             # 健康检查
-bash scripts/deploy_nginx.sh status            # 查看 nginx 与后端服务状态
+python3 -m pip install pymysql
 ```
 
-说明：
-- Nginx 对外提供前端页面（默认 `80/443`）
-- 后端服务默认监听 `8080`，由 Nginx 反向代理到 `/api/*`
-- 前端静态目录默认发布到 `/var/www/music-review`
-
-## Secret rotation 与历史清理
-
-- 如果历史版本曾泄露过密钥，必须立即 rotation：更换数据库密码、更新 `JWT_SECRET`，并使旧 token 失效。
-- 如需从 git 历史抹除敏感文件/字符串，可使用 `git filter-repo`（不会自动执行）：
+### 导出公开音乐目录
 
 ```bash
-# 删除某文件在历史中的所有版本
-git filter-repo --path backend/src/main/resources/application.properties --invert-paths
-
-# 替换历史中的敏感文本（示例）
-cat > /tmp/replacements.txt <<'EOF'
-literal:<old_db_password_here>==>***REMOVED***
-literal:<old_jwt_secret_here>==>***REMOVED***
-EOF
-git filter-repo --replace-text /tmp/replacements.txt
+env DB_HOST=127.0.0.1 DB_PORT=3306 DB_NAME=music_review DB_USER=music_review_app DB_PASS='<db_password>' \
+  python3 database/export_public_seed.py
 ```
 
-警告：
-- 清理历史后需要 `git push --force --all --tags`，会影响所有现有 clone/fork。
-- 即使做了历史清理，也必须完成密钥 rotation。
+### 导出公开猜乐队题库
+
+```bash
+env DB_HOST=127.0.0.1 DB_PORT=3306 DB_NAME=music_review DB_USER=music_review_app DB_PASS='<db_password>' \
+  python3 database/export_public_guess_band_seed.py
+```
+
+公开题库导出规则：
+
+- 只导出 `PUBLIC` 题库
+- 默认跳过空题库
+- 自动把题库拥有者匿名化为 demo 用户
+- 不导出私有题库、游客题库、行为日志
 
 ## 数据库表
 
@@ -177,9 +192,15 @@ git filter-repo --replace-text /tmp/replacements.txt
 | question_banks / question_bank_items | 自选题库及题目 |
 | guess_band_online_* | 联机猜乐队相关表 |
 
-## 说明
-- 猜乐队“游客题库”数据仅保存在当前浏览器，不会上传服务器，不支持跨设备同步。
-- 登录后可创建可分享题库（支持分享链接）。
+## 私有内容
+
+以下内容保留为私有，不进入 GitHub：
+
+- `scripts/` 下的私有部署与数据整理脚本
+- 本地上传目录 `backend/uploads/`
+- 真实环境变量和密钥
 
 ## 开发日志
+
 - 2026-01-31：项目初始化，完成数据库设计
+- 2026-04-14：补充开源版公开题库种子与导出脚本

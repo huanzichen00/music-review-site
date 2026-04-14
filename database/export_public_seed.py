@@ -10,7 +10,8 @@ Included tables:
   - tracks
 
 Excluded user-related tables:
-  - users, favorites, reviews, blog_*, notifications, events, question_banks, online match tables
+  - users, favorites, reviews, blog_*, notifications, events, question_banks,
+    and online match tables
 """
 
 from __future__ import annotations

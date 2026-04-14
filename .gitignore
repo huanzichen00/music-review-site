@@ -75,3 +75,13 @@ backend/uploads/**
 !backend/uploads/.gitkeep
 !backend/uploads/avatars/
 !backend/uploads/avatars/.gitkeep
+
+# Private ops / data maintenance scripts
+scripts/
+
+# Local sync scratch
+tmp_sync/
+
+# Local logs
+backend.log
+frontend.log
