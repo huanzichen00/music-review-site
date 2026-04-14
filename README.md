@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="frontend/public/readme-cover.svg" alt="Music Review Site cover" width="100%" />
+</p>
+
 # Music Review Site（乐评网站）
 
 一个以音乐发现和“猜乐队”玩法为核心的全栈项目。  
@@ -5,6 +9,13 @@ A full-stack music project focused on discovery and a "Guess the Band" game.
 
 参考站点：[`progarchives.com`](https://www.progarchives.com)  
 Inspired by: [`progarchives.com`](https://www.progarchives.com)
+
+<p align="center">
+  <a href="#项目简介--overview">项目简介</a> ·
+  <a href="#核心功能--features">核心功能</a> ·
+  <a href="#快速开始--quick-start">快速开始</a> ·
+  <a href="#开源边界--open-source-scope">开源边界</a>
+</p>
 
 ## 项目简介 / Overview
 
