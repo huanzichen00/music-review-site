@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   Form,
+  Grid,
   Input,
   List,
   Modal,
@@ -43,6 +44,8 @@ const GuessBandBanks = () => {
   const { isAuthenticated, user } = useAuth();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [savingMeta, setSavingMeta] = useState(false);
@@ -419,10 +422,13 @@ const GuessBandBanks = () => {
   }
 
   return (
-    <div style={{ maxWidth: 1320, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+    <div className="guess-band-banks-page" style={{ maxWidth: 1320, margin: '0 auto' }}>
+      <div
+        className="guess-band-banks-topbar"
+        style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}
+      >
         <Title level={2} style={{ marginBottom: 0 }}>猜乐队题库管理</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)} block={isMobile}>
           新建题库
         </Button>
       </div>
@@ -437,11 +443,14 @@ const GuessBandBanks = () => {
         />
       ) : null}
 
-      <div style={{ display: 'flex', gap: 16, marginTop: 16, alignItems: 'stretch', flexWrap: 'wrap' }}>
+      <div
+        className="guess-band-banks-main"
+        style={{ display: 'flex', gap: 16, marginTop: 16, alignItems: 'stretch', flexWrap: 'wrap' }}
+      >
         <Card
           style={{
-            width: 320,
-            flex: '1 1 320px',
+            width: isMobile ? '100%' : 320,
+            flex: isMobile ? '1 1 100%' : '1 1 320px',
             ...(isDark
               ? { background: 'linear-gradient(145deg, #171719 0%, #131316 100%)', border: '1px solid #2F2F33' }
               : {}),
@@ -480,7 +489,8 @@ const GuessBandBanks = () => {
 
         <Card
           style={{
-            flex: '3 1 860px',
+            width: isMobile ? '100%' : undefined,
+            flex: isMobile ? '1 1 100%' : '3 1 860px',
             ...(isDark
               ? { background: 'linear-gradient(145deg, #171719 0%, #131316 100%)', border: '1px solid #2F2F33' }
               : {}),
@@ -508,7 +518,12 @@ const GuessBandBanks = () => {
             <Alert type="warning" showIcon message="请选择一个题库" />
           ) : (
             <>
-              <Form layout="inline" form={metaForm} style={{ rowGap: 12 }}>
+              <Form
+                layout={isMobile ? 'vertical' : 'inline'}
+                form={metaForm}
+                className="guess-band-bank-form"
+                style={{ rowGap: 12 }}
+              >
                 <Form.Item
                   name="name"
                   label="名称"
@@ -517,11 +532,11 @@ const GuessBandBanks = () => {
                     { max: 100, message: '最多 100 字' },
                   ]}
                 >
-                  <Input style={{ width: 240 }} />
+                  <Input style={{ width: isMobile ? '100%' : 240 }} />
                 </Form.Item>
                 <Form.Item name="visibility" label="可见性" initialValue="PUBLIC">
                   <Select
-                    style={{ width: 140 }}
+                    style={{ width: isMobile ? '100%' : 140 }}
                     options={[
                       { value: 'PUBLIC', label: 'PUBLIC' },
                       { value: 'PRIVATE', label: 'PRIVATE' },
@@ -556,6 +571,7 @@ const GuessBandBanks = () => {
 
               <div style={{ marginTop: 10 }}>
                 <Transfer
+                  className="guess-band-transfer"
                   dataSource={transferDataSource}
                   titles={['可选乐队', '题库乐队']}
                   targetKeys={targetKeys}
@@ -567,8 +583,8 @@ const GuessBandBanks = () => {
                     item.description.toLowerCase().includes(inputValue.toLowerCase())
                   }
                   listStyle={{
-                    width: 360,
-                    height: 520,
+                    width: isMobile ? '100%' : 360,
+                    height: isMobile ? 320 : 520,
                     ...(isDark ? { background: '#171719', color: '#E5E7EB', borderColor: '#2F2F33' } : {}),
                   }}
                   footer={(listProps) =>
@@ -601,7 +617,7 @@ const GuessBandBanks = () => {
           <Text type="secondary">暂无其他人公开的题库。</Text>
         ) : (
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            <div style={{ width: 360, flex: '1 1 360px' }}>
+            <div style={{ width: isMobile ? '100%' : 360, flex: isMobile ? '1 1 100%' : '1 1 360px' }}>
               <Input
                 allowClear
                 value={publicSearch}
@@ -659,7 +675,7 @@ const GuessBandBanks = () => {
               />
             </div>
 
-            <div style={{ flex: '2 1 520px', minWidth: 0 }}>
+            <div style={{ flex: isMobile ? '1 1 100%' : '2 1 520px', minWidth: 0 }}>
               {!selectedPublicBank ? (
                 <Alert type="info" showIcon message="请选择一个公开题库查看详情" />
               ) : publicDetailLoading ? (
@@ -696,6 +712,8 @@ const GuessBandBanks = () => {
         onCancel={() => setCreateOpen(false)}
         onOk={handleCreate}
         okText="创建"
+        destroyOnHidden
+        width={isMobile ? 'calc(100vw - 24px)' : 520}
       >
         <Form layout="vertical" form={createForm} initialValues={{ visibility: 'PUBLIC' }}>
           <Form.Item

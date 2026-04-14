@@ -616,6 +616,18 @@ h1, h2, h3, h4, h5, h6 {
   display: none !important;
 }
 
+.guess-band-banks-page .ant-card {
+  min-width: 0;
+}
+
+.guess-band-transfer {
+  width: 100%;
+}
+
+.guess-band-transfer .ant-transfer-list {
+  min-width: 0;
+}
+
 @media (max-width: 768px) {
   .guess-band-dropdown.ant-select-dropdown {
     max-height: 52vh !important;
@@ -634,6 +646,57 @@ h1, h2, h3, h4, h5, h6 {
     line-height: 1.5;
     color: #64748B;
     user-select: none;
+  }
+
+  .guess-band-banks-topbar > .ant-btn {
+    width: 100%;
+  }
+
+  .guess-band-bank-form .ant-form-item {
+    margin-right: 0 !important;
+    margin-bottom: 12px !important;
+  }
+
+  .guess-band-bank-form .ant-form-item-control,
+  .guess-band-bank-form .ant-form-item-control-input,
+  .guess-band-bank-form .ant-form-item-control-input-content,
+  .guess-band-bank-form .ant-input,
+  .guess-band-bank-form .ant-select {
+    width: 100% !important;
+  }
+
+  .guess-band-transfer .ant-transfer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .guess-band-transfer .ant-transfer-list {
+    width: 100% !important;
+  }
+
+  .guess-band-transfer .ant-transfer-operation {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+    margin: 0 !important;
+  }
+
+  .guess-band-transfer .ant-transfer-operation .ant-btn {
+    margin: 0 6px !important;
+  }
+
+  .guess-band-transfer .ant-transfer-list-header {
+    padding-inline: 12px;
+  }
+
+  .guess-band-transfer .ant-transfer-list-body {
+    height: 260px !important;
+  }
+
+  .guess-band-banks-page .ant-modal {
+    max-width: calc(100vw - 24px);
   }
 }
 
