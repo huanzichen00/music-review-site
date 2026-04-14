@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="frontend/public/readme-cover.svg" alt="Music Review Site cover" width="100%" />
-</p>
-
 # Music Review Site（乐评网站）
 
 一个以音乐发现和“猜乐队”玩法为核心的全栈项目。  
