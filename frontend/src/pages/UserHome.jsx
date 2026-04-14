@@ -22,6 +22,7 @@ import { blogPostsApi } from '../api/blogPosts';
 import SmartAlbumCover from '../components/SmartAlbumCover';
 import { resolveAvatarUrl } from '../utils/avatar';
 import { unwrapListData } from '../utils/apiData';
+import { formatChinaDate, formatChinaDateTime } from '../utils/datetime';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -87,7 +88,7 @@ const UserHome = () => {
             )}
             <div style={{ marginTop: 10 }}>
               <Text type="secondary">
-                加入时间：{profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : '-'}
+                加入时间：{formatChinaDate(profile?.createdAt)}
               </Text>
             </div>
           </div>
@@ -120,7 +121,7 @@ const UserHome = () => {
                   description={
                     <>
                       <Text type="secondary">
-                        发布于 {new Date(post.createdAt).toLocaleString()}
+                        发布于 {formatChinaDateTime(post.createdAt)}
                       </Text>
                       {post.albumCoverUrl && (
                         <div style={{ marginTop: 8 }}>

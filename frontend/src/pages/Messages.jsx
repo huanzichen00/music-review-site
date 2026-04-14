@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { notificationsApi } from '../api/notifications';
 import { useAuth } from '../context/AuthContext';
 import { unwrapListData } from '../utils/apiData';
+import { formatChinaDateTime } from '../utils/datetime';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -134,7 +135,7 @@ const Messages = () => {
                       <div style={{ marginTop: 6 }}>
                         <Text type="secondary">
                           {item.senderUsername ? `来自 ${item.senderUsername} · ` : ''}
-                          {new Date(item.createdAt).toLocaleString()}
+                          {formatChinaDateTime(item.createdAt)}
                         </Text>
                       </div>
                       {item.relatedBlogPostId ? (

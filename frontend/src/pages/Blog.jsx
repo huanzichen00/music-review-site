@@ -26,6 +26,7 @@ import { useTheme } from '../context/ThemeContext';
 import { resolveAvatarUrl } from '../utils/avatar';
 import SmartAlbumCover from '../components/SmartAlbumCover';
 import { unwrapListData } from '../utils/apiData';
+import { formatChinaDateTime } from '../utils/datetime';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -340,7 +341,7 @@ const Blog = () => {
                           >
                             {post.username || `用户 #${post.userId}`}
                           </Button>
-                          · 发布于 {new Date(post.createdAt).toLocaleString()}
+                          · 发布于 {formatChinaDateTime(post.createdAt)}
                         </Text>
                         {post.albumCoverUrl && (
                           <div style={{ marginTop: 10 }}>
@@ -396,7 +397,7 @@ const Blog = () => {
                                     >
                                       {reply.username}
                                     </Text>
-                                    <Text type="secondary">{new Date(reply.createdAt).toLocaleString()}</Text>
+                                    <Text type="secondary">{formatChinaDateTime(reply.createdAt)}</Text>
                                     {user?.id === reply.userId ? (
                                       <Button
                                         type="link"
