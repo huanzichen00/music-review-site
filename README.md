@@ -23,12 +23,7 @@ Inspired by: [`progarchives.com`](https://www.progarchives.com)
 用户可以浏览乐队、专辑、曲目，注册登录，收藏和评论内容，也可以创建自己的题库或进入联机房间进行猜乐队对战。  
 
 This project started as an experimental music website and gradually evolved into a game-centered music platform.  
-Users can browse artists, albums, and tracks, register accounts, create question banks, and play the Guess-Band mode locally or online.
-
-## 界面预览 / Preview
-
-![Guess Band UI](frontend/public/guess-band-ui-sample.svg)
-![Guess Band Online](frontend/public/guess-band-online-style-preview-v2.svg)
+Users can browse artists, albums, and tracks, register accounts, create question banks, and play the Guess-Band mode locally or online
 
 ## 核心功能 / Features
 
