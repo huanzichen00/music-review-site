@@ -121,10 +121,10 @@ const Profile = () => {
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto' }}>
+    <div className="profile-page" style={{ maxWidth: 800, margin: '0 auto' }}>
       <Title level={2}>我的资料</Title>
 
-      <Card>
+      <Card className="profile-card">
         {/* Avatar and Basic Info */}
         <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: 24 }}>
           {editing ? (

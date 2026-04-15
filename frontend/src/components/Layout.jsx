@@ -290,23 +290,21 @@ const Layout = ({ children }) => {
   const userMenuItems = [
     {
       key: 'messages',
-      icon: (
-        <Badge count={unreadCount} size="small" offset={[6, -2]}>
-          {glyph('信')}
-        </Badge>
+      label: (
+        <Space size={8}>
+          <span style={menuLinkStyle}>消息中心</span>
+          <Badge count={unreadCount} size="small" />
+        </Space>
       ),
-      label: <span style={menuLinkStyle}>消息中心</span>,
       onClick: () => navigate('/messages'),
     },
     {
       key: 'favorites',
-      icon: glyph('藏'),
       label: <span style={menuLinkStyle}>我的收藏</span>,
       onClick: () => navigate('/favorites'),
     },
     {
       key: 'profile',
-      icon: glyph('我'),
       label: <span style={menuLinkStyle}>个人资料</span>,
       onClick: () => navigate('/profile'),
     },
@@ -315,7 +313,6 @@ const Layout = ({ children }) => {
     },
     {
       key: 'logout',
-      icon: glyph('退'),
       label: <span style={menuLinkStyle}>退出登录</span>,
       onClick: handleLogout,
     },

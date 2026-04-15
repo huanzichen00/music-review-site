@@ -63,8 +63,8 @@ const UserHome = () => {
   }
 
   return (
-    <div style={{ maxWidth: 980, margin: '0 auto' }}>
-      <Card>
+    <div className="user-home-page" style={{ maxWidth: 980, margin: '0 auto' }}>
+      <Card className="user-home-card">
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap' }}>
           <Avatar
             size={120}
@@ -95,7 +95,7 @@ const UserHome = () => {
         </div>
       </Card>
 
-      <Card title="TA 发布的博客" style={{ marginTop: 20 }}>
+      <Card className="user-home-card" title="TA 发布的博客" style={{ marginTop: 20 }}>
         {posts.length === 0 ? (
           <Empty description="暂时还没有发布博客" />
         ) : (
