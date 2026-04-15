@@ -424,14 +424,24 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 :root[data-theme='dark'] .artists-filters .ant-input::placeholder,
-:root[data-theme='dark'] .artists-filters .ant-select-selection-placeholder {
+:root[data-theme='dark'] .artists-filters .ant-select-selection-placeholder,
+:root[data-theme='dark'] .artists-filters .ant-select-selection-search-input::placeholder {
   color: #9CA3AF !important;
+  -webkit-text-fill-color: #9CA3AF !important;
 }
 
 :root[data-theme='dark'] .artists-filters .ant-select-selection-item,
-:root[data-theme='dark'] .artists-filters .ant-select-selection-search-input {
+:root[data-theme='dark'] .artists-filters .ant-select-selection-search-input,
+:root[data-theme='dark'] .artists-filters .ant-select-selection-search-input input,
+:root[data-theme='dark'] .artists-filters input.ant-select-selection-search-input {
   color: #E5E7EB !important;
   -webkit-text-fill-color: #E5E7EB !important;
+  caret-color: #E5E7EB !important;
+}
+
+:root[data-theme='dark'] .artists-filters .ant-select-arrow,
+:root[data-theme='dark'] .artists-filters .ant-select-clear {
+  color: #AEB4BE !important;
 }
 
 :root[data-theme='dark'] .years-filters .ant-input,
