@@ -232,10 +232,14 @@ public class AlbumService {
         return "#";
     }
 
+    /**
+     * 曲目去重
+     */
     private List<TrackDTO> dedupeTracks(List<TrackDTO> tracks) {
         if (tracks == null || tracks.isEmpty()) {
             return List.of();
         }
+        // LinkedHashMap 保留插入顺序
         Map<String, TrackDTO> unique = new LinkedHashMap<>();
         for (TrackDTO track : tracks) {
             if (track == null || track.getTitle() == null) {
