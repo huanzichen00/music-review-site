@@ -69,7 +69,7 @@ const Years = () => {
           JSON.stringify({ updatedAt: Date.now(), summary })
         );
       } catch {
-        // Ignore storage write failures.
+        // 忽略写入缓存失败。
       }
     };
     const applySummary = (summary) => {

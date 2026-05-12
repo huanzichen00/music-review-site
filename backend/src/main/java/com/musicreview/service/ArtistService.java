@@ -32,7 +32,7 @@ public class ArtistService {
     private final AuthService authService;
 
     /**
-     * Get all artists
+     * 获取全部艺术家
      */
     public Page<ArtistResponse> getAllArtists(Pageable pageable) {
         Page<Artist> artists = artistRepository.findAllByOrderByNameAsc(pageable);
@@ -40,7 +40,7 @@ public class ArtistService {
     }
 
     /**
-     * Get artists by name initial (A-Z, #)
+     * 按名称首字母获取艺术家（A-Z 或 #）
      */
     public Page<ArtistResponse> getArtistsByInitial(String initial, Pageable pageable) {
         Page<Artist> artists = artistRepository.findByNameInitialOrderByNameAsc(initial.toUpperCase(), pageable);
@@ -48,7 +48,7 @@ public class ArtistService {
     }
 
     /**
-     * Get artist by ID
+     * 按 ID 获取艺术家
      */
     public ArtistResponse getArtistById(Long id) {
         Artist artist = artistRepository.findById(id)
@@ -58,7 +58,7 @@ public class ArtistService {
     }
 
     /**
-     * Search artists by name
+     * 按名称搜索艺术家
      */
     public Page<ArtistResponse> searchArtists(String query, Pageable pageable) {
         Page<Artist> artists = artistRepository.findByNameContainingIgnoreCase(query, pageable);
@@ -75,7 +75,7 @@ public class ArtistService {
     }
 
     /**
-     * Create a new artist
+     * 创建艺术家
      */
     @Transactional
     public ArtistResponse createArtist(ArtistRequest request) {
@@ -99,7 +99,7 @@ public class ArtistService {
     }
 
     /**
-     * Update an existing artist
+     * 更新已有艺术家
      */
     @Transactional
     public ArtistResponse updateArtist(Long id, ArtistRequest request) {
@@ -125,11 +125,11 @@ public class ArtistService {
     }
 
     /**
-     * Delete an artist (only allowed for user "Huan" and only if artist has no albums)
+     * 删除艺术家（仅用户 "Huan" 可执行，且艺术家名下不能有专辑）
      */
     @Transactional
     public void deleteArtist(Long id) {
-        // Check permission - only user "Huan" can delete
+        // 校验权限，仅用户 "Huan" 可以删除
         User currentUser = authService.getCurrentUser();
         if (!"Huan".equals(currentUser.getUsername())) {
             throw new RuntimeException("Only user 'Huan' can delete artists");
@@ -138,7 +138,7 @@ public class ArtistService {
         Artist artist = artistRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Artist not found with id: " + id));
         
-        // Check if artist has any albums
+        // 检查艺术家名下是否还有专辑
         long albumCount = albumRepository.countByArtistId(id);
         if (albumCount > 0) {
             throw new RuntimeException("Cannot delete artist: Artist has " + albumCount + " album(s). Please delete all albums first.");
@@ -148,7 +148,7 @@ public class ArtistService {
     }
 
     /**
-     * Extract initial letter from name (A-Z, or # for non-letters)
+     * 提取名称首字母（A-Z，非字母则返回 #）
      */
     private String extractInitial(String name) {
         if (name == null || name.isEmpty()) {

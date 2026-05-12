@@ -28,14 +28,14 @@ public class ArtistResponse {
     private Integer albumCount;
 
     public static ArtistResponse fromEntity(Artist artist) {
-        // Safely handle lazy-loaded albums collection
+        // 安全处理懒加载的专辑集合
         int albumCount = 0;
         try {
             if (artist.getAlbums() != null) {
                 albumCount = artist.getAlbums().size();
             }
         } catch (Exception e) {
-            // Lazy loading exception - ignore and set to 0
+            // 忽略懒加载异常，并将数量置为 0
             albumCount = 0;
         }
         

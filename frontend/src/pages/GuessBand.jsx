@@ -354,7 +354,7 @@ const safeMark = (name) => {
   try {
     performance.mark(name);
   } catch {
-    // ignore
+    // 忽略请求中断
   }
 };
 

@@ -77,7 +77,7 @@ const markGuessBandRouteStart = () => {
       performance.mark('gb_route_start');
     }
   } catch {
-    // ignore
+    // 忽略性能埋点异常
   }
 };
 
@@ -91,7 +91,7 @@ const warmGuessBandApiCache = async (isAuthenticated) => {
       questionBanksApi.getMineCached({ force: true }).catch(() => {});
     }
   } catch {
-    // ignore warm-up failures
+    // 忽略预热失败
   }
 };
 
@@ -127,7 +127,7 @@ const Layout = ({ children }) => {
     if (onlinePrefetchTimerRef.current != null || typeof window === 'undefined') {
       return;
     }
-    // Split into a second, delayed prefetch to avoid a burst of concurrent chunk work.
+    // 将其拆成第二次延迟预取，避免并发加载 chunk 过于集中。
     onlinePrefetchTimerRef.current = window.setTimeout(() => {
       onlinePrefetchTimerRef.current = null;
       prefetchRoute('/music/guess-band/online');

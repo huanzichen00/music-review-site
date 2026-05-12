@@ -57,7 +57,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     }
                 } catch (JwtException | IllegalArgumentException e) {
                     logger.error("JWT parsing/validation error: " + e.getMessage(), e);
-                    // Don't set authentication, let it fail
+                    // 不主动写入认证信息，交给后续流程判定失败
                 }
             }
         } catch (Exception e) {

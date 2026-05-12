@@ -29,10 +29,10 @@ public class Track {
     private String title;
 
     @Column
-    private Integer duration; // Duration in seconds
+    private Integer duration; // 时长，单位为秒
 
     /**
-     * Get formatted duration as MM:SS
+     * 获取 MM:SS 格式的时长字符串
      */
     public String getFormattedDuration() {
         if (duration == null) return null;

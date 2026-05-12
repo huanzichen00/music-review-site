@@ -23,7 +23,7 @@ public class ReplyService {
     private final AuthService authService;
 
     /**
-     * Get replies for a review
+     * 获取某条评论下的回复
      */
     public List<ReplyResponse> getRepliesByReview(Long reviewId) {
         return replyRepository.findByReviewIdOrderByCreatedAtAsc(reviewId).stream()
@@ -32,7 +32,7 @@ public class ReplyService {
     }
 
     /**
-     * Create a reply
+     * 创建回复
      */
     @Transactional
     public ReplyResponse createReply(ReplyRequest request) {
@@ -52,7 +52,7 @@ public class ReplyService {
     }
 
     /**
-     * Update a reply
+     * 更新回复
      */
     @Transactional
     public ReplyResponse updateReply(Long replyId, String content) {
@@ -71,7 +71,7 @@ public class ReplyService {
     }
 
     /**
-     * Delete a reply
+     * 删除回复
      */
     @Transactional
     public void deleteReply(Long replyId) {
@@ -88,7 +88,7 @@ public class ReplyService {
     }
 
     /**
-     * Get reply count for a review
+     * 获取某条评论的回复数
      */
     public int getReplyCount(Long reviewId) {
         return replyRepository.countByReviewId(reviewId);

@@ -22,7 +22,7 @@ public class UserProfileResponse {
     private String role;
     private LocalDateTime createdAt;
 
-    // Stats
+    // 统计信息
     private Integer reviewCount;
     private Integer favoriteCount;
 

@@ -32,21 +32,21 @@ public class JwtUtils {
     }
 
     /**
-     * Extract username from JWT token
+     * 从 JWT 中提取用户名
      */
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
     /**
-     * Extract expiration date from JWT token
+     * 从 JWT 中提取过期时间
      */
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
     /**
-     * Extract a claim from JWT token
+     * 从 JWT 中提取指定声明
      */
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
@@ -54,7 +54,7 @@ public class JwtUtils {
     }
 
     /**
-     * Extract all claims from JWT token
+     * 从 JWT 中提取全部声明
      */
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
@@ -65,14 +65,14 @@ public class JwtUtils {
     }
 
     /**
-     * Check if token is expired
+     * 检查令牌是否已过期
      */
     private Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
     /**
-     * Generate JWT token for user
+     * 为用户生成 JWT
      */
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
@@ -80,7 +80,7 @@ public class JwtUtils {
     }
 
     /**
-     * Create JWT token
+     * 创建 JWT
      */
     private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
@@ -93,7 +93,7 @@ public class JwtUtils {
     }
 
     /**
-     * Validate JWT token
+     * 校验 JWT 是否有效
      */
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
@@ -101,15 +101,15 @@ public class JwtUtils {
     }
 
     /**
-     * Get signing key from secret
+     * 根据密钥获取签名 Key
      */
     private SecretKey getSigningKey() {
-        // Try Base64 decode first, if fails use the secret directly as bytes
+        // 先尝试按 Base64 解码，失败后再直接使用原始字符串字节
         try {
             byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
             return Keys.hmacShaKeyFor(keyBytes);
         } catch (IllegalArgumentException e) {
-            // If not Base64, use the secret string directly
+            // 如果不是 Base64，就直接使用密钥字符串本身
             byte[] keyBytes = jwtSecret.getBytes();
             return Keys.hmacShaKeyFor(keyBytes);
         }

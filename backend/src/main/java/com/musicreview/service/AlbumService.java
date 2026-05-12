@@ -36,14 +36,14 @@ public class AlbumService {
     private final AuthService authService;
 
     /**
-     * Get all albums
+     * 获取全部专辑
      */
     public Page<AlbumResponse> getAllAlbums(Pageable pageable) {
         return albumRepository.findAlbumSummaries(pageable);
     }
 
     /**
-     * Get albums by title initial (A-Z, #)
+     * 按标题首字母获取专辑（A-Z 或 #）
      */
     public Page<AlbumResponse> getAlbumsByInitial(String initial, Pageable pageable) {
         return albumRepository.findByTitleInitialOrderByTitleAsc(initial.toUpperCase(), pageable)
@@ -51,7 +51,7 @@ public class AlbumService {
     }
 
     /**
-     * Get album by ID with full details
+     * 按 ID 获取完整专辑详情
      */
     @Transactional(readOnly = true)
     public AlbumResponse getAlbumById(Long id) {
@@ -61,7 +61,7 @@ public class AlbumService {
     }
 
     /**
-     * Get albums by artist
+     * 获取某位艺术家的专辑
      */
     public Page<AlbumResponse> getAlbumsByArtist(Long artistId, Pageable pageable) {
         return albumRepository.findByArtistIdOrderByReleaseYearDesc(artistId, pageable)
@@ -69,7 +69,7 @@ public class AlbumService {
     }
 
     /**
-     * Get albums by genre
+     * 获取某个流派下的专辑
      */
     public Page<AlbumResponse> getAlbumsByGenre(Long genreId, Pageable pageable) {
         return albumRepository.findByGenreId(genreId, pageable)
@@ -77,7 +77,7 @@ public class AlbumService {
     }
 
     /**
-     * Get albums by release year
+     * 按发行年份获取专辑
      */
     public Page<AlbumResponse> getAlbumsByYear(Integer year, Pageable pageable) {
         return albumRepository.findByReleaseYear(year, pageable)
@@ -85,14 +85,14 @@ public class AlbumService {
     }
 
     /**
-     * Get all available release years
+     * 获取全部可用发行年份
      */
     public List<Integer> getAllReleaseYears() {
         return albumRepository.findAllReleaseYears();
     }
 
     /**
-     * Search albums by title
+     * 按标题搜索专辑
      */
     public Page<AlbumResponse> searchAlbums(String query, Pageable pageable) {
         return albumRepository.findByTitleContainingIgnoreCase(query, pageable)
@@ -100,18 +100,18 @@ public class AlbumService {
     }
 
     /**
-     * Create a new album
+     * 创建专辑
      */
     @Transactional
     public AlbumResponse createAlbum(AlbumRequest request) {
-        // Get artist
+        // 查询艺术家
         Artist artist = artistRepository.findById(request.getArtistId())
                 .orElseThrow(() -> new RuntimeException("Artist not found with id: " + request.getArtistId()));
 
-        // Get current user
+        // 获取当前用户
         User currentUser = authService.getCurrentUser();
 
-        // Get genres
+        // 查询流派
         Set<Genre> genres = new HashSet<>();
         if (request.getGenreIds() != null && !request.getGenreIds().isEmpty()) {
             genres = request.getGenreIds().stream()
@@ -120,7 +120,7 @@ public class AlbumService {
                     .collect(Collectors.toSet());
         }
 
-        // Create album
+        // 创建专辑实体
         Album album = Album.builder()
                 .title(request.getTitle())
                 .titleInitial(extractInitial(request.getTitle()))
@@ -132,7 +132,7 @@ public class AlbumService {
                 .createdBy(currentUser)
                 .build();
 
-        // Attach tracks (dedupe by trackNumber + title)
+        // 关联曲目（按 trackNumber + title 去重）
         List<TrackDTO> dedupedTracks = dedupeTracks(request.getTracks());
         if (!dedupedTracks.isEmpty()) {
             for (TrackDTO trackDTO : dedupedTracks) {
@@ -151,18 +151,18 @@ public class AlbumService {
     }
 
     /**
-     * Update an existing album
+     * 更新已有专辑
      */
     @Transactional
     public AlbumResponse updateAlbum(Long id, AlbumRequest request) {
         Album album = albumRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Album not found with id: " + id));
 
-        // Get artist
+        // 查询艺术家
         Artist artist = artistRepository.findById(request.getArtistId())
                 .orElseThrow(() -> new RuntimeException("Artist not found with id: " + request.getArtistId()));
 
-        // Get genres
+        // 查询流派
         Set<Genre> genres = new HashSet<>();
         if (request.getGenreIds() != null && !request.getGenreIds().isEmpty()) {
             genres = request.getGenreIds().stream()
@@ -171,7 +171,7 @@ public class AlbumService {
                     .collect(Collectors.toSet());
         }
 
-        // Update album
+        // 更新专辑字段
         album.setTitle(request.getTitle());
         album.setTitleInitial(extractInitial(request.getTitle()));
         album.setArtist(artist);
@@ -180,9 +180,9 @@ public class AlbumService {
         album.setDescription(request.getDescription());
         album.setGenres(genres);
 
-        // Update tracks (dedupe by trackNumber + title)
+        // 更新曲目（按 trackNumber + title 去重）
         if (request.getTracks() != null) {
-            // Hard delete existing rows first to avoid stale ORM state causing duplicated inserts.
+            // 先硬删除旧记录，避免 ORM 状态残留导致重复插入。
             trackRepository.deleteByAlbumId(album.getId());
             album.getTracks().clear();
             List<TrackDTO> dedupedTracks = dedupeTracks(request.getTracks());
@@ -202,11 +202,11 @@ public class AlbumService {
     }
 
     /**
-     * Delete an album (only allowed for user "Huan")
+     * 删除专辑（仅用户 "Huan" 可执行）
      */
     @Transactional
     public void deleteAlbum(Long id) {
-        // Check permission - only user "Huan" can delete
+        // 校验权限，仅用户 "Huan" 可以删除
         User currentUser = authService.getCurrentUser();
         if (!"Huan".equals(currentUser.getUsername())) {
             throw new RuntimeException("Only user 'Huan' can delete albums");
@@ -219,7 +219,7 @@ public class AlbumService {
     }
 
     /**
-     * Extract initial letter from title (A-Z, or # for non-letters)
+     * 提取标题首字母（A-Z，非字母则返回 #）
      */
     private String extractInitial(String title) {
         if (title == null || title.isEmpty()) {

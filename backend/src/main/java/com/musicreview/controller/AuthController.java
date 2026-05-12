@@ -34,7 +34,7 @@ public class AuthController {
     private boolean cookieSecure;
 
     /**
-     * Register a new user
+     * 注册新用户
      * POST /api/auth/register
      */
     @PostMapping("/register")
@@ -55,7 +55,7 @@ public class AuthController {
     }
 
     /**
-     * Login user
+     * 用户登录
      * POST /api/auth/login
      */
     @PostMapping("/login")
@@ -112,7 +112,7 @@ public class AuthController {
     }
 
     /**
-     * Get current user info
+     * 获取当前用户信息
      * GET /api/auth/me
      */
     @GetMapping("/me")

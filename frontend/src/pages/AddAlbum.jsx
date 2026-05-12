@@ -17,7 +17,7 @@ const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
-// Common countries for music artists
+// 音乐人常用国家选项
 const COUNTRIES = [
   'United States',
   'United Kingdom',
@@ -77,7 +77,7 @@ const AddAlbum = () => {
   const [batchTrackText, setBatchTrackText] = useState('');
   const [coverUploading, setCoverUploading] = useState(false);
   
-  // MusicBrainz search states
+  // MusicBrainz 搜索相关状态
   const [searchAlbum, setSearchAlbum] = useState('');
   const [searchArtist, setSearchArtist] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -112,7 +112,7 @@ const AddAlbum = () => {
     loadData();
   }, [authLoading, isAuthenticated, navigate]);
 
-  // Search albums from MusicBrainz
+  // 从 MusicBrainz 搜索专辑
   const handleSearch = async () => {
     if (!searchAlbum.trim() && !searchArtist.trim()) {
       message.warning('请输入专辑名或艺术家名');
@@ -134,14 +134,14 @@ const AddAlbum = () => {
     }
   };
 
-  // Import selected album from MusicBrainz
+  // 从 MusicBrainz 导入选中的专辑
   const handleImportAlbum = async (mbid) => {
     setImporting(true);
     try {
       const response = await importApi.getAlbumDetails(mbid);
       const data = response.data;
 
-      // Fill form with imported data
+      // 用导入的数据回填表单
       form.setFieldsValue({
         title: data.title,
         releaseYear: data.releaseYear,
@@ -154,7 +154,7 @@ const AddAlbum = () => {
         })) || [{ title: '' }],
       });
 
-      // Store imported artist info for later use
+      // 暂存导入的艺术家信息，供后续使用
       if (data.artist) {
         setImportedArtist(data.artist);
       }
@@ -232,7 +232,7 @@ const AddAlbum = () => {
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      // Filter out empty tracks
+      // 过滤空曲目
       const validTracks = values.tracks?.filter(track => track.title && track.title.trim()) || [];
       
       const albumData = {
@@ -296,7 +296,7 @@ const AddAlbum = () => {
       const response = await genresApi.create(values);
       message.success('风格创建成功！');
       setGenres([...genres, response.data]);
-      // Add to current selection
+      // 合并到当前已选项
       const currentGenres = form.getFieldValue('genreIds') || [];
       form.setFieldValue('genreIds', [...currentGenres, response.data.id]);
       setGenreModalVisible(false);
@@ -308,7 +308,7 @@ const AddAlbum = () => {
     }
   };
 
-  // Parse batch track text and fill form
+  // 解析批量曲目文本并回填表单
   const handleBatchTrackImport = () => {
     if (!batchTrackText.trim()) {
       message.warning('请输入曲目列表');
@@ -322,22 +322,22 @@ const AddAlbum = () => {
       const trimmed = line.trim();
       if (!trimmed) continue;
       
-      // Try to parse: "1. Track Name 3:45" or "Track Name 3:45" or just "Track Name"
-      // Remove leading numbers like "1." or "01."
+      // 尝试解析“1. Track Name 3:45”“Track Name 3:45”或仅“Track Name”这几种格式
+      // 去掉前导序号，如“1.”或“01.”
       let trackLine = trimmed.replace(/^\d+[.)]\s*/, '');
       
-      // Try to extract duration at the end (formats: 3:45, 03:45, 3:45:00)
+      // 尝试提取末尾时长（例如 3:45、03:45、3:45:00）
       const durationMatch = trackLine.match(/\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*$/);
       let minutes = null;
       let seconds = null;
       
       if (durationMatch) {
         if (durationMatch[3]) {
-          // Format: H:MM:SS
+          // 格式：H:MM:SS
           minutes = parseInt(durationMatch[1]) * 60 + parseInt(durationMatch[2]);
           seconds = parseInt(durationMatch[3]);
         } else {
-          // Format: M:SS
+          // 格式：M:SS
           minutes = parseInt(durationMatch[1]);
           seconds = parseInt(durationMatch[2]);
         }
@@ -367,7 +367,7 @@ const AddAlbum = () => {
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
       <Title level={2}>添加新专辑</Title>
 
-      {/* Search and Import from MusicBrainz */}
+      {/* 从 MusicBrainz 搜索并导入 */}
       <Card style={{ marginBottom: 16 }}>
         <Title level={4}>
           <SearchOutlined style={{ marginRight: 8 }} />
@@ -403,7 +403,7 @@ const AddAlbum = () => {
           </Button>
         </Space>
 
-        {/* Search Results */}
+        {/* 搜索结果 */}
         {searching && (
           <div style={{ textAlign: 'center', padding: 20 }}>
             <Spin tip="搜索中..." />
@@ -445,7 +445,7 @@ const AddAlbum = () => {
         )}
       </Card>
 
-      {/* Imported Artist Alert */}
+      {/* 导入艺术家提示 */}
       {importedArtist && (
         <Alert
           message="导入的艺术家"
@@ -478,7 +478,7 @@ const AddAlbum = () => {
           onFinish={onFinish}
           initialValues={{ tracks: [{ title: '' }] }}
         >
-          {/* Basic Info */}
+          {/* 基本信息 */}
           <Title level={4}>基本信息</Title>
           
           <Form.Item
@@ -670,7 +670,7 @@ const AddAlbum = () => {
         </Form>
       </Card>
 
-      {/* Add Genre Modal */}
+      {/* 新增流派弹窗 */}
       <Modal
         title="新增风格"
         open={genreModalVisible}
@@ -696,7 +696,7 @@ const AddAlbum = () => {
         </Form>
       </Modal>
 
-      {/* Add Artist Modal */}
+      {/* 新增艺术家弹窗 */}
       <Modal
         title="新增艺术家"
         open={artistModalVisible}
@@ -756,7 +756,7 @@ const AddAlbum = () => {
         </Form>
       </Modal>
 
-      {/* Batch Track Import Modal */}
+      {/* 批量导入曲目弹窗 */}
       <Modal
         title="批量导入曲目"
         open={batchTrackModalVisible}

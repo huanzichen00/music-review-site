@@ -398,7 +398,7 @@ const GuessBandOnline = () => {
         const res = await guessBandOnlineApi.getRoom(roomCode, playerToken);
         setRoom(res.data);
       } catch {
-        // keep polling quiet
+        // 轮询失败时静默处理
       } finally {
         inFlight = false;
       }
@@ -444,7 +444,7 @@ const GuessBandOnline = () => {
       const res = await guessBandOnlineApi.getRecords();
       setRecords(res.data || []);
     } catch {
-      // ignore
+      // 忽略请求中断
     }
   };
 

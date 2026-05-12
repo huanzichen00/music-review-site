@@ -25,7 +25,7 @@ public class UserController {
     private final AuthService authService;
 
     /**
-     * Get current user profile
+     * 获取当前用户资料
      * GET /api/users/me
      */
     @GetMapping("/me")
@@ -41,7 +41,7 @@ public class UserController {
     }
 
     /**
-     * Update current user profile
+     * 更新当前用户资料
      * PUT /api/users/me
      */
     @PutMapping("/me")
@@ -57,7 +57,7 @@ public class UserController {
             }
             
             User saved = userRepository.save(user);
-            // Get counts to include in response
+            // 统计数量并写回响应
             int reviewCount = reviewRepository.countByUserId(saved.getId());
             int favoriteCount = favoriteRepository.countByUserId(saved.getId());
             return ResponseEntity.ok(UserProfileResponse.fromEntity(saved, reviewCount, favoriteCount));
@@ -67,7 +67,7 @@ public class UserController {
     }
 
     /**
-     * Get user profile by ID (public)
+     * 按 ID 获取用户公开资料
      * GET /api/users/{id}
      */
     @GetMapping("/{id}")

@@ -19,7 +19,7 @@ public class ReplyController {
     private final ReplyService replyService;
 
     /**
-     * Get replies for a review
+     * 获取某条评论下的回复
      * GET /api/replies/review/{reviewId}
      */
     @GetMapping("/review/{reviewId}")
@@ -28,7 +28,7 @@ public class ReplyController {
     }
 
     /**
-     * Create a reply
+     * 创建回复
      * POST /api/replies
      */
     @PostMapping
@@ -42,7 +42,7 @@ public class ReplyController {
     }
 
     /**
-     * Update a reply
+     * 更新回复
      * PUT /api/replies/{id}
      */
     @PutMapping("/{id}")
@@ -60,7 +60,7 @@ public class ReplyController {
     }
 
     /**
-     * Delete a reply
+     * 删除回复
      * DELETE /api/replies/{id}
      */
     @DeleteMapping("/{id}")

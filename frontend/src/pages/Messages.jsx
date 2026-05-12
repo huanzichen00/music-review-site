@@ -31,7 +31,7 @@ const Messages = () => {
           setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
           window.dispatchEvent(new Event('notifications-updated'));
         } catch {
-          // keep list readable even if auto mark read fails
+          // 即使自动标记已读失败，也保持列表可正常展示
         }
       }
     } catch (error) {

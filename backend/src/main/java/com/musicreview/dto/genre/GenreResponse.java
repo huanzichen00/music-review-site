@@ -22,7 +22,7 @@ public class GenreResponse {
                 .id(genre.getId())
                 .name(genre.getName())
                 .description(genre.getDescription())
-                .albumCount(0) // Will be set by service if needed
+                .albumCount(0) // 如有需要会由服务层补充设置
                 .build();
     }
     

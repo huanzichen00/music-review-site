@@ -21,7 +21,7 @@ public class FavoriteService {
     private final AuthService authService;
 
     /**
-     * Get current user's favorites
+     * 获取当前用户的收藏
      */
     public Page<FavoriteResponse> getMyFavorites(Pageable pageable) {
         User currentUser = authService.getCurrentUser();
@@ -29,7 +29,7 @@ public class FavoriteService {
     }
 
     /**
-     * Check if album is favorited by current user
+     * 检查当前用户是否收藏了该专辑
      */
     public boolean isFavorited(Long albumId) {
         User currentUser = authService.getCurrentUser();
@@ -37,22 +37,22 @@ public class FavoriteService {
     }
 
     /**
-     * Add album to favorites
+     * 添加专辑到收藏
      */
     @Transactional
     public FavoriteResponse addFavorite(Long albumId) {
         User currentUser = authService.getCurrentUser();
 
-        // Check if already favorited
+        // 检查是否已收藏
         if (favoriteRepository.existsByUserIdAndAlbumId(currentUser.getId(), albumId)) {
             throw new RuntimeException("Album is already in favorites");
         }
 
-        // Get album
+        // 查询专辑
         Album album = albumRepository.findById(albumId)
                 .orElseThrow(() -> new RuntimeException("Album not found with id: " + albumId));
 
-        // Create favorite
+        // 创建收藏记录
         Favorite favorite = Favorite.builder()
                 .user(currentUser)
                 .album(album)
@@ -63,7 +63,7 @@ public class FavoriteService {
     }
 
     /**
-     * Remove album from favorites
+     * 取消收藏专辑
      */
     @Transactional
     public void removeFavorite(Long albumId) {
@@ -77,7 +77,7 @@ public class FavoriteService {
     }
 
     /**
-     * Get favorite count for album
+     * 获取专辑收藏数
      */
     public long getFavoriteCount(Long albumId) {
         return favoriteRepository.countByAlbumId(albumId);

@@ -12,7 +12,7 @@ import java.util.List;
 
 @Data
 @AllArgsConstructor
-public class UserDetailsImpl implements UserDetails {
+public  class UserDetailsImpl implements UserDetails {
 
     private Long id;
     private String username;

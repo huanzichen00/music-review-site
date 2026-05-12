@@ -1,16 +1,16 @@
 import api from './axios';
 
 export const usersApi = {
-  // Get current user profile
+  // 获取当前用户资料
   getMyProfile: () => api.get('/users/me'),
   
-  // Update current user profile
+  // 更新当前用户资料
   updateMyProfile: (data) => api.put('/users/me', data),
   
-  // Get user profile by ID (public)
+  // 按用户 ID 获取公开资料
   getUserProfile: (id) => api.get(`/users/${id}`),
 
-  // Upload avatar
+  // 上传头像
   uploadAvatar: (file) => {
     const formData = new FormData();
     formData.append('file', file);

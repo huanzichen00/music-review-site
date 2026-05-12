@@ -51,14 +51,14 @@ const Profile = () => {
   }, [authLoading, form, isAuthenticated, navigate]);
 
   const handleUpload = async (file) => {
-    // Validate file type
+    // 校验文件类型
     const isImage = file.type.startsWith('image/');
     if (!isImage) {
       message.error('仅支持图片文件！');
       return false;
     }
 
-    // Validate file size (max 5MB)
+    // 校验文件大小（最大 5MB）
     const isLt5M = file.size / 1024 / 1024 < 5;
     if (!isLt5M) {
       message.error('图片需小于 5MB！');
@@ -77,7 +77,7 @@ const Profile = () => {
       setUploading(false);
     }
 
-    return false; // Prevent default upload behavior
+    return false; // 阻止上传组件默认上传行为
   };
 
   const handleSave = async (values) => {
@@ -125,7 +125,7 @@ const Profile = () => {
       <Title level={2}>我的资料</Title>
 
       <Card className="profile-card">
-        {/* Avatar and Basic Info */}
+        {/* 头像与基础信息 */}
         <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: 24 }}>
           {editing ? (
             <div style={{ marginRight: 24 }}>
@@ -188,7 +188,7 @@ const Profile = () => {
 
         <Divider />
 
-        {/* Bio Display (when not editing) */}
+        {/* 未编辑时显示个人简介 */}
         {!editing && (
           <div>
             <Title level={5}>简介</Title>
@@ -200,7 +200,7 @@ const Profile = () => {
           </div>
         )}
 
-        {/* Edit Form */}
+        {/* 编辑表单 */}
         {editing && (
           <Form
             form={form}
@@ -242,7 +242,7 @@ const Profile = () => {
 
         <Divider />
 
-        {/* Account Info */}
+        {/* 账号信息 */}
         <Descriptions title="账号信息" column={1}>
           <Descriptions.Item label="用户名">{profile?.username}</Descriptions.Item>
           <Descriptions.Item label="邮箱">{profile?.email}</Descriptions.Item>

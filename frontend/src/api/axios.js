@@ -10,11 +10,11 @@ const api = axios.create({
   },
 });
 
-// Request interceptor
+// 请求拦截器
 api.interceptors.request.use(
   (config) => {
     if (config.data instanceof FormData) {
-      // Let the browser set multipart boundary
+      // 让浏览器自动补上 multipart 边界
       delete config.headers['Content-Type'];
     }
     return config;
@@ -24,7 +24,7 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - handle errors
+// 响应拦截器，统一处理错误
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -34,7 +34,7 @@ api.interceptors.response.use(
     const isMutating = ['post', 'put', 'patch', 'delete'].includes(method);
     const requestUrl = requestConfig.url || '';
 
-    // CSRF token may expire or become stale; refresh once and retry mutating request.
+    // CSRF 令牌可能过期或失效；刷新一次后重试写操作请求。
     if (
       status === 403 &&
       isMutating &&
@@ -48,7 +48,7 @@ api.interceptors.response.use(
           _csrfRetried: true,
         });
       } catch {
-        // fall through to normal 403 handling
+        // 刷新失败时继续走常规的 403 处理逻辑
       }
     }
 

@@ -644,7 +644,7 @@ public class GuessBandOnlineService {
             try {
                 ids.add(Long.parseLong(raw));
             } catch (NumberFormatException ignored) {
-                // Skip invalid token and keep parsing remaining IDs.
+                // 跳过无效片段，继续解析后续 ID。
             }
         }
         return new ArrayList<>(ids);

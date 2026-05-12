@@ -21,7 +21,7 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     /**
-     * Get recent reviews (top 10)
+     * 获取最新评论（前 10 条）
      * GET /api/reviews/recent
      */
     @GetMapping("/recent")
@@ -34,7 +34,7 @@ public class ReviewController {
     }
 
     /**
-     * Get reviews for an album
+     * 获取某张专辑的评论
      * GET /api/reviews/album/{albumId}
      */
     @GetMapping("/album/{albumId}")
@@ -48,7 +48,7 @@ public class ReviewController {
     }
 
     /**
-     * Get current user's reviews
+     * 获取当前用户的评论
      * GET /api/reviews/my
      */
     @GetMapping("/my")
@@ -61,7 +61,7 @@ public class ReviewController {
     }
 
     /**
-     * Get current user's review for an album
+     * 获取当前用户对某张专辑的评论
      * GET /api/reviews/my/{albumId}
      */
     @GetMapping("/my/{albumId}")
@@ -74,7 +74,7 @@ public class ReviewController {
     }
 
     /**
-     * Create or update a review
+     * 创建或更新评论
      * POST /api/reviews
      */
     @PostMapping
@@ -88,7 +88,7 @@ public class ReviewController {
     }
 
     /**
-     * Delete a review
+     * 删除评论
      * DELETE /api/reviews/{id}
      */
     @DeleteMapping("/{id}")
@@ -102,7 +102,7 @@ public class ReviewController {
     }
 
     /**
-     * Get album stats (average rating, review count)
+     * 获取专辑统计信息（平均分、评论数）
      * GET /api/reviews/stats/{albumId}
      */
     @GetMapping("/stats/{albumId}")

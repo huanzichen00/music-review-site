@@ -176,7 +176,7 @@ const AlbumDetail = () => {
   const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm();
   
-  // Reply state
+  // 回复相关状态
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyContent, setReplyContent] = useState('');
   const [submittingReply, setSubmittingReply] = useState(false);
@@ -378,7 +378,7 @@ const AlbumDetail = () => {
   return (
     <div>
       <Row gutter={[40, 32]}>
-        {/* Album Cover */}
+        {/* 专辑封面 */}
         <Col xs={24} md={8}>
           <div style={styles.coverContainer}>
             {album.coverUrl ? (
@@ -409,7 +409,7 @@ const AlbumDetail = () => {
           </div>
         </Col>
 
-        {/* Album Info */}
+        {/* 专辑信息 */}
         <Col xs={24} md={16}>
           <h1 style={styles.albumTitle}>{album.title}</h1>
           <h2
@@ -535,7 +535,7 @@ const AlbumDetail = () => {
         </Col>
       </Row>
 
-      {/* Track List */}
+      {/* 曲目列表 */}
       {album.tracks && album.tracks.length > 0 && (
         <Card 
           title={
@@ -575,7 +575,7 @@ const AlbumDetail = () => {
         </Card>
       )}
 
-      {/* Reviews */}
+      {/* 评论区 */}
       <Card 
         title={
           <span style={{ ...styles.cardTitle, color: isDark ? '#E5E7EB' : styles.cardTitle.color }}>
@@ -658,14 +658,14 @@ const AlbumDetail = () => {
                   />
                 </List.Item>
 
-                {/* Replies Section */}
+                {/* 回复区 */}
                 {expandedReplies[review.id] && (
                   <div style={{
                     ...styles.replyContainer,
                     background: isDark ? '#1F2937' : styles.replyContainer.background,
                     borderLeft: isDark ? '3px solid #4B5563' : styles.replyContainer.borderLeft
                   }}>
-                    {/* Reply Input */}
+                    {/* 回复输入框 */}
                     {isAuthenticated && (
                       <div style={{ marginBottom: '16px', display: 'flex', gap: '8px' }}>
                         <Input.TextArea
@@ -691,7 +691,7 @@ const AlbumDetail = () => {
                       </div>
                     )}
 
-                    {/* Replies List */}
+                    {/* 回复列表 */}
                     {reviewReplies[review.id]?.length > 0 ? (
                       reviewReplies[review.id].map((reply) => (
                         <div key={reply.id} style={{ 
@@ -743,7 +743,7 @@ const AlbumDetail = () => {
         )}
       </Card>
 
-      {/* Review Modal */}
+      {/* 评论弹窗 */}
       <Modal
         className="album-review-modal"
         title={

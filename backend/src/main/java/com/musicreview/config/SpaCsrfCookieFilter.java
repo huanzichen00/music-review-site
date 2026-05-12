@@ -11,7 +11,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 /**
- * Force CSRF token generation so CookieCsrfTokenRepository writes XSRF-TOKEN for SPA clients.
+ * 强制生成 CSRF 令牌，确保 CookieCsrfTokenRepository 会为 SPA 客户端写入 XSRF-TOKEN。
  */
 public class SpaCsrfCookieFilter extends OncePerRequestFilter {
 

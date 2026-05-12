@@ -21,7 +21,7 @@ public class BlogPostController {
     private final BlogPostService blogPostService;
 
     /**
-     * Get all blog posts
+     * 获取全部博客文章
      * GET /api/blog-posts
      */
     @GetMapping
@@ -34,7 +34,7 @@ public class BlogPostController {
     }
 
     /**
-     * Get current user's blog posts
+     * 获取当前用户的博客文章
      * GET /api/blog-posts/my
      */
     @GetMapping("/my")
@@ -47,7 +47,7 @@ public class BlogPostController {
     }
 
     /**
-     * Get blog posts by user id
+     * 按用户 ID 获取博客文章
      * GET /api/blog-posts/user/{userId}
      */
     @GetMapping("/user/{userId}")
@@ -61,7 +61,7 @@ public class BlogPostController {
     }
 
     /**
-     * Create a blog post
+     * 创建博客文章
      * POST /api/blog-posts
      */
     @PostMapping
@@ -74,7 +74,7 @@ public class BlogPostController {
     }
 
     /**
-     * Update a blog post
+     * 更新博客文章
      * PUT /api/blog-posts/{id}
      */
     @PutMapping("/{id}")
@@ -87,7 +87,7 @@ public class BlogPostController {
     }
 
     /**
-     * Delete a blog post
+     * 删除博客文章
      * DELETE /api/blog-posts/{id}
      */
     @DeleteMapping("/{id}")

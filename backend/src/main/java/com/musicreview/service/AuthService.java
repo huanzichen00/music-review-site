@@ -26,21 +26,21 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     /**
-     * Register a new user
+     * 注册新用户
      */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        // Check if username already exists
+        // 检查用户名是否已存在
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username already exists");
         }
 
-        // Check if email already exists
+        // 检查邮箱是否已存在
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
 
-        // Create new user
+        // 创建新用户
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
@@ -50,7 +50,7 @@ public class AuthService {
 
         userRepository.save(user);
 
-        // Generate JWT token
+        // 生成 JWT
         UserDetailsImpl userDetails = UserDetailsImpl.build(user);
         String token = jwtUtils.generateToken(userDetails);
 
@@ -66,7 +66,7 @@ public class AuthService {
     }
 
     /**
-     * Authenticate user and return JWT token
+     * 用户登录并返回 JWT
      */
     public AuthResponse login(LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
@@ -80,7 +80,7 @@ public class AuthService {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         String token = jwtUtils.generateToken(userDetails);
 
-        // Get full user to include avatar and bio
+        // 重新查询完整用户信息，补齐头像和简介
         User user = userRepository.findById(userDetails.getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -96,7 +96,7 @@ public class AuthService {
     }
 
     /**
-     * Get current authenticated user
+     * 获取当前认证用户
      */
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -110,7 +110,7 @@ public class AuthService {
         if (principal instanceof UserDetailsImpl userDetails) {
             username = userDetails.getUsername();
         } else if (principal instanceof String s) {
-            username = s; // JWT filter 很可能把 principal 放成了 username 字符串
+            username = s; // JWT 过滤器很可能把 principal 直接放成了用户名字符串
         } else {
             throw new RuntimeException("Unsupported principal type: " + principal.getClass());
         }

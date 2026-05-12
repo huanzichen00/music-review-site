@@ -30,19 +30,19 @@ public class AlbumResponse {
     private String description;
     private LocalDateTime createdAt;
 
-    // Artist info
+    // 艺术家信息
     private Long artistId;
     private String artistName;
 
-    // Genres
+    // 流派
     private Set<GenreDTO> genres;
 
-    // Tracks
+    // 曲目
     private List<TrackDTO> tracks;
 
-    // Stats
+    // 统计信息
     private Integer trackCount;
-    private Integer totalDuration; // in seconds
+    private Integer totalDuration; // 单位：秒
     private String formattedTotalDuration;
     private Double averageRating;
     private Integer reviewCount;
@@ -92,7 +92,7 @@ public class AlbumResponse {
                 .artistId(album.getArtist() != null ? album.getArtist().getId() : null)
                 .artistName(album.getArtist() != null ? album.getArtist().getName() : null);
 
-        // Safely copy tracks
+        // 安全复制曲目
         List<TrackDTO> trackList = new ArrayList<>();
         int totalDuration = 0;
         try {
@@ -105,14 +105,14 @@ public class AlbumResponse {
                 }
             }
         } catch (Exception e) {
-            // Ignore lazy loading errors
+            // 忽略懒加载异常
         }
         builder.tracks(trackList);
         builder.trackCount(trackList.size());
         builder.totalDuration(totalDuration);
         builder.formattedTotalDuration(formatDuration(totalDuration));
 
-        // Safely copy genres
+        // 安全复制流派
         Set<GenreDTO> genreSet = new HashSet<>();
         try {
             if (album.getGenres() != null) {
@@ -121,11 +121,11 @@ public class AlbumResponse {
                 }
             }
         } catch (Exception e) {
-            // Ignore lazy loading errors
+            // 忽略懒加载异常
         }
         builder.genres(genreSet);
 
-        // Safely get review stats
+        // 安全读取评论统计
         Double avgRating = null;
         int reviewCount = 0;
         try {
@@ -145,19 +145,19 @@ public class AlbumResponse {
                 }
             }
         } catch (Exception e) {
-            // Ignore lazy loading errors
+            // 忽略懒加载异常
         }
         builder.averageRating(avgRating);
         builder.reviewCount(reviewCount);
 
-        // Safely get favorite count
+        // 安全读取收藏数量
         int favoriteCount = 0;
         try {
             if (album.getFavorites() != null) {
                 favoriteCount = album.getFavorites().size();
             }
         } catch (Exception e) {
-            // Ignore lazy loading errors
+            // 忽略懒加载异常
         }
         builder.favoriteCount(favoriteCount);
 

@@ -22,14 +22,14 @@ public class ReviewService {
     private final AuthService authService;
 
     /**
-     * Get reviews for an album
+     * 获取某张专辑的评论
      */
     public Page<ReviewResponse> getReviewsByAlbum(Long albumId, Pageable pageable) {
         return reviewRepository.findReviewResponsesByAlbumId(albumId, pageable);
     }
 
     /**
-     * Get current user's reviews
+     * 获取当前用户的评论
      */
     public Page<ReviewResponse> getMyReviews(Pageable pageable) {
         User currentUser = authService.getCurrentUser();
@@ -37,7 +37,7 @@ public class ReviewService {
     }
 
     /**
-     * Get current user's review for an album
+     * 获取当前用户对某张专辑的评论
      */
     public ReviewResponse getMyReviewForAlbum(Long albumId) {
         User currentUser = authService.getCurrentUser();
@@ -46,22 +46,22 @@ public class ReviewService {
     }
 
     /**
-     * Create or update a review
+     * 创建或更新评论
      */
     @Transactional
     public ReviewResponse createOrUpdateReview(ReviewRequest request) {
         User currentUser = authService.getCurrentUser();
 
-        // Get album
+        // 查询专辑
         Album album = albumRepository.findById(request.getAlbumId())
                 .orElseThrow(() -> new RuntimeException("Album not found with id: " + request.getAlbumId()));
 
-        // Check if review already exists
+        // 检查评论是否已存在
         Review review = reviewRepository.findByUserIdAndAlbumId(currentUser.getId(), request.getAlbumId())
                 .orElse(null);
 
         if (review == null) {
-            // Create new review
+            // 创建新评论
             review = Review.builder()
                     .user(currentUser)
                     .album(album)
@@ -69,7 +69,7 @@ public class ReviewService {
                     .content(request.getContent())
                     .build();
         } else {
-            // Update existing review
+            // 更新已有评论
             review.setRating(request.getRating());
             review.setContent(request.getContent());
         }
@@ -79,7 +79,7 @@ public class ReviewService {
     }
 
     /**
-     * Delete a review
+     * 删除评论
      */
     @Transactional
     public void deleteReview(Long reviewId) {
@@ -88,7 +88,7 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Review not found with id: " + reviewId));
 
-        // Check if the review belongs to current user
+        // 检查评论是否属于当前用户
         if (!review.getUser().getId().equals(currentUser.getId())) {
             throw new RuntimeException("You can only delete your own reviews");
         }
@@ -97,7 +97,7 @@ public class ReviewService {
     }
 
     /**
-     * Get average rating for an album
+     * 获取专辑平均评分
      */
     public Double getAverageRating(Long albumId) {
         Double avg = reviewRepository.getAverageRatingByAlbumId(albumId);
@@ -105,14 +105,14 @@ public class ReviewService {
     }
 
     /**
-     * Get review count for an album
+     * 获取专辑评论数
      */
     public long getReviewCount(Long albumId) {
         return reviewRepository.countByAlbumId(albumId);
     }
 
     /**
-     * Get recent reviews (top 10)
+     * 获取最新评论（前 10 条）
      */
     public Page<ReviewResponse> getRecentReviews(Pageable pageable) {
         return reviewRepository.findRecentReviewResponses(pageable);

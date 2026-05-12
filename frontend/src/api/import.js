@@ -1,7 +1,7 @@
 import api from './axios';
 
 export const importApi = {
-  // Search albums from MusicBrainz
+  // 从 MusicBrainz 搜索专辑
   searchAlbums: (album, artist, limit = 10) => {
     const params = new URLSearchParams();
     if (album) params.append('album', album);
@@ -10,9 +10,9 @@ export const importApi = {
     return api.get(`/import/search?${params.toString()}`);
   },
   
-  // Get album details with track list from MusicBrainz
+  // 从 MusicBrainz 获取带曲目列表的专辑详情
   getAlbumDetails: (mbid) => api.get(`/import/album/${mbid}`),
   
-  // Import from NetEase (may be restricted)
+  // 从网易云导入（可能受限制）
   fromNetease: (url) => api.get(`/import/netease?url=${encodeURIComponent(url)}`),
 };

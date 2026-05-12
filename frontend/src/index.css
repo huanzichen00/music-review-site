@@ -84,12 +84,12 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(180deg, #0E0E0F 0%, #121214 50%, #101012 100%);
 }
 
-/* Ensure Ant Layout doesn't cover the page gradient */
+/* 确保 Ant Layout 不会盖住页面渐变背景 */
 .ant-layout {
   background: transparent !important;
 }
 
-/* Custom scrollbar */
+/* 自定义滚动条 */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -110,7 +110,7 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(180deg, #C4956A 0%, #B8860B 100%);
 }
 
-/* Card hover effect */
+/* 卡片悬停效果 */
 .ant-card {
   border: 1px solid var(--warm-border) !important;
   box-shadow: 0 2px 8px rgba(139, 69, 19, 0.08);

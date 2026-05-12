@@ -19,7 +19,7 @@ public class GenreController {
     private final GenreService genreService;
 
     /**
-     * Get all genres
+     * 获取全部流派
      * GET /api/genres
      */
     @GetMapping
@@ -28,7 +28,7 @@ public class GenreController {
     }
 
     /**
-     * Get genre by ID
+     * 按 ID 获取流派
      * GET /api/genres/{id}
      */
     @GetMapping("/{id}")
@@ -41,7 +41,7 @@ public class GenreController {
     }
 
     /**
-     * Create a new genre
+     * 创建流派
      * POST /api/genres
      */
     @PostMapping
@@ -55,7 +55,7 @@ public class GenreController {
     }
 
     /**
-     * Delete a genre
+     * 删除流派
      * DELETE /api/genres/{id}
      */
     @DeleteMapping("/{id}")

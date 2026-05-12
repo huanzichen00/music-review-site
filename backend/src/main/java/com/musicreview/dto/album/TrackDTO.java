@@ -22,9 +22,9 @@ public class TrackDTO {
     @NotBlank(message = "Track title is required")
     private String title;
 
-    private Integer duration; // in seconds
+    private Integer duration; // 单位：秒
 
-    private String formattedDuration; // MM:SS format
+    private String formattedDuration; // MM:SS 格式
 
     public static TrackDTO fromEntity(Track track) {
         return TrackDTO.builder()

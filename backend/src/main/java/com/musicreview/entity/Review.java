@@ -34,7 +34,7 @@ public class Review {
     private Album album;
 
     @Column(precision = 2, scale = 1)
-    private BigDecimal rating; // 0.0 - 5.0
+    private BigDecimal rating; // 评分范围：0.0 - 5.0
 
     @Column(columnDefinition = "TEXT")
     private String content;

@@ -25,7 +25,7 @@ public class GenreService {
     private final AuthService authService;
 
     /**
-     * Get all genres
+     * 获取全部流派
      */
     @Transactional(readOnly = true)
     public List<GenreResponse> getAllGenres() {
@@ -37,7 +37,7 @@ public class GenreService {
     }
 
     /**
-     * Get genre by ID
+     * 按 ID 获取流派
      */
     @Transactional(readOnly = true)
     public GenreResponse getGenreById(Long id) {
@@ -47,11 +47,11 @@ public class GenreService {
     }
 
     /**
-     * Create a new genre
+     * 创建流派
      */
     @Transactional
     public GenreResponse createGenre(GenreRequest request) {
-        // Check if genre already exists
+        // 检查流派是否已存在
         if (genreRepository.existsByName(request.getName())) {
             throw new RuntimeException("Genre already exists: " + request.getName());
         }
@@ -66,7 +66,7 @@ public class GenreService {
     }
 
     /**
-     * Delete a genre (only allowed for user "Huan" and only if genre has no albums)
+     * 删除流派（仅用户 "Huan" 可执行，且流派下不能有关联专辑）
      */
     @Transactional
     public void deleteGenre(Long id) {

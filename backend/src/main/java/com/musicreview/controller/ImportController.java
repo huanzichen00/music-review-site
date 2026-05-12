@@ -20,7 +20,7 @@ public class ImportController {
     private static final String USER_AGENT = "MusicReviewSite/1.0 (https://github.com/huanzichen00/music-review-site)";
 
     /**
-     * Search albums from MusicBrainz
+     * 从 MusicBrainz 搜索专辑
      * GET /api/import/search?album=xxx&artist=xxx
      */
     @GetMapping("/search")
@@ -34,7 +34,7 @@ public class ImportController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Please provide album name or artist name"));
             }
 
-            // Build search query with exact matching using quotes
+            // 使用引号构造精确匹配搜索语句
             StringBuilder query = new StringBuilder();
             if (album != null && !album.trim().isEmpty()) {
                 query.append("release:\"").append(URLEncoder.encode(album.trim(), StandardCharsets.UTF_8)).append("\"");
@@ -66,7 +66,7 @@ public class ImportController {
                 return ResponseEntity.ok(Map.of("results", Collections.emptyList()));
             }
 
-            // Parse results
+            // 解析搜索结果
             List<Map<String, Object>> results = new ArrayList<>();
             for (Map<String, Object> release : releases) {
                 Map<String, Object> result = new HashMap<>();
@@ -77,7 +77,7 @@ public class ImportController {
                 result.put("country", release.get("country"));
                 result.put("status", release.get("status"));
                 
-                // Get artist info
+                // 提取艺术家信息
                 @SuppressWarnings("unchecked")
                 List<Map<String, Object>> artistCredits = (List<Map<String, Object>>) release.get("artist-credit");
                 if (artistCredits != null && !artistCredits.isEmpty()) {
@@ -89,7 +89,7 @@ public class ImportController {
                     }
                 }
                 
-                // Get release group for primary type
+                // 提取发行组的主类型
                 @SuppressWarnings("unchecked")
                 Map<String, Object> releaseGroup = (Map<String, Object>) release.get("release-group");
                 if (releaseGroup != null) {
@@ -107,7 +107,7 @@ public class ImportController {
     }
 
     /**
-     * Get album details and track list from MusicBrainz
+     * 从 MusicBrainz 获取专辑详情与曲目列表
      * GET /api/import/album/{mbid}
      */
     @GetMapping("/album/{mbid}")
@@ -136,7 +136,7 @@ public class ImportController {
             result.put("country", release.get("country"));
             result.put("barcode", release.get("barcode"));
             
-            // Extract year from date
+            // 从日期中提取年份
             String dateStr = (String) release.get("date");
             if (dateStr != null && dateStr.length() >= 4) {
                 try {
@@ -144,7 +144,7 @@ public class ImportController {
                 } catch (NumberFormatException ignored) {}
             }
 
-            // Get artist info
+            // 提取艺术家信息
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> artistCredits = (List<Map<String, Object>>) release.get("artist-credit");
             if (artistCredits != null && !artistCredits.isEmpty()) {
@@ -158,9 +158,9 @@ public class ImportController {
                 }
             }
 
-            // Cover art URL not set here to avoid VPN-restricted services in China.
+            // 这里不设置封面 URL，避免依赖在中国可能受限的服务。
 
-            // Get tracks from all media
+            // 汇总所有介质下的曲目
             List<Map<String, Object>> tracks = new ArrayList<>();
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> media = (List<Map<String, Object>>) release.get("media");
@@ -175,7 +175,7 @@ public class ImportController {
                             trackInfo.put("trackNumber", globalTrackNumber++);
                             trackInfo.put("title", track.get("title"));
                             
-                            // Duration in milliseconds
+                            // 时长原始值为毫秒
                             Object length = track.get("length");
                             if (length != null) {
                                 int durationMs = ((Number) length).intValue();
@@ -201,7 +201,7 @@ public class ImportController {
     }
 
     /**
-     * Import album info from NetEase Cloud Music (may be restricted)
+     * 从网易云音乐导入专辑信息（可能受限制）
      * GET /api/import/netease?url=xxx
      */
     @GetMapping("/netease")

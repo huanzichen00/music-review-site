@@ -23,35 +23,35 @@ public class FileController {
     private String uploadDir;
 
     /**
-     * Upload avatar image
+     * 上传头像图片
      * POST /api/files/avatar
      */
     @PostMapping("/avatar")
     public ResponseEntity<?> uploadAvatar(@RequestParam("file") MultipartFile file) {
         try {
-            // Validate file
+            // 校验文件是否存在
             if (file.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Please select a file"));
             }
 
-            // Check file type
+            // 校验文件类型
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Only image files are allowed"));
             }
 
-            // Check file size (max 5MB)
+            // 校验文件大小（最大 5MB）
             if (file.getSize() > 5 * 1024 * 1024) {
                 return ResponseEntity.badRequest().body(Map.of("error", "File size must be less than 5MB"));
             }
 
-            // Create upload directory if not exists
+            // 如有必要则创建上传目录
             Path uploadPath = Paths.get(uploadDir, "avatars");
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
 
-            // Generate unique filename
+            // 生成唯一文件名
             String originalFilename = file.getOriginalFilename();
             String extension = "";
             if (originalFilename != null && originalFilename.contains(".")) {
@@ -59,11 +59,11 @@ public class FileController {
             }
             String newFilename = UUID.randomUUID().toString() + extension;
 
-            // Save file
+            // 保存文件
             Path filePath = uploadPath.resolve(newFilename);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-            // Return file URL
+            // 返回文件访问地址
             String fileUrl = "/api/files/avatars/" + newFilename;
             return ResponseEntity.ok(Map.of(
                 "url", fileUrl,
@@ -76,7 +76,7 @@ public class FileController {
     }
 
     /**
-     * Upload album cover image
+     * 上传专辑封面
      * POST /api/files/album-cover
      */
     @PostMapping("/album-cover")
@@ -91,7 +91,7 @@ public class FileController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Only image files are allowed"));
             }
 
-            // Check file size (max 8MB)
+            // 校验文件大小（最大 8MB）
             if (file.getSize() > 8 * 1024 * 1024) {
                 return ResponseEntity.badRequest().body(Map.of("error", "File size must be less than 8MB"));
             }
@@ -123,13 +123,13 @@ public class FileController {
     }
 
     /**
-     * Serve avatar image
+     * 返回头像图片
      * GET /api/files/avatars/{filename}
      */
     @GetMapping("/avatars/{filename}")
     public ResponseEntity<?> getAvatar(@PathVariable String filename) {
         try {
-            // Sanitize filename to prevent directory traversal
+            // 清洗文件名，防止目录穿越
             String safeFilename = filename.replaceAll("[^a-zA-Z0-9._-]", "");
             
             Path filePath = Paths.get(uploadDir, "avatars", safeFilename);
@@ -139,8 +139,8 @@ public class FileController {
 
             byte[] fileContent = Files.readAllBytes(filePath);
             
-            // Determine content type based on file extension
-            String contentType = "image/jpeg"; // default
+            // 根据文件扩展名推断内容类型
+            String contentType = "image/jpeg"; // 默认值
             String lowerFilename = safeFilename.toLowerCase();
             if (lowerFilename.endsWith(".png")) {
                 contentType = "image/png";
@@ -155,7 +155,7 @@ public class FileController {
                         contentType = detectedType;
                     }
                 } catch (Exception e) {
-                    // Use default
+                    // 保持默认值
                 }
             }
 
@@ -171,7 +171,7 @@ public class FileController {
     }
 
     /**
-     * Serve album cover image
+     * 返回专辑封面
      * GET /api/files/album-covers/{filename}
      */
     @GetMapping("/album-covers/{filename}")
@@ -200,7 +200,7 @@ public class FileController {
                         contentType = detectedType;
                     }
                 } catch (Exception e) {
-                    // Use default
+                    // 保持默认值
                 }
             }
 

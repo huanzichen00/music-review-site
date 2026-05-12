@@ -61,13 +61,13 @@ public class SecurityConfig {
                 )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
+                        // 公开接口
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/import/**").permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/event", HttpMethod.POST.name())).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/**", HttpMethod.OPTIONS.name())).permitAll()
-                        // Public read access for albums, artists, genres, reviews
+                        // 专辑、艺术家、流派、评论等资源允许公开读取
                         .requestMatchers(
                                 new AntPathRequestMatcher("/api/albums", HttpMethod.GET.name()),
                                 new AntPathRequestMatcher("/api/albums/**", HttpMethod.GET.name()),
@@ -90,7 +90,7 @@ public class SecurityConfig {
                                 new AntPathRequestMatcher("/api/question-banks/share/**", HttpMethod.GET.name()),
                                 new AntPathRequestMatcher("/api/guess-band-online/**")
                         ).permitAll()
-                        // All other endpoints require authentication
+                        // 其余接口都需要认证
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

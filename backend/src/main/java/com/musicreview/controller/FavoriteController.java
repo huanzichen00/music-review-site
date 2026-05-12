@@ -19,7 +19,7 @@ public class FavoriteController {
     private final FavoriteService favoriteService;
 
     /**
-     * Get current user's favorites
+     * 获取当前用户的收藏
      * GET /api/favorites
      */
     @GetMapping
@@ -32,7 +32,7 @@ public class FavoriteController {
     }
 
     /**
-     * Check if album is favorited
+     * 检查专辑是否已被收藏
      * GET /api/favorites/check/{albumId}
      */
     @GetMapping("/check/{albumId}")
@@ -42,7 +42,7 @@ public class FavoriteController {
     }
 
     /**
-     * Add album to favorites
+     * 收藏专辑
      * POST /api/favorites/{albumId}
      */
     @PostMapping("/{albumId}")
@@ -56,7 +56,7 @@ public class FavoriteController {
     }
 
     /**
-     * Remove album from favorites
+     * 取消收藏专辑
      * DELETE /api/favorites/{albumId}
      */
     @DeleteMapping("/{albumId}")

@@ -61,7 +61,7 @@ public class Album {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Many-to-Many with Genre
+    // 与流派是多对多关系
     @ManyToMany
     @JoinTable(
         name = "album_genres",
@@ -71,18 +71,18 @@ public class Album {
     @Builder.Default
     private Set<Genre> genres = new HashSet<>();
 
-    // One-to-Many with Track
+    // 与曲目是一对多关系
     @OneToMany(mappedBy = "album", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("trackNumber ASC")
     @Builder.Default
     private List<Track> tracks = new ArrayList<>();
 
-    // One-to-Many with Review
+    // 与评论是一对多关系
     @OneToMany(mappedBy = "album", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Review> reviews = new ArrayList<>();
 
-    // One-to-Many with Favorite
+    // 与收藏是一对多关系
     @OneToMany(mappedBy = "album", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Favorite> favorites = new ArrayList<>();

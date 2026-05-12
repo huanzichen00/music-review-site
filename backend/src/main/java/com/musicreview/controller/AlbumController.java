@@ -22,7 +22,7 @@ public class AlbumController {
     private final AlbumService albumService;
 
     /**
-     * Get all albums
+     * 获取全部专辑
      * GET /api/albums
      */
     @GetMapping
@@ -35,7 +35,7 @@ public class AlbumController {
     }
 
     /**
-     * Get albums by title initial letter
+     * 按标题首字母获取专辑
      * GET /api/albums/initial/{letter}
      */
     @GetMapping("/initial/{letter}")
@@ -49,7 +49,7 @@ public class AlbumController {
     }
 
     /**
-     * Get album by ID (with full details)
+     * 按 ID 获取专辑（包含完整详情）
      * GET /api/albums/{id}
      */
     @GetMapping("/{id}")
@@ -64,7 +64,7 @@ public class AlbumController {
     }
 
     /**
-     * Get albums by artist
+     * 获取某位艺术家的专辑
      * GET /api/albums/artist/{artistId}
      */
     @GetMapping("/artist/{artistId}")
@@ -78,7 +78,7 @@ public class AlbumController {
     }
 
     /**
-     * Get albums by genre
+     * 获取某个流派下的专辑
      * GET /api/albums/genre/{genreId}
      */
     @GetMapping("/genre/{genreId}")
@@ -92,7 +92,7 @@ public class AlbumController {
     }
 
     /**
-     * Get albums by release year
+     * 按发行年份获取专辑
      * GET /api/albums/year/{year}
      */
     @GetMapping("/year/{year}")
@@ -106,7 +106,7 @@ public class AlbumController {
     }
 
     /**
-     * Get all available release years
+     * 获取全部可用发行年份
      * GET /api/albums/years
      */
     @GetMapping("/years")
@@ -115,7 +115,7 @@ public class AlbumController {
     }
 
     /**
-     * Search albums by title
+     * 按标题搜索专辑
      * GET /api/albums/search?q=xxx
      */
     @GetMapping("/search")
@@ -129,7 +129,7 @@ public class AlbumController {
     }
 
     /**
-     * Create a new album
+     * 创建专辑
      * POST /api/albums
      */
     @PostMapping
@@ -143,7 +143,7 @@ public class AlbumController {
     }
 
     /**
-     * Update an album
+     * 更新专辑
      * PUT /api/albums/{id}
      */
     @PutMapping("/{id}")
@@ -157,7 +157,7 @@ public class AlbumController {
     }
 
     /**
-     * Delete an album
+     * 删除专辑
      * DELETE /api/albums/{id}
      */
     @DeleteMapping("/{id}")

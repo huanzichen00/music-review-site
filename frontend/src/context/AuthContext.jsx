@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await authApi.getCsrf();
     } catch {
-      // ignore csrf bootstrap failure
+      // 忽略初始化 CSRF 失败
     }
   }, []);
 
@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
       try {
         await ensureCsrfToken();
       } catch {
-        // ignore csrf bootstrap failure
+        // 忽略初始化 CSRF 失败
       }
 
       const token = localStorage.getItem('token');
@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }) => {
       await ensureCsrfToken();
       await authApi.logout();
     } catch {
-      // ignore logout API failure and clear local user state anyway
+      // 即使退出接口失败，也继续清理本地登录态
     }
     localStorage.removeItem('token');
     localStorage.removeItem('user');

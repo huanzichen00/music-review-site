@@ -23,7 +23,7 @@ public class ArtistController {
     private final ArtistService artistService;
 
     /**
-     * Get all artists
+     * 获取全部艺术家
      * GET /api/artists
      */
     @GetMapping
@@ -36,7 +36,7 @@ public class ArtistController {
     }
 
     /**
-     * Get artists by initial letter
+     * 按首字母获取艺术家
      * GET /api/artists/initial/{letter}
      */
     @GetMapping("/initial/{letter}")
@@ -50,7 +50,7 @@ public class ArtistController {
     }
 
     /**
-     * Get artist by ID
+     * 按 ID 获取艺术家
      * GET /api/artists/{id}
      */
     @GetMapping("/{id}")
@@ -63,7 +63,7 @@ public class ArtistController {
     }
 
     /**
-     * Search artists by name
+     * 按名称搜索艺术家
      * GET /api/artists/search?q=xxx
      */
     @GetMapping(value = "/search", params = {"q", "!limit"})
@@ -77,7 +77,7 @@ public class ArtistController {
     }
 
     /**
-     * Search artist names (lightweight)
+     * 搜索艺术家名称（轻量结果）
      * GET /api/artists/search?q=xxx&limit=20
      */
     @GetMapping(value = "/search", params = {"q", "limit"})
@@ -89,7 +89,7 @@ public class ArtistController {
     }
 
     /**
-     * Create a new artist
+     * 创建艺术家
      * POST /api/artists
      */
     @PostMapping
@@ -103,7 +103,7 @@ public class ArtistController {
     }
 
     /**
-     * Update an artist
+     * 更新艺术家
      * PUT /api/artists/{id}
      */
     @PutMapping("/{id}")
@@ -117,7 +117,7 @@ public class ArtistController {
     }
 
     /**
-     * Delete an artist
+     * 删除艺术家
      * DELETE /api/artists/{id}
      */
     @DeleteMapping("/{id}")

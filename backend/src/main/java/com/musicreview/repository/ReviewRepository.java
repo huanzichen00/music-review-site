@@ -30,7 +30,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     int countByUserId(Long userId);
 
-    // Get recent reviews ordered by creation time
+    // 按创建时间倒序获取最新评论
     List<Review> findTop10ByOrderByCreatedAtDesc();
 
     @Query("""
