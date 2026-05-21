@@ -25,7 +25,22 @@ export const albumsApi = {
   getByGenre: (genreId, config = {}) => api.get(`/albums/genre/${genreId}`, config),
   getByYear: (year, config = {}) => api.get(`/albums/year/${year}`, config),
   getYears: (config = {}) => api.get('/albums/years', config),
-  search: (query, config = {}) => api.get(`/albums/search?q=${query}`, config),
+  search: (query, config = {}) =>
+    api.get('/albums/search', {
+      ...config,
+      params: {
+        ...(config.params || {}),
+        q: query,
+      },
+    }),
+  getHotSearches: (limit = 10, config = {}) =>
+    api.get('/albums/hot-searches', {
+      ...config,
+      params: {
+        ...(config.params || {}),
+        limit,
+      },
+    }),
   create: async (data) => {
     const res = await api.post('/albums', data);
     invalidateApiCache(ALBUMS_ALL_CACHE_KEY);

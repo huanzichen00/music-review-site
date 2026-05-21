@@ -2,7 +2,9 @@ package com.musicreview.controller;
 
 import com.musicreview.dto.album.AlbumRequest;
 import com.musicreview.dto.album.AlbumResponse;
+import com.musicreview.dto.search.HotSearchResponse;
 import com.musicreview.service.AlbumService;
+import com.musicreview.service.SearchAnalyticsService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +22,7 @@ import java.util.Map;
 public class AlbumController {
 
     private final AlbumService albumService;
+    private final SearchAnalyticsService searchAnalyticsService;
 
     /**
      * 获取全部专辑
@@ -125,7 +128,14 @@ public class AlbumController {
             @RequestParam(defaultValue = "20") int size
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(albumService.searchAlbums(query, pageable));
+        Page<AlbumResponse> result = (albumService.searchAlbums(query, pageable));
+
+        if (!result.isEmpty()) {
+            searchAnalyticsService.recordAlbumSearch(query);
+        }
+
+        return ResponseEntity.ok(result);
+
     }
 
     /**
@@ -168,5 +178,12 @@ public class AlbumController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    @GetMapping("/hot-searches")
+    public ResponseEntity<List<HotSearchResponse>> getHotSearches(
+        @RequestParam(defaultValue = "10") Integer limit
+    ) {
+        return ResponseEntity.ok(searchAnalyticsService.getAlbumHotSearches(limit));
     }
 }
